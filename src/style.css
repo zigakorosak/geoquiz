@@ -1,0 +1,389 @@
+:root {
+  --bg: #10141c;
+  --surface: #1a2030;
+  --surface-raised: #232b40;
+  --text: #e8ecf4;
+  --text-dim: #9aa4bd;
+  --accent: #4f8cff;
+  --accent-dim: #2c3f66;
+  --correct: #34c77b;
+  --wrong: #e0546b;
+  --border: #2c3450;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  color: var(--text);
+  background: var(--surface-raised);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6em 1.2em;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+button:hover:not(:disabled) {
+  border-color: var(--accent);
+}
+
+button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ---------- Menu screen ---------- */
+
+.menu-screen {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.menu-screen h1 {
+  text-align: center;
+  margin: 0;
+}
+
+.menu-step h2 {
+  font-size: 1.05rem;
+  color: var(--text-dim);
+  margin: 0 0 0.75rem;
+}
+
+.menu-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.menu-option--selected {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+}
+
+.multiple-choice-options {
+  justify-content: center;
+  max-width: 32rem;
+  margin: 0 auto;
+}
+
+.menu-option--correct {
+  background: var(--correct);
+  border-color: var(--correct);
+  color: #fff;
+}
+
+.menu-option--wrong {
+  background: var(--wrong);
+  border-color: var(--wrong);
+  color: #fff;
+}
+
+/* Visually inert after a result, but deliberately still a real (non-
+   disabled) button — see inputs.js — so clicking it still counts as
+   "click anywhere advances" instead of silently doing nothing. */
+.menu-option--locked:not(.menu-option--correct):not(.menu-option--wrong) {
+  opacity: 0.5;
+}
+
+.menu-option--locked:hover {
+  border-color: var(--border);
+}
+
+.start-button {
+  align-self: center;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.75em 2em;
+  margin-top: 1rem;
+}
+
+/* ---------- Wizard screens (home, games flow, settings) ---------- */
+
+.wizard-back {
+  align-self: flex-start;
+  font-size: 0.9rem;
+  padding: 0.4em 0.9em;
+}
+
+.wizard-subtitle {
+  text-align: center;
+  color: var(--text-dim);
+  margin: -1rem 0 0;
+}
+
+.wizard-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  min-width: 8rem;
+}
+
+.wizard-option-desc {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+}
+
+/* ---------- Map explore screen ---------- */
+
+.explore-label {
+  font-weight: 600;
+}
+
+.explore-area {
+  min-height: 400px;
+}
+
+/* ---------- Game screen ---------- */
+
+.game-screen {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem 1.5rem 2rem;
+  gap: 1rem;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.game-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-weight: 600;
+}
+
+.game-timer {
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.game-header .exit-button {
+  margin-left: auto;
+  font-weight: 400;
+  font-size: 0.9rem;
+}
+
+.prompt-area {
+  min-height: 3.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.prompt-text {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+}
+
+.answer-area {
+  flex: 1;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.answer-text-form {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.answer-text-form input {
+  font: inherit;
+  padding: 0.6em 0.8em;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  min-width: 16rem;
+}
+
+.answer-text-form input.input--correct {
+  border-color: var(--correct);
+}
+
+.answer-text-form input.input--wrong {
+  border-color: var(--wrong);
+}
+
+.feedback-area {
+  display: flex;
+  justify-content: center;
+  min-height: 1.5em;
+}
+
+.answer-feedback {
+  text-align: center;
+  color: var(--text-dim);
+}
+
+.action-button {
+  align-self: center;
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+  font-weight: 600;
+  padding: 0.6em 2em;
+  min-width: 10rem;
+}
+
+/* ---------- World map ---------- */
+
+.world-map {
+  width: 100%;
+  height: 100%;
+  min-height: 320px;
+  display: block;
+}
+
+.country {
+  fill: var(--surface-raised);
+  stroke: var(--bg);
+  stroke-width: 0.5;
+  /* keep border thickness constant as d3-zoom scales the map */
+  vector-effect: non-scaling-stroke;
+}
+
+.country--unplayable {
+  fill: var(--surface);
+}
+
+.world-map--clickable .country:not(.country--unplayable):hover {
+  fill: var(--accent-dim);
+}
+
+.world-map--clickable .country:not(.country--unplayable) {
+  cursor: pointer;
+}
+
+/* Invisible oversized click target for countries too small to hit
+   reliably (Monaco, Vatican City, San Marino, ...) — see WorldMap.js. */
+.country-hitarea {
+  fill: transparent;
+  pointer-events: all;
+}
+
+.world-map--clickable .country-hitarea {
+  cursor: pointer;
+}
+
+.world-map--clickable .country-hitarea:hover {
+  fill: var(--accent-dim);
+  opacity: 0.6;
+}
+
+.country--highlighted {
+  fill: var(--accent);
+}
+
+.country--selected {
+  fill: var(--accent-dim);
+  stroke: var(--accent);
+  stroke-width: 1.5;
+}
+
+.country--correct {
+  fill: var(--correct);
+}
+
+.country--wrong {
+  fill: var(--wrong);
+}
+
+.border-lines {
+  pointer-events: none;
+}
+
+.border--disputed {
+  fill: none;
+  stroke: var(--text-dim);
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/* ---------- Summary ---------- */
+
+.game-summary {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.summary-score {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.summary-time {
+  color: var(--text-dim);
+  margin: -0.5rem 0 0;
+}
+
+.summary-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  max-height: 320px;
+  overflow-y: auto;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.summary-list li {
+  padding: 0.5rem 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.summary-list li:last-child {
+  border-bottom: none;
+}
+
+.summary-correct {
+  color: var(--correct);
+}
+
+.summary-wrong {
+  color: var(--wrong);
+}
+
+.game-summary button {
+  align-self: center;
+}

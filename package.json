@@ -1,0 +1,27 @@
+{
+  "name": "wp-map-quiz",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "generate-data": "node scripts/generate-data.mjs",
+    "generate-us-states-data": "node scripts/generate-us-states-data.mjs",
+    "archive": "bash scripts/archive.sh"
+  },
+  "devDependencies": {
+    "us-atlas": "^3.0.1",
+    "vite": "^8.3.0",
+    "world-atlas": "^2.0.2",
+    "world-countries": "^5.1.0"
+  },
+  "dependencies": {
+    "d3-delaunay": "^6.0.4",
+    "d3-geo": "^3.1.1",
+    "d3-selection": "^3.0.0",
+    "d3-zoom": "^3.0.0",
+    "topojson-client": "^3.1.0"
+  }
+}

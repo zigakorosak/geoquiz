@@ -1,0 +1,4286 @@
+[
+  {
+    "id": "004",
+    "cca2": "AF",
+    "cca3": "AFG",
+    "name": "Afghanistan",
+    "officialName": "Islamic Republic of Afghanistan",
+    "capital": "Kabul",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      33,
+      65
+    ],
+    "flagEmoji": "🇦🇫",
+    "independent": true,
+    "area": 652230,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "248",
+    "cca2": "AX",
+    "cca3": "ALA",
+    "name": "Åland Islands",
+    "officialName": "Åland Islands",
+    "capital": "Mariehamn",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      60.116667,
+      19.9
+    ],
+    "flagEmoji": "🇦🇽",
+    "independent": false,
+    "area": 1580,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "008",
+    "cca2": "AL",
+    "cca3": "ALB",
+    "name": "Albania",
+    "officialName": "Republic of Albania",
+    "capital": "Tirana",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      41,
+      20
+    ],
+    "flagEmoji": "🇦🇱",
+    "independent": true,
+    "area": 28748,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "012",
+    "cca2": "DZ",
+    "cca3": "DZA",
+    "name": "Algeria",
+    "officialName": "People's Democratic Republic of Algeria",
+    "capital": "Algiers",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      28,
+      3
+    ],
+    "flagEmoji": "🇩🇿",
+    "independent": true,
+    "area": 2381741,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "016",
+    "cca2": "AS",
+    "cca3": "ASM",
+    "name": "American Samoa",
+    "officialName": "American Samoa",
+    "capital": "Pago Pago",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -14.33333333,
+      -170
+    ],
+    "flagEmoji": "🇦🇸",
+    "independent": false,
+    "area": 199,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "020",
+    "cca2": "AD",
+    "cca3": "AND",
+    "name": "Andorra",
+    "officialName": "Principality of Andorra",
+    "capital": "Andorra la Vella",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      42.5,
+      1.5
+    ],
+    "flagEmoji": "🇦🇩",
+    "independent": true,
+    "area": 468,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "024",
+    "cca2": "AO",
+    "cca3": "AGO",
+    "name": "Angola",
+    "officialName": "Republic of Angola",
+    "capital": "Luanda",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      -12.5,
+      18.5
+    ],
+    "flagEmoji": "🇦🇴",
+    "independent": true,
+    "area": 1246700,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "660",
+    "cca2": "AI",
+    "cca3": "AIA",
+    "name": "Anguilla",
+    "officialName": "Anguilla",
+    "capital": "The Valley",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.25,
+      -63.16666666
+    ],
+    "flagEmoji": "🇦🇮",
+    "independent": false,
+    "area": 91,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "010",
+    "cca2": "AQ",
+    "cca3": "ATA",
+    "name": "Antarctica",
+    "officialName": "Antarctica",
+    "capital": null,
+    "region": "Antarctic",
+    "subregion": "",
+    "latlng": [
+      -90,
+      0
+    ],
+    "flagEmoji": "🇦🇶",
+    "independent": false,
+    "area": 14000000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "028",
+    "cca2": "AG",
+    "cca3": "ATG",
+    "name": "Antigua and Barbuda",
+    "officialName": "Antigua and Barbuda",
+    "capital": "Saint John's",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      17.05,
+      -61.8
+    ],
+    "flagEmoji": "🇦🇬",
+    "independent": true,
+    "area": 442,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "032",
+    "cca2": "AR",
+    "cca3": "ARG",
+    "name": "Argentina",
+    "officialName": "Argentine Republic",
+    "capital": "Buenos Aires",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -34,
+      -64
+    ],
+    "flagEmoji": "🇦🇷",
+    "independent": true,
+    "area": 2780400,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "051",
+    "cca2": "AM",
+    "cca3": "ARM",
+    "name": "Armenia",
+    "officialName": "Republic of Armenia",
+    "capital": "Yerevan",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      40,
+      45
+    ],
+    "flagEmoji": "🇦🇲",
+    "independent": true,
+    "area": 29743,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "533",
+    "cca2": "AW",
+    "cca3": "ABW",
+    "name": "Aruba",
+    "officialName": "Aruba",
+    "capital": "Oranjestad",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      12.5,
+      -69.96666666
+    ],
+    "flagEmoji": "🇦🇼",
+    "independent": false,
+    "area": 180,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "036",
+    "cca2": "AU",
+    "cca3": "AUS",
+    "name": "Australia",
+    "officialName": "Commonwealth of Australia",
+    "capital": "Canberra",
+    "region": "Oceania",
+    "subregion": "Australia and New Zealand",
+    "latlng": [
+      -27,
+      133
+    ],
+    "flagEmoji": "🇦🇺",
+    "independent": true,
+    "area": 7692024,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "040",
+    "cca2": "AT",
+    "cca3": "AUT",
+    "name": "Austria",
+    "officialName": "Republic of Austria",
+    "capital": "Vienna",
+    "region": "Europe",
+    "subregion": "Central Europe",
+    "latlng": [
+      47.33333333,
+      13.33333333
+    ],
+    "flagEmoji": "🇦🇹",
+    "independent": true,
+    "area": 83871,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "031",
+    "cca2": "AZ",
+    "cca3": "AZE",
+    "name": "Azerbaijan",
+    "officialName": "Republic of Azerbaijan",
+    "capital": "Baku",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      40.5,
+      47.5
+    ],
+    "flagEmoji": "🇦🇿",
+    "independent": true,
+    "area": 86600,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "044",
+    "cca2": "BS",
+    "cca3": "BHS",
+    "name": "Bahamas",
+    "officialName": "Commonwealth of the Bahamas",
+    "capital": "Nassau",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      24.25,
+      -76
+    ],
+    "flagEmoji": "🇧🇸",
+    "independent": true,
+    "area": 13943,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "048",
+    "cca2": "BH",
+    "cca3": "BHR",
+    "name": "Bahrain",
+    "officialName": "Kingdom of Bahrain",
+    "capital": "Manama",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      26,
+      50.55
+    ],
+    "flagEmoji": "🇧🇭",
+    "independent": true,
+    "area": 765,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "050",
+    "cca2": "BD",
+    "cca3": "BGD",
+    "name": "Bangladesh",
+    "officialName": "People's Republic of Bangladesh",
+    "capital": "Dhaka",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      24,
+      90
+    ],
+    "flagEmoji": "🇧🇩",
+    "independent": true,
+    "area": 147570,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "052",
+    "cca2": "BB",
+    "cca3": "BRB",
+    "name": "Barbados",
+    "officialName": "Barbados",
+    "capital": "Bridgetown",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      13.16666666,
+      -59.53333333
+    ],
+    "flagEmoji": "🇧🇧",
+    "independent": true,
+    "area": 430,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "112",
+    "cca2": "BY",
+    "cca3": "BLR",
+    "name": "Belarus",
+    "officialName": "Republic of Belarus",
+    "capital": "Minsk",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "latlng": [
+      53,
+      28
+    ],
+    "flagEmoji": "🇧🇾",
+    "independent": true,
+    "area": 207600,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "056",
+    "cca2": "BE",
+    "cca3": "BEL",
+    "name": "Belgium",
+    "officialName": "Kingdom of Belgium",
+    "capital": "Brussels",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      50.83333333,
+      4
+    ],
+    "flagEmoji": "🇧🇪",
+    "independent": true,
+    "area": 30528,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "084",
+    "cca2": "BZ",
+    "cca3": "BLZ",
+    "name": "Belize",
+    "officialName": "Belize",
+    "capital": "Belmopan",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      17.25,
+      -88.75
+    ],
+    "flagEmoji": "🇧🇿",
+    "independent": true,
+    "area": 22966,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "204",
+    "cca2": "BJ",
+    "cca3": "BEN",
+    "name": "Benin",
+    "officialName": "Republic of Benin",
+    "capital": "Porto-Novo",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      9.5,
+      2.25
+    ],
+    "flagEmoji": "🇧🇯",
+    "independent": true,
+    "area": 112622,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "060",
+    "cca2": "BM",
+    "cca3": "BMU",
+    "name": "Bermuda",
+    "officialName": "Bermuda",
+    "capital": "Hamilton",
+    "region": "Americas",
+    "subregion": "North America",
+    "latlng": [
+      32.33333333,
+      -64.75
+    ],
+    "flagEmoji": "🇧🇲",
+    "independent": false,
+    "area": 54,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "064",
+    "cca2": "BT",
+    "cca3": "BTN",
+    "name": "Bhutan",
+    "officialName": "Kingdom of Bhutan",
+    "capital": "Thimphu",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      27.5,
+      90.5
+    ],
+    "flagEmoji": "🇧🇹",
+    "independent": true,
+    "area": 38394,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "068",
+    "cca2": "BO",
+    "cca3": "BOL",
+    "name": "Bolivia",
+    "officialName": "Plurinational State of Bolivia",
+    "capital": "Sucre",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -17,
+      -65
+    ],
+    "flagEmoji": "🇧🇴",
+    "independent": true,
+    "area": 1098581,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "070",
+    "cca2": "BA",
+    "cca3": "BIH",
+    "name": "Bosnia and Herzegovina",
+    "officialName": "Bosnia and Herzegovina",
+    "capital": "Sarajevo",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      44,
+      18
+    ],
+    "flagEmoji": "🇧🇦",
+    "independent": true,
+    "area": 51209,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "072",
+    "cca2": "BW",
+    "cca3": "BWA",
+    "name": "Botswana",
+    "officialName": "Republic of Botswana",
+    "capital": "Gaborone",
+    "region": "Africa",
+    "subregion": "Southern Africa",
+    "latlng": [
+      -22,
+      24
+    ],
+    "flagEmoji": "🇧🇼",
+    "independent": true,
+    "area": 582000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "076",
+    "cca2": "BR",
+    "cca3": "BRA",
+    "name": "Brazil",
+    "officialName": "Federative Republic of Brazil",
+    "capital": "Brasília",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -10,
+      -55
+    ],
+    "flagEmoji": "🇧🇷",
+    "independent": true,
+    "area": 8515767,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "086",
+    "cca2": "IO",
+    "cca3": "IOT",
+    "name": "British Indian Ocean Territory",
+    "officialName": "British Indian Ocean Territory",
+    "capital": "Diego Garcia",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -6,
+      71.5
+    ],
+    "flagEmoji": "🇮🇴",
+    "independent": false,
+    "area": 60,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "092",
+    "cca2": "VG",
+    "cca3": "VGB",
+    "name": "British Virgin Islands",
+    "officialName": "Virgin Islands",
+    "capital": "Road Town",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.431383,
+      -64.62305
+    ],
+    "flagEmoji": "🇻🇬",
+    "independent": false,
+    "area": 151,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "096",
+    "cca2": "BN",
+    "cca3": "BRN",
+    "name": "Brunei",
+    "officialName": "Nation of Brunei, Abode of Peace",
+    "capital": "Bandar Seri Begawan",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      4.5,
+      114.66666666
+    ],
+    "flagEmoji": "🇧🇳",
+    "independent": true,
+    "area": 5765,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "100",
+    "cca2": "BG",
+    "cca3": "BGR",
+    "name": "Bulgaria",
+    "officialName": "Republic of Bulgaria",
+    "capital": "Sofia",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      43,
+      25
+    ],
+    "flagEmoji": "🇧🇬",
+    "independent": true,
+    "area": 110879,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "854",
+    "cca2": "BF",
+    "cca3": "BFA",
+    "name": "Burkina Faso",
+    "officialName": "Burkina Faso",
+    "capital": "Ouagadougou",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      13,
+      -2
+    ],
+    "flagEmoji": "🇧🇫",
+    "independent": true,
+    "area": 272967,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "108",
+    "cca2": "BI",
+    "cca3": "BDI",
+    "name": "Burundi",
+    "officialName": "Republic of Burundi",
+    "capital": "Gitega",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -3.5,
+      30
+    ],
+    "flagEmoji": "🇧🇮",
+    "independent": true,
+    "area": 27834,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "116",
+    "cca2": "KH",
+    "cca3": "KHM",
+    "name": "Cambodia",
+    "officialName": "Kingdom of Cambodia",
+    "capital": "Phnom Penh",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      13,
+      105
+    ],
+    "flagEmoji": "🇰🇭",
+    "independent": true,
+    "area": 181035,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "120",
+    "cca2": "CM",
+    "cca3": "CMR",
+    "name": "Cameroon",
+    "officialName": "Republic of Cameroon",
+    "capital": "Yaoundé",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      6,
+      12
+    ],
+    "flagEmoji": "🇨🇲",
+    "independent": true,
+    "area": 475442,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "124",
+    "cca2": "CA",
+    "cca3": "CAN",
+    "name": "Canada",
+    "officialName": "Canada",
+    "capital": "Ottawa",
+    "region": "Americas",
+    "subregion": "North America",
+    "latlng": [
+      60,
+      -95
+    ],
+    "flagEmoji": "🇨🇦",
+    "independent": true,
+    "area": 9984670,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "132",
+    "cca2": "CV",
+    "cca3": "CPV",
+    "name": "Cape Verde",
+    "officialName": "Republic of Cabo Verde",
+    "capital": "Praia",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      16,
+      -24
+    ],
+    "flagEmoji": "🇨🇻",
+    "independent": true,
+    "area": 4033,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "136",
+    "cca2": "KY",
+    "cca3": "CYM",
+    "name": "Cayman Islands",
+    "officialName": "Cayman Islands",
+    "capital": "George Town",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      19.5,
+      -80.5
+    ],
+    "flagEmoji": "🇰🇾",
+    "independent": false,
+    "area": 264,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "140",
+    "cca2": "CF",
+    "cca3": "CAF",
+    "name": "Central African Republic",
+    "officialName": "Central African Republic",
+    "capital": "Bangui",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      7,
+      21
+    ],
+    "flagEmoji": "🇨🇫",
+    "independent": true,
+    "area": 622984,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "148",
+    "cca2": "TD",
+    "cca3": "TCD",
+    "name": "Chad",
+    "officialName": "Republic of Chad",
+    "capital": "N'Djamena",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      15,
+      19
+    ],
+    "flagEmoji": "🇹🇩",
+    "independent": true,
+    "area": 1284000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "152",
+    "cca2": "CL",
+    "cca3": "CHL",
+    "name": "Chile",
+    "officialName": "Republic of Chile",
+    "capital": "Santiago",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -30,
+      -71
+    ],
+    "flagEmoji": "🇨🇱",
+    "independent": true,
+    "area": 756102,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "156",
+    "cca2": "CN",
+    "cca3": "CHN",
+    "name": "China",
+    "officialName": "People's Republic of China",
+    "capital": "Beijing",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      35,
+      105
+    ],
+    "flagEmoji": "🇨🇳",
+    "independent": true,
+    "area": 9706961,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "170",
+    "cca2": "CO",
+    "cca3": "COL",
+    "name": "Colombia",
+    "officialName": "Republic of Colombia",
+    "capital": "Bogotá",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      4,
+      -72
+    ],
+    "flagEmoji": "🇨🇴",
+    "independent": true,
+    "area": 1141748,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "174",
+    "cca2": "KM",
+    "cca3": "COM",
+    "name": "Comoros",
+    "officialName": "Union of the Comoros",
+    "capital": "Moroni",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -12.16666666,
+      44.25
+    ],
+    "flagEmoji": "🇰🇲",
+    "independent": true,
+    "area": 1862,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "184",
+    "cca2": "CK",
+    "cca3": "COK",
+    "name": "Cook Islands",
+    "officialName": "Cook Islands",
+    "capital": "Avarua",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -21.23333333,
+      -159.76666666
+    ],
+    "flagEmoji": "🇨🇰",
+    "independent": false,
+    "area": 236,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "188",
+    "cca2": "CR",
+    "cca3": "CRI",
+    "name": "Costa Rica",
+    "officialName": "Republic of Costa Rica",
+    "capital": "San José",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      10,
+      -84
+    ],
+    "flagEmoji": "🇨🇷",
+    "independent": true,
+    "area": 51100,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "191",
+    "cca2": "HR",
+    "cca3": "HRV",
+    "name": "Croatia",
+    "officialName": "Republic of Croatia",
+    "capital": "Zagreb",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      45.16666666,
+      15.5
+    ],
+    "flagEmoji": "🇭🇷",
+    "independent": true,
+    "area": 56594,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "192",
+    "cca2": "CU",
+    "cca3": "CUB",
+    "name": "Cuba",
+    "officialName": "Republic of Cuba",
+    "capital": "Havana",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      21.5,
+      -80
+    ],
+    "flagEmoji": "🇨🇺",
+    "independent": true,
+    "area": 109884,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "531",
+    "cca2": "CW",
+    "cca3": "CUW",
+    "name": "Curaçao",
+    "officialName": "Country of Curaçao",
+    "capital": "Willemstad",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      12.116667,
+      -68.933333
+    ],
+    "flagEmoji": "🇨🇼",
+    "independent": false,
+    "area": 444,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "196",
+    "cca2": "CY",
+    "cca3": "CYP",
+    "name": "Cyprus",
+    "officialName": "Republic of Cyprus",
+    "capital": "Nicosia",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      35,
+      33
+    ],
+    "flagEmoji": "🇨🇾",
+    "independent": true,
+    "area": 9251,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "203",
+    "cca2": "CZ",
+    "cca3": "CZE",
+    "name": "Czechia",
+    "officialName": "Czech Republic",
+    "capital": "Prague",
+    "region": "Europe",
+    "subregion": "Central Europe",
+    "latlng": [
+      49.75,
+      15.5
+    ],
+    "flagEmoji": "🇨🇿",
+    "independent": true,
+    "area": 78865,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "208",
+    "cca2": "DK",
+    "cca3": "DNK",
+    "name": "Denmark",
+    "officialName": "Kingdom of Denmark",
+    "capital": "Copenhagen",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      56,
+      10
+    ],
+    "flagEmoji": "🇩🇰",
+    "independent": true,
+    "area": 43094,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "262",
+    "cca2": "DJ",
+    "cca3": "DJI",
+    "name": "Djibouti",
+    "officialName": "Republic of Djibouti",
+    "capital": "Djibouti",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      11.5,
+      43
+    ],
+    "flagEmoji": "🇩🇯",
+    "independent": true,
+    "area": 23200,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "212",
+    "cca2": "DM",
+    "cca3": "DMA",
+    "name": "Dominica",
+    "officialName": "Commonwealth of Dominica",
+    "capital": "Roseau",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      15.41666666,
+      -61.33333333
+    ],
+    "flagEmoji": "🇩🇲",
+    "independent": true,
+    "area": 751,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "214",
+    "cca2": "DO",
+    "cca3": "DOM",
+    "name": "Dominican Republic",
+    "officialName": "Dominican Republic",
+    "capital": "Santo Domingo",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      19,
+      -70.66666666
+    ],
+    "flagEmoji": "🇩🇴",
+    "independent": true,
+    "area": 48671,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "180",
+    "cca2": "CD",
+    "cca3": "COD",
+    "name": "DR Congo",
+    "officialName": "Democratic Republic of the Congo",
+    "capital": "Kinshasa",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      0,
+      25
+    ],
+    "flagEmoji": "🇨🇩",
+    "independent": true,
+    "area": 2344858,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "218",
+    "cca2": "EC",
+    "cca3": "ECU",
+    "name": "Ecuador",
+    "officialName": "Republic of Ecuador",
+    "capital": "Quito",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -2,
+      -77.5
+    ],
+    "flagEmoji": "🇪🇨",
+    "independent": true,
+    "area": 276841,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "818",
+    "cca2": "EG",
+    "cca3": "EGY",
+    "name": "Egypt",
+    "officialName": "Arab Republic of Egypt",
+    "capital": "Cairo",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      27,
+      30
+    ],
+    "flagEmoji": "🇪🇬",
+    "independent": true,
+    "area": 1002450,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "222",
+    "cca2": "SV",
+    "cca3": "SLV",
+    "name": "El Salvador",
+    "officialName": "Republic of El Salvador",
+    "capital": "San Salvador",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      13.83333333,
+      -88.91666666
+    ],
+    "flagEmoji": "🇸🇻",
+    "independent": true,
+    "area": 21041,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "226",
+    "cca2": "GQ",
+    "cca3": "GNQ",
+    "name": "Equatorial Guinea",
+    "officialName": "Republic of Equatorial Guinea",
+    "capital": "Malabo",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      2,
+      10
+    ],
+    "flagEmoji": "🇬🇶",
+    "independent": true,
+    "area": 28051,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "232",
+    "cca2": "ER",
+    "cca3": "ERI",
+    "name": "Eritrea",
+    "officialName": "State of Eritrea",
+    "capital": "Asmara",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      15,
+      39
+    ],
+    "flagEmoji": "🇪🇷",
+    "independent": true,
+    "area": 117600,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "233",
+    "cca2": "EE",
+    "cca3": "EST",
+    "name": "Estonia",
+    "officialName": "Republic of Estonia",
+    "capital": "Tallinn",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      59,
+      26
+    ],
+    "flagEmoji": "🇪🇪",
+    "independent": true,
+    "area": 45227,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "748",
+    "cca2": "SZ",
+    "cca3": "SWZ",
+    "name": "Eswatini",
+    "officialName": "Kingdom of Eswatini",
+    "capital": "Lobamba",
+    "region": "Africa",
+    "subregion": "Southern Africa",
+    "latlng": [
+      -26.5,
+      31.5
+    ],
+    "flagEmoji": "🇸🇿",
+    "independent": true,
+    "area": 17364,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "231",
+    "cca2": "ET",
+    "cca3": "ETH",
+    "name": "Ethiopia",
+    "officialName": "Federal Democratic Republic of Ethiopia",
+    "capital": "Addis Ababa",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      8,
+      38
+    ],
+    "flagEmoji": "🇪🇹",
+    "independent": true,
+    "area": 1104300,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "238",
+    "cca2": "FK",
+    "cca3": "FLK",
+    "name": "Falkland Islands",
+    "officialName": "Falkland Islands",
+    "capital": "Stanley",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -51.75,
+      -59
+    ],
+    "flagEmoji": "🇫🇰",
+    "independent": false,
+    "area": 12173,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "234",
+    "cca2": "FO",
+    "cca3": "FRO",
+    "name": "Faroe Islands",
+    "officialName": "Faroe Islands",
+    "capital": "Tórshavn",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      62,
+      -7
+    ],
+    "flagEmoji": "🇫🇴",
+    "independent": false,
+    "area": 1393,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "242",
+    "cca2": "FJ",
+    "cca3": "FJI",
+    "name": "Fiji",
+    "officialName": "Republic of Fiji",
+    "capital": "Suva",
+    "region": "Oceania",
+    "subregion": "Melanesia",
+    "latlng": [
+      -18,
+      175
+    ],
+    "flagEmoji": "🇫🇯",
+    "independent": true,
+    "area": 18272,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "246",
+    "cca2": "FI",
+    "cca3": "FIN",
+    "name": "Finland",
+    "officialName": "Republic of Finland",
+    "capital": "Helsinki",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      64,
+      26
+    ],
+    "flagEmoji": "🇫🇮",
+    "independent": true,
+    "area": 338424,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "250",
+    "cca2": "FR",
+    "cca3": "FRA",
+    "name": "France",
+    "officialName": "French Republic",
+    "capital": "Paris",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      46,
+      2
+    ],
+    "flagEmoji": "🇫🇷",
+    "independent": true,
+    "area": 551695,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "258",
+    "cca2": "PF",
+    "cca3": "PYF",
+    "name": "French Polynesia",
+    "officialName": "French Polynesia",
+    "capital": "Papeetē",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -15,
+      -140
+    ],
+    "flagEmoji": "🇵🇫",
+    "independent": false,
+    "area": 4167,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "260",
+    "cca2": "TF",
+    "cca3": "ATF",
+    "name": "French Southern and Antarctic Lands",
+    "officialName": "Territory of the French Southern and Antarctic Lands",
+    "capital": "Port-aux-Français",
+    "region": "Antarctic",
+    "subregion": "",
+    "latlng": [
+      -49.25,
+      69.167
+    ],
+    "flagEmoji": "🇹🇫",
+    "independent": false,
+    "area": 7747,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "266",
+    "cca2": "GA",
+    "cca3": "GAB",
+    "name": "Gabon",
+    "officialName": "Gabonese Republic",
+    "capital": "Libreville",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      -1,
+      11.75
+    ],
+    "flagEmoji": "🇬🇦",
+    "independent": true,
+    "area": 267668,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "270",
+    "cca2": "GM",
+    "cca3": "GMB",
+    "name": "Gambia",
+    "officialName": "Republic of the Gambia",
+    "capital": "Banjul",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      13.46666666,
+      -16.56666666
+    ],
+    "flagEmoji": "🇬🇲",
+    "independent": true,
+    "area": 10689,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "268",
+    "cca2": "GE",
+    "cca3": "GEO",
+    "name": "Georgia",
+    "officialName": "Georgia",
+    "capital": "Tbilisi",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      42,
+      43.5
+    ],
+    "flagEmoji": "🇬🇪",
+    "independent": true,
+    "area": 69700,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "276",
+    "cca2": "DE",
+    "cca3": "DEU",
+    "name": "Germany",
+    "officialName": "Federal Republic of Germany",
+    "capital": "Berlin",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      51,
+      9
+    ],
+    "flagEmoji": "🇩🇪",
+    "independent": true,
+    "area": 357114,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "288",
+    "cca2": "GH",
+    "cca3": "GHA",
+    "name": "Ghana",
+    "officialName": "Republic of Ghana",
+    "capital": "Accra",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      8,
+      -2
+    ],
+    "flagEmoji": "🇬🇭",
+    "independent": true,
+    "area": 238533,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "300",
+    "cca2": "GR",
+    "cca3": "GRC",
+    "name": "Greece",
+    "officialName": "Hellenic Republic",
+    "capital": "Athens",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      39,
+      22
+    ],
+    "flagEmoji": "🇬🇷",
+    "independent": true,
+    "area": 131990,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "304",
+    "cca2": "GL",
+    "cca3": "GRL",
+    "name": "Greenland",
+    "officialName": "Greenland",
+    "capital": "Nuuk",
+    "region": "Americas",
+    "subregion": "North America",
+    "latlng": [
+      72,
+      -40
+    ],
+    "flagEmoji": "🇬🇱",
+    "independent": false,
+    "area": 2166086,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "308",
+    "cca2": "GD",
+    "cca3": "GRD",
+    "name": "Grenada",
+    "officialName": "Grenada",
+    "capital": "St. George's",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      12.11666666,
+      -61.66666666
+    ],
+    "flagEmoji": "🇬🇩",
+    "independent": true,
+    "area": 344,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "316",
+    "cca2": "GU",
+    "cca3": "GUM",
+    "name": "Guam",
+    "officialName": "Guam",
+    "capital": "Hagåtña",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      13.46666666,
+      144.78333333
+    ],
+    "flagEmoji": "🇬🇺",
+    "independent": false,
+    "area": 549,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "320",
+    "cca2": "GT",
+    "cca3": "GTM",
+    "name": "Guatemala",
+    "officialName": "Republic of Guatemala",
+    "capital": "Guatemala City",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      15.5,
+      -90.25
+    ],
+    "flagEmoji": "🇬🇹",
+    "independent": true,
+    "area": 108889,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "831",
+    "cca2": "GG",
+    "cca3": "GGY",
+    "name": "Guernsey",
+    "officialName": "Bailiwick of Guernsey",
+    "capital": "St. Peter Port",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      49.46666666,
+      -2.58333333
+    ],
+    "flagEmoji": "🇬🇬",
+    "independent": false,
+    "area": 78,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "324",
+    "cca2": "GN",
+    "cca3": "GIN",
+    "name": "Guinea",
+    "officialName": "Republic of Guinea",
+    "capital": "Conakry",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      11,
+      -10
+    ],
+    "flagEmoji": "🇬🇳",
+    "independent": true,
+    "area": 245857,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "624",
+    "cca2": "GW",
+    "cca3": "GNB",
+    "name": "Guinea-Bissau",
+    "officialName": "Republic of Guinea-Bissau",
+    "capital": "Bissau",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      12,
+      -15
+    ],
+    "flagEmoji": "🇬🇼",
+    "independent": true,
+    "area": 36125,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "328",
+    "cca2": "GY",
+    "cca3": "GUY",
+    "name": "Guyana",
+    "officialName": "Co-operative Republic of Guyana",
+    "capital": "Georgetown",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      5,
+      -59
+    ],
+    "flagEmoji": "🇬🇾",
+    "independent": true,
+    "area": 214969,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "332",
+    "cca2": "HT",
+    "cca3": "HTI",
+    "name": "Haiti",
+    "officialName": "Republic of Haiti",
+    "capital": "Port-au-Prince",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      19,
+      -72.41666666
+    ],
+    "flagEmoji": "🇭🇹",
+    "independent": true,
+    "area": 27750,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "334",
+    "cca2": "HM",
+    "cca3": "HMD",
+    "name": "Heard Island and McDonald Islands",
+    "officialName": "Heard Island and McDonald Islands",
+    "capital": null,
+    "region": "Antarctic",
+    "subregion": "",
+    "latlng": [
+      -53.1,
+      72.51666666
+    ],
+    "flagEmoji": "🇭🇲",
+    "independent": false,
+    "area": 412,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "340",
+    "cca2": "HN",
+    "cca3": "HND",
+    "name": "Honduras",
+    "officialName": "Republic of Honduras",
+    "capital": "Tegucigalpa",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      15,
+      -86.5
+    ],
+    "flagEmoji": "🇭🇳",
+    "independent": true,
+    "area": 112492,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "344",
+    "cca2": "HK",
+    "cca3": "HKG",
+    "name": "Hong Kong",
+    "officialName": "Hong Kong Special Administrative Region of the People's Republic of China",
+    "capital": "City of Victoria",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      22.267,
+      114.188
+    ],
+    "flagEmoji": "🇭🇰",
+    "independent": false,
+    "area": 1104,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "348",
+    "cca2": "HU",
+    "cca3": "HUN",
+    "name": "Hungary",
+    "officialName": "Hungary",
+    "capital": "Budapest",
+    "region": "Europe",
+    "subregion": "Central Europe",
+    "latlng": [
+      47,
+      20
+    ],
+    "flagEmoji": "🇭🇺",
+    "independent": true,
+    "area": 93028,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "352",
+    "cca2": "IS",
+    "cca3": "ISL",
+    "name": "Iceland",
+    "officialName": "Iceland",
+    "capital": "Reykjavik",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      65,
+      -18
+    ],
+    "flagEmoji": "🇮🇸",
+    "independent": true,
+    "area": 103000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "356",
+    "cca2": "IN",
+    "cca3": "IND",
+    "name": "India",
+    "officialName": "Republic of India",
+    "capital": "New Delhi",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      20,
+      77
+    ],
+    "flagEmoji": "🇮🇳",
+    "independent": true,
+    "area": 3287590,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "360",
+    "cca2": "ID",
+    "cca3": "IDN",
+    "name": "Indonesia",
+    "officialName": "Republic of Indonesia",
+    "capital": "Jakarta",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      -5,
+      120
+    ],
+    "flagEmoji": "🇮🇩",
+    "independent": true,
+    "area": 1904569,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "364",
+    "cca2": "IR",
+    "cca3": "IRN",
+    "name": "Iran",
+    "officialName": "Islamic Republic of Iran",
+    "capital": "Tehran",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      32,
+      53
+    ],
+    "flagEmoji": "🇮🇷",
+    "independent": true,
+    "area": 1648195,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "368",
+    "cca2": "IQ",
+    "cca3": "IRQ",
+    "name": "Iraq",
+    "officialName": "Republic of Iraq",
+    "capital": "Baghdad",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      33,
+      44
+    ],
+    "flagEmoji": "🇮🇶",
+    "independent": true,
+    "area": 438317,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "372",
+    "cca2": "IE",
+    "cca3": "IRL",
+    "name": "Ireland",
+    "officialName": "Republic of Ireland",
+    "capital": "Dublin",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      53,
+      -8
+    ],
+    "flagEmoji": "🇮🇪",
+    "independent": true,
+    "area": 70273,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "833",
+    "cca2": "IM",
+    "cca3": "IMN",
+    "name": "Isle of Man",
+    "officialName": "Isle of Man",
+    "capital": "Douglas",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      54.25,
+      -4.5
+    ],
+    "flagEmoji": "🇮🇲",
+    "independent": false,
+    "area": 572,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "376",
+    "cca2": "IL",
+    "cca3": "ISR",
+    "name": "Israel",
+    "officialName": "State of Israel",
+    "capital": "Jerusalem",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      31.47,
+      35.13
+    ],
+    "flagEmoji": "🇮🇱",
+    "independent": true,
+    "area": 20770,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "380",
+    "cca2": "IT",
+    "cca3": "ITA",
+    "name": "Italy",
+    "officialName": "Italian Republic",
+    "capital": "Rome",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      42.83333333,
+      12.83333333
+    ],
+    "flagEmoji": "🇮🇹",
+    "independent": true,
+    "area": 301336,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "384",
+    "cca2": "CI",
+    "cca3": "CIV",
+    "name": "Ivory Coast",
+    "officialName": "Republic of Côte d'Ivoire",
+    "capital": "Yamoussoukro",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      8,
+      -5
+    ],
+    "flagEmoji": "🇨🇮",
+    "independent": true,
+    "area": 322463,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "388",
+    "cca2": "JM",
+    "cca3": "JAM",
+    "name": "Jamaica",
+    "officialName": "Jamaica",
+    "capital": "Kingston",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.25,
+      -77.5
+    ],
+    "flagEmoji": "🇯🇲",
+    "independent": true,
+    "area": 10991,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "392",
+    "cca2": "JP",
+    "cca3": "JPN",
+    "name": "Japan",
+    "officialName": "Japan",
+    "capital": "Tokyo",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      36,
+      138
+    ],
+    "flagEmoji": "🇯🇵",
+    "independent": true,
+    "area": 377930,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "832",
+    "cca2": "JE",
+    "cca3": "JEY",
+    "name": "Jersey",
+    "officialName": "Bailiwick of Jersey",
+    "capital": "Saint Helier",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      49.25,
+      -2.16666666
+    ],
+    "flagEmoji": "🇯🇪",
+    "independent": false,
+    "area": 116,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "400",
+    "cca2": "JO",
+    "cca3": "JOR",
+    "name": "Jordan",
+    "officialName": "Hashemite Kingdom of Jordan",
+    "capital": "Amman",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      31,
+      36
+    ],
+    "flagEmoji": "🇯🇴",
+    "independent": true,
+    "area": 89342,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "398",
+    "cca2": "KZ",
+    "cca3": "KAZ",
+    "name": "Kazakhstan",
+    "officialName": "Republic of Kazakhstan",
+    "capital": "Astana",
+    "region": "Asia",
+    "subregion": "Central Asia",
+    "latlng": [
+      48,
+      68
+    ],
+    "flagEmoji": "🇰🇿",
+    "independent": true,
+    "area": 2724900,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "404",
+    "cca2": "KE",
+    "cca3": "KEN",
+    "name": "Kenya",
+    "officialName": "Republic of Kenya",
+    "capital": "Nairobi",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      1,
+      38
+    ],
+    "flagEmoji": "🇰🇪",
+    "independent": true,
+    "area": 580367,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "296",
+    "cca2": "KI",
+    "cca3": "KIR",
+    "name": "Kiribati",
+    "officialName": "Independent and Sovereign Republic of Kiribati",
+    "capital": "South Tarawa",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      1.41666666,
+      173
+    ],
+    "flagEmoji": "🇰🇮",
+    "independent": true,
+    "area": 811,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "UNK",
+    "cca2": "XK",
+    "cca3": "UNK",
+    "name": "Kosovo",
+    "officialName": "Republic of Kosovo",
+    "capital": "Pristina",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      42.666667,
+      21.166667
+    ],
+    "flagEmoji": "🇽🇰",
+    "independent": null,
+    "area": 10908,
+    "isExtraTerritory": true
+  },
+  {
+    "id": "414",
+    "cca2": "KW",
+    "cca3": "KWT",
+    "name": "Kuwait",
+    "officialName": "State of Kuwait",
+    "capital": "Kuwait City",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      29.5,
+      45.75
+    ],
+    "flagEmoji": "🇰🇼",
+    "independent": true,
+    "area": 17818,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "417",
+    "cca2": "KG",
+    "cca3": "KGZ",
+    "name": "Kyrgyzstan",
+    "officialName": "Kyrgyz Republic",
+    "capital": "Bishkek",
+    "region": "Asia",
+    "subregion": "Central Asia",
+    "latlng": [
+      41,
+      75
+    ],
+    "flagEmoji": "🇰🇬",
+    "independent": true,
+    "area": 199951,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "418",
+    "cca2": "LA",
+    "cca3": "LAO",
+    "name": "Laos",
+    "officialName": "Lao People's Democratic Republic",
+    "capital": "Vientiane",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      18,
+      105
+    ],
+    "flagEmoji": "🇱🇦",
+    "independent": true,
+    "area": 236800,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "428",
+    "cca2": "LV",
+    "cca3": "LVA",
+    "name": "Latvia",
+    "officialName": "Republic of Latvia",
+    "capital": "Riga",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      57,
+      25
+    ],
+    "flagEmoji": "🇱🇻",
+    "independent": true,
+    "area": 64559,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "422",
+    "cca2": "LB",
+    "cca3": "LBN",
+    "name": "Lebanon",
+    "officialName": "Lebanese Republic",
+    "capital": "Beirut",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      33.83333333,
+      35.83333333
+    ],
+    "flagEmoji": "🇱🇧",
+    "independent": true,
+    "area": 10452,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "426",
+    "cca2": "LS",
+    "cca3": "LSO",
+    "name": "Lesotho",
+    "officialName": "Kingdom of Lesotho",
+    "capital": "Maseru",
+    "region": "Africa",
+    "subregion": "Southern Africa",
+    "latlng": [
+      -29.5,
+      28.5
+    ],
+    "flagEmoji": "🇱🇸",
+    "independent": true,
+    "area": 30355,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "430",
+    "cca2": "LR",
+    "cca3": "LBR",
+    "name": "Liberia",
+    "officialName": "Republic of Liberia",
+    "capital": "Monrovia",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      6.5,
+      -9.5
+    ],
+    "flagEmoji": "🇱🇷",
+    "independent": true,
+    "area": 111369,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "434",
+    "cca2": "LY",
+    "cca3": "LBY",
+    "name": "Libya",
+    "officialName": "State of Libya",
+    "capital": "Tripoli",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      25,
+      17
+    ],
+    "flagEmoji": "🇱🇾",
+    "independent": true,
+    "area": 1759540,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "438",
+    "cca2": "LI",
+    "cca3": "LIE",
+    "name": "Liechtenstein",
+    "officialName": "Principality of Liechtenstein",
+    "capital": "Vaduz",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      47.26666666,
+      9.53333333
+    ],
+    "flagEmoji": "🇱🇮",
+    "independent": true,
+    "area": 160,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "440",
+    "cca2": "LT",
+    "cca3": "LTU",
+    "name": "Lithuania",
+    "officialName": "Republic of Lithuania",
+    "capital": "Vilnius",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      56,
+      24
+    ],
+    "flagEmoji": "🇱🇹",
+    "independent": true,
+    "area": 65300,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "442",
+    "cca2": "LU",
+    "cca3": "LUX",
+    "name": "Luxembourg",
+    "officialName": "Grand Duchy of Luxembourg",
+    "capital": "Luxembourg",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      49.75,
+      6.16666666
+    ],
+    "flagEmoji": "🇱🇺",
+    "independent": true,
+    "area": 2586,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "446",
+    "cca2": "MO",
+    "cca3": "MAC",
+    "name": "Macau",
+    "officialName": "Macao Special Administrative Region of the People's Republic of China",
+    "capital": null,
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      22.16666666,
+      113.55
+    ],
+    "flagEmoji": "🇲🇴",
+    "independent": false,
+    "area": 30,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "450",
+    "cca2": "MG",
+    "cca3": "MDG",
+    "name": "Madagascar",
+    "officialName": "Republic of Madagascar",
+    "capital": "Antananarivo",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -20,
+      47
+    ],
+    "flagEmoji": "🇲🇬",
+    "independent": true,
+    "area": 587041,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "454",
+    "cca2": "MW",
+    "cca3": "MWI",
+    "name": "Malawi",
+    "officialName": "Republic of Malawi",
+    "capital": "Lilongwe",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -13.5,
+      34
+    ],
+    "flagEmoji": "🇲🇼",
+    "independent": true,
+    "area": 118484,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "458",
+    "cca2": "MY",
+    "cca3": "MYS",
+    "name": "Malaysia",
+    "officialName": "Malaysia",
+    "capital": "Kuala Lumpur",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      2.5,
+      112.5
+    ],
+    "flagEmoji": "🇲🇾",
+    "independent": true,
+    "area": 330803,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "462",
+    "cca2": "MV",
+    "cca3": "MDV",
+    "name": "Maldives",
+    "officialName": "Republic of the Maldives",
+    "capital": "Malé",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      3.25,
+      73
+    ],
+    "flagEmoji": "🇲🇻",
+    "independent": true,
+    "area": 300,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "466",
+    "cca2": "ML",
+    "cca3": "MLI",
+    "name": "Mali",
+    "officialName": "Republic of Mali",
+    "capital": "Bamako",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      17,
+      -4
+    ],
+    "flagEmoji": "🇲🇱",
+    "independent": true,
+    "area": 1240192,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "470",
+    "cca2": "MT",
+    "cca3": "MLT",
+    "name": "Malta",
+    "officialName": "Republic of Malta",
+    "capital": "Valletta",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      35.83333333,
+      14.58333333
+    ],
+    "flagEmoji": "🇲🇹",
+    "independent": true,
+    "area": 316,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "584",
+    "cca2": "MH",
+    "cca3": "MHL",
+    "name": "Marshall Islands",
+    "officialName": "Republic of the Marshall Islands",
+    "capital": "Majuro",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      9,
+      168
+    ],
+    "flagEmoji": "🇲🇭",
+    "independent": true,
+    "area": 181,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "478",
+    "cca2": "MR",
+    "cca3": "MRT",
+    "name": "Mauritania",
+    "officialName": "Islamic Republic of Mauritania",
+    "capital": "Nouakchott",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      20,
+      -12
+    ],
+    "flagEmoji": "🇲🇷",
+    "independent": true,
+    "area": 1030700,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "480",
+    "cca2": "MU",
+    "cca3": "MUS",
+    "name": "Mauritius",
+    "officialName": "Republic of Mauritius",
+    "capital": "Port Louis",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -20.28333333,
+      57.55
+    ],
+    "flagEmoji": "🇲🇺",
+    "independent": true,
+    "area": 2040,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "484",
+    "cca2": "MX",
+    "cca3": "MEX",
+    "name": "Mexico",
+    "officialName": "United Mexican States",
+    "capital": "Mexico City",
+    "region": "Americas",
+    "subregion": "North America",
+    "latlng": [
+      23,
+      -102
+    ],
+    "flagEmoji": "🇲🇽",
+    "independent": true,
+    "area": 1964375,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "583",
+    "cca2": "FM",
+    "cca3": "FSM",
+    "name": "Micronesia",
+    "officialName": "Federated States of Micronesia",
+    "capital": "Palikir",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      6.91666666,
+      158.25
+    ],
+    "flagEmoji": "🇫🇲",
+    "independent": true,
+    "area": 702,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "498",
+    "cca2": "MD",
+    "cca3": "MDA",
+    "name": "Moldova",
+    "officialName": "Republic of Moldova",
+    "capital": "Chișinău",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "latlng": [
+      47,
+      29
+    ],
+    "flagEmoji": "🇲🇩",
+    "independent": true,
+    "area": 33846,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "492",
+    "cca2": "MC",
+    "cca3": "MCO",
+    "name": "Monaco",
+    "officialName": "Principality of Monaco",
+    "capital": "Monaco",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      43.73333333,
+      7.4
+    ],
+    "flagEmoji": "🇲🇨",
+    "independent": true,
+    "area": 2.02,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "496",
+    "cca2": "MN",
+    "cca3": "MNG",
+    "name": "Mongolia",
+    "officialName": "Mongolia",
+    "capital": "Ulan Bator",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      46,
+      105
+    ],
+    "flagEmoji": "🇲🇳",
+    "independent": true,
+    "area": 1564110,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "499",
+    "cca2": "ME",
+    "cca3": "MNE",
+    "name": "Montenegro",
+    "officialName": "Montenegro",
+    "capital": "Podgorica",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      42.5,
+      19.3
+    ],
+    "flagEmoji": "🇲🇪",
+    "independent": true,
+    "area": 13812,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "500",
+    "cca2": "MS",
+    "cca3": "MSR",
+    "name": "Montserrat",
+    "officialName": "Montserrat",
+    "capital": "Plymouth",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      16.75,
+      -62.2
+    ],
+    "flagEmoji": "🇲🇸",
+    "independent": false,
+    "area": 102,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "504",
+    "cca2": "MA",
+    "cca3": "MAR",
+    "name": "Morocco",
+    "officialName": "Kingdom of Morocco",
+    "capital": "Rabat",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      32,
+      -5
+    ],
+    "flagEmoji": "🇲🇦",
+    "independent": true,
+    "area": 446550,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "508",
+    "cca2": "MZ",
+    "cca3": "MOZ",
+    "name": "Mozambique",
+    "officialName": "Republic of Mozambique",
+    "capital": "Maputo",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -18.25,
+      35
+    ],
+    "flagEmoji": "🇲🇿",
+    "independent": true,
+    "area": 801590,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "104",
+    "cca2": "MM",
+    "cca3": "MMR",
+    "name": "Myanmar",
+    "officialName": "Republic of the Union of Myanmar",
+    "capital": "Naypyidaw",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      22,
+      98
+    ],
+    "flagEmoji": "🇲🇲",
+    "independent": true,
+    "area": 676578,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "516",
+    "cca2": "NA",
+    "cca3": "NAM",
+    "name": "Namibia",
+    "officialName": "Republic of Namibia",
+    "capital": "Windhoek",
+    "region": "Africa",
+    "subregion": "Southern Africa",
+    "latlng": [
+      -22,
+      17
+    ],
+    "flagEmoji": "🇳🇦",
+    "independent": true,
+    "area": 825615,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "520",
+    "cca2": "NR",
+    "cca3": "NRU",
+    "name": "Nauru",
+    "officialName": "Republic of Nauru",
+    "capital": "Yaren",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      -0.53333333,
+      166.91666666
+    ],
+    "flagEmoji": "🇳🇷",
+    "independent": true,
+    "area": 21,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "524",
+    "cca2": "NP",
+    "cca3": "NPL",
+    "name": "Nepal",
+    "officialName": "Federal Democratic Republic of Nepal",
+    "capital": "Kathmandu",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      28,
+      84
+    ],
+    "flagEmoji": "🇳🇵",
+    "independent": true,
+    "area": 147181,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "528",
+    "cca2": "NL",
+    "cca3": "NLD",
+    "name": "Netherlands",
+    "officialName": "Kingdom of the Netherlands",
+    "capital": "Amsterdam",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      52.5,
+      5.75
+    ],
+    "flagEmoji": "🇳🇱",
+    "independent": true,
+    "area": 41850,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "540",
+    "cca2": "NC",
+    "cca3": "NCL",
+    "name": "New Caledonia",
+    "officialName": "New Caledonia",
+    "capital": "Nouméa",
+    "region": "Oceania",
+    "subregion": "Melanesia",
+    "latlng": [
+      -21.5,
+      165.5
+    ],
+    "flagEmoji": "🇳🇨",
+    "independent": false,
+    "area": 18575,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "554",
+    "cca2": "NZ",
+    "cca3": "NZL",
+    "name": "New Zealand",
+    "officialName": "New Zealand",
+    "capital": "Wellington",
+    "region": "Oceania",
+    "subregion": "Australia and New Zealand",
+    "latlng": [
+      -41,
+      174
+    ],
+    "flagEmoji": "🇳🇿",
+    "independent": true,
+    "area": 270467,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "558",
+    "cca2": "NI",
+    "cca3": "NIC",
+    "name": "Nicaragua",
+    "officialName": "Republic of Nicaragua",
+    "capital": "Managua",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      13,
+      -85
+    ],
+    "flagEmoji": "🇳🇮",
+    "independent": true,
+    "area": 130373,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "562",
+    "cca2": "NE",
+    "cca3": "NER",
+    "name": "Niger",
+    "officialName": "Republic of Niger",
+    "capital": "Niamey",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      16,
+      8
+    ],
+    "flagEmoji": "🇳🇪",
+    "independent": true,
+    "area": 1267000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "566",
+    "cca2": "NG",
+    "cca3": "NGA",
+    "name": "Nigeria",
+    "officialName": "Federal Republic of Nigeria",
+    "capital": "Abuja",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      10,
+      8
+    ],
+    "flagEmoji": "🇳🇬",
+    "independent": true,
+    "area": 923768,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "570",
+    "cca2": "NU",
+    "cca3": "NIU",
+    "name": "Niue",
+    "officialName": "Niue",
+    "capital": "Alofi",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -19.03333333,
+      -169.86666666
+    ],
+    "flagEmoji": "🇳🇺",
+    "independent": false,
+    "area": 260,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "574",
+    "cca2": "NF",
+    "cca3": "NFK",
+    "name": "Norfolk Island",
+    "officialName": "Territory of Norfolk Island",
+    "capital": "Kingston",
+    "region": "Oceania",
+    "subregion": "Australia and New Zealand",
+    "latlng": [
+      -29.03333333,
+      167.95
+    ],
+    "flagEmoji": "🇳🇫",
+    "independent": false,
+    "area": 36,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "408",
+    "cca2": "KP",
+    "cca3": "PRK",
+    "name": "North Korea",
+    "officialName": "Democratic People's Republic of Korea",
+    "capital": "Pyongyang",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      40,
+      127
+    ],
+    "flagEmoji": "🇰🇵",
+    "independent": true,
+    "area": 120538,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "807",
+    "cca2": "MK",
+    "cca3": "MKD",
+    "name": "North Macedonia",
+    "officialName": "Republic of North Macedonia",
+    "capital": "Skopje",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      41.83333333,
+      22
+    ],
+    "flagEmoji": "🇲🇰",
+    "independent": true,
+    "area": 25713,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "XNC",
+    "cca2": null,
+    "cca3": null,
+    "name": "Northern Cyprus",
+    "officialName": "Turkish Republic of Northern Cyprus",
+    "capital": "North Nicosia",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      35.1856,
+      33.3823
+    ],
+    "flagEmoji": null,
+    "independent": false,
+    "area": 3355,
+    "isExtraTerritory": true
+  },
+  {
+    "id": "580",
+    "cca2": "MP",
+    "cca3": "MNP",
+    "name": "Northern Mariana Islands",
+    "officialName": "Commonwealth of the Northern Mariana Islands",
+    "capital": "Saipan",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      15.2,
+      145.75
+    ],
+    "flagEmoji": "🇲🇵",
+    "independent": false,
+    "area": 464,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "578",
+    "cca2": "NO",
+    "cca3": "NOR",
+    "name": "Norway",
+    "officialName": "Kingdom of Norway",
+    "capital": "Oslo",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      62,
+      10
+    ],
+    "flagEmoji": "🇳🇴",
+    "independent": true,
+    "area": 323802,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "512",
+    "cca2": "OM",
+    "cca3": "OMN",
+    "name": "Oman",
+    "officialName": "Sultanate of Oman",
+    "capital": "Muscat",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      21,
+      57
+    ],
+    "flagEmoji": "🇴🇲",
+    "independent": true,
+    "area": 309500,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "586",
+    "cca2": "PK",
+    "cca3": "PAK",
+    "name": "Pakistan",
+    "officialName": "Islamic Republic of Pakistan",
+    "capital": "Islamabad",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      30,
+      70
+    ],
+    "flagEmoji": "🇵🇰",
+    "independent": true,
+    "area": 881912,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "585",
+    "cca2": "PW",
+    "cca3": "PLW",
+    "name": "Palau",
+    "officialName": "Republic of Palau",
+    "capital": "Ngerulmud",
+    "region": "Oceania",
+    "subregion": "Micronesia",
+    "latlng": [
+      7.5,
+      134.5
+    ],
+    "flagEmoji": "🇵🇼",
+    "independent": true,
+    "area": 459,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "275",
+    "cca2": "PS",
+    "cca3": "PSE",
+    "name": "Palestine",
+    "officialName": "State of Palestine",
+    "capital": "Ramallah",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      31.9,
+      35.2
+    ],
+    "flagEmoji": "🇵🇸",
+    "independent": false,
+    "area": 6220,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "591",
+    "cca2": "PA",
+    "cca3": "PAN",
+    "name": "Panama",
+    "officialName": "Republic of Panama",
+    "capital": "Panama City",
+    "region": "Americas",
+    "subregion": "Central America",
+    "latlng": [
+      9,
+      -80
+    ],
+    "flagEmoji": "🇵🇦",
+    "independent": true,
+    "area": 75417,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "598",
+    "cca2": "PG",
+    "cca3": "PNG",
+    "name": "Papua New Guinea",
+    "officialName": "Independent State of Papua New Guinea",
+    "capital": "Port Moresby",
+    "region": "Oceania",
+    "subregion": "Melanesia",
+    "latlng": [
+      -6,
+      147
+    ],
+    "flagEmoji": "🇵🇬",
+    "independent": true,
+    "area": 462840,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "600",
+    "cca2": "PY",
+    "cca3": "PRY",
+    "name": "Paraguay",
+    "officialName": "Republic of Paraguay",
+    "capital": "Asunción",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -23,
+      -58
+    ],
+    "flagEmoji": "🇵🇾",
+    "independent": true,
+    "area": 406752,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "604",
+    "cca2": "PE",
+    "cca3": "PER",
+    "name": "Peru",
+    "officialName": "Republic of Peru",
+    "capital": "Lima",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -10,
+      -76
+    ],
+    "flagEmoji": "🇵🇪",
+    "independent": true,
+    "area": 1285216,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "608",
+    "cca2": "PH",
+    "cca3": "PHL",
+    "name": "Philippines",
+    "officialName": "Republic of the Philippines",
+    "capital": "Manila",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      13,
+      122
+    ],
+    "flagEmoji": "🇵🇭",
+    "independent": true,
+    "area": 342353,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "612",
+    "cca2": "PN",
+    "cca3": "PCN",
+    "name": "Pitcairn Islands",
+    "officialName": "Pitcairn Group of Islands",
+    "capital": "Adamstown",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -25.06666666,
+      -130.1
+    ],
+    "flagEmoji": "🇵🇳",
+    "independent": false,
+    "area": 47,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "616",
+    "cca2": "PL",
+    "cca3": "POL",
+    "name": "Poland",
+    "officialName": "Republic of Poland",
+    "capital": "Warsaw",
+    "region": "Europe",
+    "subregion": "Central Europe",
+    "latlng": [
+      52,
+      20
+    ],
+    "flagEmoji": "🇵🇱",
+    "independent": true,
+    "area": 312679,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "620",
+    "cca2": "PT",
+    "cca3": "PRT",
+    "name": "Portugal",
+    "officialName": "Portuguese Republic",
+    "capital": "Lisbon",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      39.5,
+      -8
+    ],
+    "flagEmoji": "🇵🇹",
+    "independent": true,
+    "area": 92090,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "630",
+    "cca2": "PR",
+    "cca3": "PRI",
+    "name": "Puerto Rico",
+    "officialName": "Commonwealth of Puerto Rico",
+    "capital": "San Juan",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.25,
+      -66.5
+    ],
+    "flagEmoji": "🇵🇷",
+    "independent": false,
+    "area": 8870,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "634",
+    "cca2": "QA",
+    "cca3": "QAT",
+    "name": "Qatar",
+    "officialName": "State of Qatar",
+    "capital": "Doha",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      25.5,
+      51.25
+    ],
+    "flagEmoji": "🇶🇦",
+    "independent": true,
+    "area": 11586,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "178",
+    "cca2": "CG",
+    "cca3": "COG",
+    "name": "Republic of the Congo",
+    "officialName": "Republic of the Congo",
+    "capital": "Brazzaville",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      -1,
+      15
+    ],
+    "flagEmoji": "🇨🇬",
+    "independent": true,
+    "area": 342000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "642",
+    "cca2": "RO",
+    "cca3": "ROU",
+    "name": "Romania",
+    "officialName": "Romania",
+    "capital": "Bucharest",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      46,
+      25
+    ],
+    "flagEmoji": "🇷🇴",
+    "independent": true,
+    "area": 238391,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "643",
+    "cca2": "RU",
+    "cca3": "RUS",
+    "name": "Russia",
+    "officialName": "Russian Federation",
+    "capital": "Moscow",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "latlng": [
+      60,
+      100
+    ],
+    "flagEmoji": "🇷🇺",
+    "independent": true,
+    "area": 17098242,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "646",
+    "cca2": "RW",
+    "cca3": "RWA",
+    "name": "Rwanda",
+    "officialName": "Republic of Rwanda",
+    "capital": "Kigali",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -2,
+      30
+    ],
+    "flagEmoji": "🇷🇼",
+    "independent": true,
+    "area": 26338,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "652",
+    "cca2": "BL",
+    "cca3": "BLM",
+    "name": "Saint Barthélemy",
+    "officialName": "Collectivity of Saint Barthélemy",
+    "capital": "Gustavia",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.5,
+      -63.41666666
+    ],
+    "flagEmoji": "🇧🇱",
+    "independent": false,
+    "area": 21,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "654",
+    "cca2": "SH",
+    "cca3": "SHN",
+    "name": "Saint Helena, Ascension and Tristan da Cunha",
+    "officialName": "Saint Helena, Ascension and Tristan da Cunha",
+    "capital": "Jamestown",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      -15.95,
+      -5.72
+    ],
+    "flagEmoji": "🇸🇭",
+    "independent": false,
+    "area": 394,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "659",
+    "cca2": "KN",
+    "cca3": "KNA",
+    "name": "Saint Kitts and Nevis",
+    "officialName": "Federation of Saint Christopher and Nevis",
+    "capital": "Basseterre",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      17.33333333,
+      -62.75
+    ],
+    "flagEmoji": "🇰🇳",
+    "independent": true,
+    "area": 261,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "662",
+    "cca2": "LC",
+    "cca3": "LCA",
+    "name": "Saint Lucia",
+    "officialName": "Saint Lucia",
+    "capital": "Castries",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      13.88333333,
+      -60.96666666
+    ],
+    "flagEmoji": "🇱🇨",
+    "independent": true,
+    "area": 616,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "663",
+    "cca2": "MF",
+    "cca3": "MAF",
+    "name": "Saint Martin",
+    "officialName": "Saint Martin",
+    "capital": "Marigot",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.08333333,
+      -63.95
+    ],
+    "flagEmoji": "🇲🇫",
+    "independent": false,
+    "area": 53,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "666",
+    "cca2": "PM",
+    "cca3": "SPM",
+    "name": "Saint Pierre and Miquelon",
+    "officialName": "Saint Pierre and Miquelon",
+    "capital": "Saint-Pierre",
+    "region": "Americas",
+    "subregion": "North America",
+    "latlng": [
+      46.83333333,
+      -56.33333333
+    ],
+    "flagEmoji": "🇵🇲",
+    "independent": false,
+    "area": 242,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "670",
+    "cca2": "VC",
+    "cca3": "VCT",
+    "name": "Saint Vincent and the Grenadines",
+    "officialName": "Saint Vincent and the Grenadines",
+    "capital": "Kingstown",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      13.25,
+      -61.2
+    ],
+    "flagEmoji": "🇻🇨",
+    "independent": true,
+    "area": 389,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "882",
+    "cca2": "WS",
+    "cca3": "WSM",
+    "name": "Samoa",
+    "officialName": "Independent State of Samoa",
+    "capital": "Apia",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -13.58333333,
+      -172.33333333
+    ],
+    "flagEmoji": "🇼🇸",
+    "independent": true,
+    "area": 2842,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "674",
+    "cca2": "SM",
+    "cca3": "SMR",
+    "name": "San Marino",
+    "officialName": "Most Serene Republic of San Marino",
+    "capital": "City of San Marino",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      43.76666666,
+      12.41666666
+    ],
+    "flagEmoji": "🇸🇲",
+    "independent": true,
+    "area": 61,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "678",
+    "cca2": "ST",
+    "cca3": "STP",
+    "name": "São Tomé and Príncipe",
+    "officialName": "Democratic Republic of São Tomé and Príncipe",
+    "capital": "São Tomé",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      1,
+      7
+    ],
+    "flagEmoji": "🇸🇹",
+    "independent": true,
+    "area": 964,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "682",
+    "cca2": "SA",
+    "cca3": "SAU",
+    "name": "Saudi Arabia",
+    "officialName": "Kingdom of Saudi Arabia",
+    "capital": "Riyadh",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      25,
+      45
+    ],
+    "flagEmoji": "🇸🇦",
+    "independent": true,
+    "area": 2149690,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "686",
+    "cca2": "SN",
+    "cca3": "SEN",
+    "name": "Senegal",
+    "officialName": "Republic of Senegal",
+    "capital": "Dakar",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      14,
+      -14
+    ],
+    "flagEmoji": "🇸🇳",
+    "independent": true,
+    "area": 196722,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "688",
+    "cca2": "RS",
+    "cca3": "SRB",
+    "name": "Serbia",
+    "officialName": "Republic of Serbia",
+    "capital": "Belgrade",
+    "region": "Europe",
+    "subregion": "Southeast Europe",
+    "latlng": [
+      44,
+      21
+    ],
+    "flagEmoji": "🇷🇸",
+    "independent": true,
+    "area": 88361,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "690",
+    "cca2": "SC",
+    "cca3": "SYC",
+    "name": "Seychelles",
+    "officialName": "Republic of Seychelles",
+    "capital": "Victoria",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -4.58333333,
+      55.66666666
+    ],
+    "flagEmoji": "🇸🇨",
+    "independent": true,
+    "area": 452,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "694",
+    "cca2": "SL",
+    "cca3": "SLE",
+    "name": "Sierra Leone",
+    "officialName": "Republic of Sierra Leone",
+    "capital": "Freetown",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      8.5,
+      -11.5
+    ],
+    "flagEmoji": "🇸🇱",
+    "independent": true,
+    "area": 71740,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "702",
+    "cca2": "SG",
+    "cca3": "SGP",
+    "name": "Singapore",
+    "officialName": "Republic of Singapore",
+    "capital": "Singapore",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      1.36666666,
+      103.8
+    ],
+    "flagEmoji": "🇸🇬",
+    "independent": true,
+    "area": 710,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "534",
+    "cca2": "SX",
+    "cca3": "SXM",
+    "name": "Sint Maarten",
+    "officialName": "Sint Maarten",
+    "capital": "Philipsburg",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.033333,
+      -63.05
+    ],
+    "flagEmoji": "🇸🇽",
+    "independent": false,
+    "area": 34,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "703",
+    "cca2": "SK",
+    "cca3": "SVK",
+    "name": "Slovakia",
+    "officialName": "Slovak Republic",
+    "capital": "Bratislava",
+    "region": "Europe",
+    "subregion": "Central Europe",
+    "latlng": [
+      48.66666666,
+      19.5
+    ],
+    "flagEmoji": "🇸🇰",
+    "independent": true,
+    "area": 49037,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "705",
+    "cca2": "SI",
+    "cca3": "SVN",
+    "name": "Slovenia",
+    "officialName": "Republic of Slovenia",
+    "capital": "Ljubljana",
+    "region": "Europe",
+    "subregion": "Central Europe",
+    "latlng": [
+      46.11666666,
+      14.81666666
+    ],
+    "flagEmoji": "🇸🇮",
+    "independent": true,
+    "area": 20273,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "090",
+    "cca2": "SB",
+    "cca3": "SLB",
+    "name": "Solomon Islands",
+    "officialName": "Solomon Islands",
+    "capital": "Honiara",
+    "region": "Oceania",
+    "subregion": "Melanesia",
+    "latlng": [
+      -8,
+      159
+    ],
+    "flagEmoji": "🇸🇧",
+    "independent": true,
+    "area": 28896,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "706",
+    "cca2": "SO",
+    "cca3": "SOM",
+    "name": "Somalia",
+    "officialName": "Federal Republic of Somalia",
+    "capital": "Mogadishu",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      10,
+      49
+    ],
+    "flagEmoji": "🇸🇴",
+    "independent": true,
+    "area": 637657,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "SML",
+    "cca2": null,
+    "cca3": null,
+    "name": "Somaliland",
+    "officialName": "Republic of Somaliland",
+    "capital": "Hargeisa",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      9.4942,
+      44.0269
+    ],
+    "flagEmoji": null,
+    "independent": false,
+    "area": 176120,
+    "isExtraTerritory": true
+  },
+  {
+    "id": "710",
+    "cca2": "ZA",
+    "cca3": "ZAF",
+    "name": "South Africa",
+    "officialName": "Republic of South Africa",
+    "capital": "Pretoria",
+    "region": "Africa",
+    "subregion": "Southern Africa",
+    "latlng": [
+      -29,
+      24
+    ],
+    "flagEmoji": "🇿🇦",
+    "independent": true,
+    "area": 1221037,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "239",
+    "cca2": "GS",
+    "cca3": "SGS",
+    "name": "South Georgia",
+    "officialName": "South Georgia and the South Sandwich Islands",
+    "capital": "King Edward Point",
+    "region": "Antarctic",
+    "subregion": "",
+    "latlng": [
+      -54.5,
+      -37
+    ],
+    "flagEmoji": "🇬🇸",
+    "independent": false,
+    "area": 3903,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "410",
+    "cca2": "KR",
+    "cca3": "KOR",
+    "name": "South Korea",
+    "officialName": "Republic of Korea",
+    "capital": "Seoul",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      37,
+      127.5
+    ],
+    "flagEmoji": "🇰🇷",
+    "independent": true,
+    "area": 100210,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "728",
+    "cca2": "SS",
+    "cca3": "SSD",
+    "name": "South Sudan",
+    "officialName": "Republic of South Sudan",
+    "capital": "Juba",
+    "region": "Africa",
+    "subregion": "Middle Africa",
+    "latlng": [
+      7,
+      30
+    ],
+    "flagEmoji": "🇸🇸",
+    "independent": true,
+    "area": 619745,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "724",
+    "cca2": "ES",
+    "cca3": "ESP",
+    "name": "Spain",
+    "officialName": "Kingdom of Spain",
+    "capital": "Madrid",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      40,
+      -4
+    ],
+    "flagEmoji": "🇪🇸",
+    "independent": true,
+    "area": 505992,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "144",
+    "cca2": "LK",
+    "cca3": "LKA",
+    "name": "Sri Lanka",
+    "officialName": "Democratic Socialist Republic of Sri Lanka",
+    "capital": "Colombo",
+    "region": "Asia",
+    "subregion": "Southern Asia",
+    "latlng": [
+      7,
+      81
+    ],
+    "flagEmoji": "🇱🇰",
+    "independent": true,
+    "area": 65610,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "729",
+    "cca2": "SD",
+    "cca3": "SDN",
+    "name": "Sudan",
+    "officialName": "Republic of the Sudan",
+    "capital": "Khartoum",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      15,
+      30
+    ],
+    "flagEmoji": "🇸🇩",
+    "independent": true,
+    "area": 1886068,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "740",
+    "cca2": "SR",
+    "cca3": "SUR",
+    "name": "Suriname",
+    "officialName": "Republic of Suriname",
+    "capital": "Paramaribo",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      4,
+      -56
+    ],
+    "flagEmoji": "🇸🇷",
+    "independent": true,
+    "area": 163820,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "752",
+    "cca2": "SE",
+    "cca3": "SWE",
+    "name": "Sweden",
+    "officialName": "Kingdom of Sweden",
+    "capital": "Stockholm",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      62,
+      15
+    ],
+    "flagEmoji": "🇸🇪",
+    "independent": true,
+    "area": 450295,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "756",
+    "cca2": "CH",
+    "cca3": "CHE",
+    "name": "Switzerland",
+    "officialName": "Swiss Confederation",
+    "capital": "Bern",
+    "region": "Europe",
+    "subregion": "Western Europe",
+    "latlng": [
+      47,
+      8
+    ],
+    "flagEmoji": "🇨🇭",
+    "independent": true,
+    "area": 41284,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "760",
+    "cca2": "SY",
+    "cca3": "SYR",
+    "name": "Syria",
+    "officialName": "Syrian Arab Republic",
+    "capital": "Damascus",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      35,
+      38
+    ],
+    "flagEmoji": "🇸🇾",
+    "independent": true,
+    "area": 185180,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "158",
+    "cca2": "TW",
+    "cca3": "TWN",
+    "name": "Taiwan",
+    "officialName": "Republic of China (Taiwan)",
+    "capital": "Taipei",
+    "region": "Asia",
+    "subregion": "Eastern Asia",
+    "latlng": [
+      23.5,
+      121
+    ],
+    "flagEmoji": "🇹🇼",
+    "independent": false,
+    "area": 36193,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "762",
+    "cca2": "TJ",
+    "cca3": "TJK",
+    "name": "Tajikistan",
+    "officialName": "Republic of Tajikistan",
+    "capital": "Dushanbe",
+    "region": "Asia",
+    "subregion": "Central Asia",
+    "latlng": [
+      39,
+      71
+    ],
+    "flagEmoji": "🇹🇯",
+    "independent": true,
+    "area": 143100,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "834",
+    "cca2": "TZ",
+    "cca3": "TZA",
+    "name": "Tanzania",
+    "officialName": "United Republic of Tanzania",
+    "capital": "Dodoma",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -6,
+      35
+    ],
+    "flagEmoji": "🇹🇿",
+    "independent": true,
+    "area": 945087,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "764",
+    "cca2": "TH",
+    "cca3": "THA",
+    "name": "Thailand",
+    "officialName": "Kingdom of Thailand",
+    "capital": "Bangkok",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      15,
+      100
+    ],
+    "flagEmoji": "🇹🇭",
+    "independent": true,
+    "area": 513120,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "626",
+    "cca2": "TL",
+    "cca3": "TLS",
+    "name": "Timor-Leste",
+    "officialName": "Democratic Republic of Timor-Leste",
+    "capital": "Dili",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      -8.83333333,
+      125.91666666
+    ],
+    "flagEmoji": "🇹🇱",
+    "independent": true,
+    "area": 14874,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "768",
+    "cca2": "TG",
+    "cca3": "TGO",
+    "name": "Togo",
+    "officialName": "Togolese Republic",
+    "capital": "Lomé",
+    "region": "Africa",
+    "subregion": "Western Africa",
+    "latlng": [
+      8,
+      1.16666666
+    ],
+    "flagEmoji": "🇹🇬",
+    "independent": true,
+    "area": 56785,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "776",
+    "cca2": "TO",
+    "cca3": "TON",
+    "name": "Tonga",
+    "officialName": "Kingdom of Tonga",
+    "capital": "Nuku'alofa",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -20,
+      -175
+    ],
+    "flagEmoji": "🇹🇴",
+    "independent": true,
+    "area": 747,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "780",
+    "cca2": "TT",
+    "cca3": "TTO",
+    "name": "Trinidad and Tobago",
+    "officialName": "Republic of Trinidad and Tobago",
+    "capital": "Port of Spain",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      11,
+      -61
+    ],
+    "flagEmoji": "🇹🇹",
+    "independent": true,
+    "area": 5130,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "788",
+    "cca2": "TN",
+    "cca3": "TUN",
+    "name": "Tunisia",
+    "officialName": "Tunisian Republic",
+    "capital": "Tunis",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      34,
+      9
+    ],
+    "flagEmoji": "🇹🇳",
+    "independent": true,
+    "area": 163610,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "792",
+    "cca2": "TR",
+    "cca3": "TUR",
+    "name": "Türkiye",
+    "officialName": "Republic of Türkiye",
+    "capital": "Ankara",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      39,
+      35
+    ],
+    "flagEmoji": "🇹🇷",
+    "independent": true,
+    "area": 783562,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "795",
+    "cca2": "TM",
+    "cca3": "TKM",
+    "name": "Turkmenistan",
+    "officialName": "Turkmenistan",
+    "capital": "Ashgabat",
+    "region": "Asia",
+    "subregion": "Central Asia",
+    "latlng": [
+      40,
+      60
+    ],
+    "flagEmoji": "🇹🇲",
+    "independent": true,
+    "area": 488100,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "796",
+    "cca2": "TC",
+    "cca3": "TCA",
+    "name": "Turks and Caicos Islands",
+    "officialName": "Turks and Caicos Islands",
+    "capital": "Cockburn Town",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      21.75,
+      -71.58333333
+    ],
+    "flagEmoji": "🇹🇨",
+    "independent": false,
+    "area": 948,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "800",
+    "cca2": "UG",
+    "cca3": "UGA",
+    "name": "Uganda",
+    "officialName": "Republic of Uganda",
+    "capital": "Kampala",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      1,
+      32
+    ],
+    "flagEmoji": "🇺🇬",
+    "independent": true,
+    "area": 241550,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "804",
+    "cca2": "UA",
+    "cca3": "UKR",
+    "name": "Ukraine",
+    "officialName": "Ukraine",
+    "capital": "Kyiv",
+    "region": "Europe",
+    "subregion": "Eastern Europe",
+    "latlng": [
+      49,
+      32
+    ],
+    "flagEmoji": "🇺🇦",
+    "independent": true,
+    "area": 603500,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "784",
+    "cca2": "AE",
+    "cca3": "ARE",
+    "name": "United Arab Emirates",
+    "officialName": "United Arab Emirates",
+    "capital": "Abu Dhabi",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      24,
+      54
+    ],
+    "flagEmoji": "🇦🇪",
+    "independent": true,
+    "area": 83600,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "826",
+    "cca2": "GB",
+    "cca3": "GBR",
+    "name": "United Kingdom",
+    "officialName": "United Kingdom of Great Britain and Northern Ireland",
+    "capital": "London",
+    "region": "Europe",
+    "subregion": "Northern Europe",
+    "latlng": [
+      54,
+      -2
+    ],
+    "flagEmoji": "🇬🇧",
+    "independent": true,
+    "area": 242900,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "840",
+    "cca2": "US",
+    "cca3": "USA",
+    "name": "United States",
+    "officialName": "United States of America",
+    "capital": "Washington D.C.",
+    "region": "Americas",
+    "subregion": "North America",
+    "latlng": [
+      38,
+      -97
+    ],
+    "flagEmoji": "🇺🇸",
+    "independent": true,
+    "area": 9372610,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "850",
+    "cca2": "VI",
+    "cca3": "VIR",
+    "name": "United States Virgin Islands",
+    "officialName": "Virgin Islands of the United States",
+    "capital": "Charlotte Amalie",
+    "region": "Americas",
+    "subregion": "Caribbean",
+    "latlng": [
+      18.35,
+      -64.933333
+    ],
+    "flagEmoji": "🇻🇮",
+    "independent": false,
+    "area": 347,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "858",
+    "cca2": "UY",
+    "cca3": "URY",
+    "name": "Uruguay",
+    "officialName": "Oriental Republic of Uruguay",
+    "capital": "Montevideo",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      -33,
+      -56
+    ],
+    "flagEmoji": "🇺🇾",
+    "independent": true,
+    "area": 181034,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "860",
+    "cca2": "UZ",
+    "cca3": "UZB",
+    "name": "Uzbekistan",
+    "officialName": "Republic of Uzbekistan",
+    "capital": "Tashkent",
+    "region": "Asia",
+    "subregion": "Central Asia",
+    "latlng": [
+      41,
+      64
+    ],
+    "flagEmoji": "🇺🇿",
+    "independent": true,
+    "area": 447400,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "548",
+    "cca2": "VU",
+    "cca3": "VUT",
+    "name": "Vanuatu",
+    "officialName": "Republic of Vanuatu",
+    "capital": "Port Vila",
+    "region": "Oceania",
+    "subregion": "Melanesia",
+    "latlng": [
+      -16,
+      167
+    ],
+    "flagEmoji": "🇻🇺",
+    "independent": true,
+    "area": 12189,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "336",
+    "cca2": "VA",
+    "cca3": "VAT",
+    "name": "Vatican City",
+    "officialName": "Vatican City State",
+    "capital": "Vatican City",
+    "region": "Europe",
+    "subregion": "Southern Europe",
+    "latlng": [
+      41.9,
+      12.45
+    ],
+    "flagEmoji": "🇻🇦",
+    "independent": true,
+    "area": 0.44,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "862",
+    "cca2": "VE",
+    "cca3": "VEN",
+    "name": "Venezuela",
+    "officialName": "Bolivarian Republic of Venezuela",
+    "capital": "Caracas",
+    "region": "Americas",
+    "subregion": "South America",
+    "latlng": [
+      8,
+      -66
+    ],
+    "flagEmoji": "🇻🇪",
+    "independent": true,
+    "area": 916445,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "704",
+    "cca2": "VN",
+    "cca3": "VNM",
+    "name": "Vietnam",
+    "officialName": "Socialist Republic of Vietnam",
+    "capital": "Hanoi",
+    "region": "Asia",
+    "subregion": "South-Eastern Asia",
+    "latlng": [
+      16.16666666,
+      107.83333333
+    ],
+    "flagEmoji": "🇻🇳",
+    "independent": true,
+    "area": 331212,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "876",
+    "cca2": "WF",
+    "cca3": "WLF",
+    "name": "Wallis and Futuna",
+    "officialName": "Territory of the Wallis and Futuna Islands",
+    "capital": "Mata-Utu",
+    "region": "Oceania",
+    "subregion": "Polynesia",
+    "latlng": [
+      -13.3,
+      -176.2
+    ],
+    "flagEmoji": "🇼🇫",
+    "independent": false,
+    "area": 142,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "732",
+    "cca2": "EH",
+    "cca3": "ESH",
+    "name": "Western Sahara",
+    "officialName": "Sahrawi Arab Democratic Republic",
+    "capital": "El Aaiún",
+    "region": "Africa",
+    "subregion": "Northern Africa",
+    "latlng": [
+      24.5,
+      -13
+    ],
+    "flagEmoji": "🇪🇭",
+    "independent": false,
+    "area": 266000,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "887",
+    "cca2": "YE",
+    "cca3": "YEM",
+    "name": "Yemen",
+    "officialName": "Republic of Yemen",
+    "capital": "Sana'a",
+    "region": "Asia",
+    "subregion": "Western Asia",
+    "latlng": [
+      15,
+      48
+    ],
+    "flagEmoji": "🇾🇪",
+    "independent": true,
+    "area": 527968,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "894",
+    "cca2": "ZM",
+    "cca3": "ZMB",
+    "name": "Zambia",
+    "officialName": "Republic of Zambia",
+    "capital": "Lusaka",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -15,
+      30
+    ],
+    "flagEmoji": "🇿🇲",
+    "independent": true,
+    "area": 752612,
+    "isExtraTerritory": false
+  },
+  {
+    "id": "716",
+    "cca2": "ZW",
+    "cca3": "ZWE",
+    "name": "Zimbabwe",
+    "officialName": "Republic of Zimbabwe",
+    "capital": "Harare",
+    "region": "Africa",
+    "subregion": "Eastern Africa",
+    "latlng": [
+      -20,
+      30
+    ],
+    "flagEmoji": "🇿🇼",
+    "independent": true,
+    "area": 390757,
+    "isExtraTerritory": false
+  }
+]
