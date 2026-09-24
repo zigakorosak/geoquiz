@@ -6,10 +6,12 @@ name: Deploy to Namecheap
 # secrets set up first: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD — see
 # "Deployment" in DESIGN.md for exactly where to find them in cPanel and
 # how to add them.
+#
+# Manual only, by request — does NOT run automatically on push. Trigger it
+# from the Actions tab ("Deploy to Namecheap" -> "Run workflow"), or via
+# `gh workflow run "Deploy to Namecheap"`.
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
 
 jobs:

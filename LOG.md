@@ -3,6 +3,15 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-24 — deploy is manual-only, by request
+
+User confirmed the live deploy works, then asked that it only upload to
+the site when explicitly asked — not automatically on every push to
+`main`. Removed the `push` trigger from `deploy.yml`, keeping only
+`workflow_dispatch`; from here, shipping a change live is a deliberate
+"Run workflow" (Actions tab, or `gh workflow run "Deploy to Namecheap"`),
+not a side effect of committing.
+
 ## 2026-09-24 — git init, GitHub remote, deploy pipeline to Namecheap
 
 First time this project has been under version control — previously

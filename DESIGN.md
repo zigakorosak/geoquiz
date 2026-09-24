@@ -654,8 +654,11 @@ us-states.json` + `us-states-topology.json`.
 Live at `zigakorosak.com/geoquiz/`, deployed from GitHub to Namecheap
 shared hosting (cPanel): `.github/workflows/deploy.yml` builds the site
 (Node runs in the Action, not on the shared host — cPanel hosting doesn't
-reliably have a usable npm/build setup) and FTPS-uploads `dist/` on every
-push to `main` (or manually via the Actions tab's "Run workflow" button).
+reliably have a usable npm/build setup) and FTPS-uploads `dist/`.
+**Manual only, by request** — pushing to `main` does *not* auto-deploy;
+trigger it from the Actions tab ("Deploy to Namecheap" → "Run workflow")
+or `gh workflow run "Deploy to Namecheap"` when it's actually time to
+push a change live.
 
 `vite.config.js` sets `base: "/geoquiz/"` to match — this is what makes
 both the built `<script>`/`<link>` tags in `index.html` and the
