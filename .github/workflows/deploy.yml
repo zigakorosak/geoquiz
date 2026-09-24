@@ -38,4 +38,15 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           local-dir: ./dist/
-          server-dir: /public_html/geoquiz/
+          # Wipes server-dir before uploading. Safe here since this FTP
+          # account's root is scoped to just this one app's folder (see
+          # note below) — also cleans up the stray nested public_html/
+          # a misconfigured earlier run left behind, and keeps old hashed
+          # asset filenames from previous builds from accumulating.
+          dangerous-clean-slate: true
+          # The FTP account's own login root is already public_html/geoquiz
+          # (see cPanel's FTP Accounts "Path" column) — server-dir is
+          # relative to that root, not the account's home directory, so
+          # this must be "/", not "/public_html/geoquiz/" (which would
+          # nest a duplicate public_html/geoquiz inside itself).
+          server-dir: ./
