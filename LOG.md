@@ -40,9 +40,40 @@ on GitHub and live on their existing Namecheap (cPanel) site.
   GitHub Pages) and where in it this should live (a subdirectory,
   `public_html/geoquiz`) — both had real consequences for `vite.config.js`
   and the workflow's `server-dir`, not just cosmetic ones.
-- Not yet done: the actual `git push` (needs the user's GitHub auth) and
-  the three FTP secrets (needs the user's cPanel credentials). The
-  workflow will fail until both exist.
+- User installed and authenticated `gh` CLI on this machine; pushed both
+  commits. The remote repo turned out non-empty (a single GitHub-generated
+  `README.md` from repo creation) — merged with `--allow-unrelated-
+  histories` rather than force-pushing over it, since there was a safe,
+  non-destructive option available.
+- Two real deploy bugs surfaced only by actually running the workflow and
+  reading its logs, not by reasoning about the config in the abstract:
+  1. `SamKirkland/FTP-Deploy-Action@v4` doesn't exist as a tag (only exact
+     versions do) — pinned to `v4.4.0`.
+  2. `FTP_SERVER` set to `ftp.zigakorosak.com` (what cPanel's "Configure
+     FTP Client" panel showed) failed DNS resolution — confirmed
+     independently with `nslookup` rather than assuming the secret was
+     mistyped, which showed genuine `NXDOMAIN`, while the bare domain
+     `zigakorosak.com` resolved fine. That `ftp.` subdomain record simply
+     doesn't exist; switched to the bare domain.
+  3. `server-dir: /public_html/geoquiz/` was wrong once the *account's
+     own* FTP login root turned out to already be scoped to
+     `public_html/geoquiz` (visible in cPanel's FTP Accounts "Path"
+     column) — the path was being applied twice, nesting a duplicate
+     `public_html/geoquiz` inside itself, confirmed by fetching the live
+     (broken) URL and seeing a directory listing rather than the app.
+     Changed `server-dir` to `./` (the FTP root) and added
+     `dangerous-clean-slate: true` to clear the stray nested folder — safe
+     specifically because this FTP account's root is scoped to only this
+     app's directory, not shared with anything else on the site; flagged
+     this as a destructive step and got explicit confirmation before
+     running it, same as any other action that alters a live external
+     system.
+- Live and verified end-to-end at `zigakorosak.com/geoquiz/`: fetched the
+  page and confirmed it's the actual app (not a redirect stub or
+  directory listing), then fetched the JS bundle, CSS, both dataset JSON
+  files, and the favicon individually (following the site's existing
+  www-redirect) to confirm every asset the app depends on actually loads,
+  not just the HTML shell.
 
 ## 2026-09-24 — US States (the second real dataset, and the first non-country one)
 

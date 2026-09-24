@@ -651,12 +651,11 @@ us-states.json` + `us-states-topology.json`.
 
 ## Deployment
 
-Hosted at `<domain>/geoquiz/` on Namecheap shared hosting (cPanel),
-deployed from GitHub: `.github/workflows/deploy.yml` builds the site
-(Node runs in the Action, not on the shared host — cPanel hosting
-doesn't reliably have a usable npm/build setup) and uploads `dist/` to
-`public_html/geoquiz/` via FTPS on every push to `main` (or manually via
-the Actions tab's "Run workflow" button).
+Live at `zigakorosak.com/geoquiz/`, deployed from GitHub to Namecheap
+shared hosting (cPanel): `.github/workflows/deploy.yml` builds the site
+(Node runs in the Action, not on the shared host — cPanel hosting doesn't
+reliably have a usable npm/build setup) and FTPS-uploads `dist/` on every
+push to `main` (or manually via the Actions tab's "Run workflow" button).
 
 `vite.config.js` sets `base: "/geoquiz/"` to match — this is what makes
 both the built `<script>`/`<link>` tags in `index.html` and the
@@ -665,24 +664,29 @@ resolve to `/geoquiz/...` instead of the domain root. If the deploy path
 ever changes (different subdirectory, domain root, a subdomain), this is
 the one line that needs to change to match.
 
-**One-time setup** (not yet done as of this writing — the workflow will
-fail until these three secrets exist): in cPanel, under **FTP Accounts**,
-either use an existing account or create one scoped to `public_html/geoquiz`
-specifically (safer than using the main account's full-access login — a
-leaked secret then only exposes that one subdirectory). Namecheap FTP
-accounts support FTPS (FTP over TLS) already; no extra setup needed on the
-hosting side beyond having the credentials. Then, on GitHub:
-**github.com/zigakorosak/geoquiz → Settings → Secrets and variables →
-Actions → New repository secret**, and add:
+**Secrets** (GitHub → repo → Settings → Secrets and variables → Actions):
+`FTP_SERVER`, `FTP_USERNAME`, `FTP_PASSWORD`, for a cPanel FTP account
+scoped to `public_html/geoquiz` specifically rather than the main
+full-access login (a leaked secret then only exposes that one
+subdirectory). Two non-obvious gotchas hit while setting this up the
+first time, worth knowing if it ever needs redoing on a different host:
 
-- `FTP_SERVER` — the hostname cPanel shows for the FTP account (often
-  the bare domain or `ftp.<domain>`)
-- `FTP_USERNAME` — the FTP account's username
-- `FTP_PASSWORD` — its password
+- The hostname cPanel's "Configure FTP Client" panel suggests
+  (conventionally `ftp.<domain>`) isn't guaranteed to actually resolve —
+  it didn't here (confirmed with `nslookup`/`getent hosts`, genuine
+  `NXDOMAIN`). The bare domain resolved fine and works just as well for
+  FTP, since the same server handles both.
+- `server-dir` in the workflow is relative to the **FTP account's own
+  login root**, not the server's filesystem root or the domain's document
+  root. If that account's root is already scoped to a subdirectory (check
+  cPanel's FTP Accounts "Path" column), `server-dir` should just be `./`
+  — setting it to the same subdirectory path again nests a duplicate
+  copy inside itself.
 
-Secrets are write-only once saved (not even visible to repo admins
-afterward, only to the Action at run time) — there's no separate "confirm
-it worked" step beyond watching the next push's Action run go green.
+Secrets are write-only once saved (not visible again to anyone, including
+repo admins, only to the Action at run time) — there's no way to double-
+check a value after the fact except by watching whether the next deploy
+run succeeds.
 
 ## Environment notes
 
