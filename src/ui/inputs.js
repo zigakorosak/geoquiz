@@ -16,6 +16,20 @@
 import { WorldMap } from "../map/WorldMap.js";
 import { shuffle } from "../core/engine.js";
 
+const EARTH_RADIUS_KM = 6371;
+
+// Great-circle distance between two `[lat, lon]` points (world-countries'
+// own field order — see core/datasets.js items) — used only by "map-pin"'s
+// post-confirm feedback.
+function haversineKm([lat1, lon1], [lat2, lon2]) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
 const renderers = {
   "multiple-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
     const correctValue = attr.getValue(item);
@@ -179,6 +193,52 @@ const renderers = {
           const guessedName = dataset.items.find((i) => i.id === guess)?.name ?? "an unrecognized area";
           feedback.textContent = `You picked ${guessedName} — correct answer: ${attr.formatAnswer(item)}`;
         }
+      },
+    };
+  },
+
+  // Borderless map: the player drops a pin anywhere rather than clicking a
+  // discrete country shape. The guess reported via onSelect is still just
+  // a country id, same as "map-click" — whichever playable country's real
+  // (invisible) shape the pin landed inside, or null over open
+  // ocean/unplayable territory — so QuizSession/attributes.js need no
+  // pin-specific logic at all; only the feedback (revealed outline +
+  // distance) is different, handled entirely here.
+  "map-pin": (
+    container,
+    { dataset, attr, mapFeatureIds, playableIds, initialTransform, onSelect, feedbackContainer }
+  ) => {
+    const map = new WorldMap(container, {
+      topology: dataset.topology,
+      objectKey: dataset.topologyObject,
+      filterIds: mapFeatureIds,
+      playableIds,
+      projection: dataset.projection,
+      initialTransform,
+      pinMode: true,
+    });
+    let lastLonLat = null;
+    map.setClickable(true, (lon, lat, containingId) => {
+      lastLonLat = [lat, lon]; // match items' own [lat, lon] latlng field order
+      onSelect(containingId);
+    });
+
+    const feedback = document.createElement("div");
+    feedback.className = "answer-feedback";
+    feedbackContainer.appendChild(feedback);
+
+    return {
+      cleanup: () => {
+        map.destroy();
+        feedback.remove();
+      },
+      getTransform: () => map.getTransform(),
+      showResult({ guess, item, correct }) {
+        map.setClickable(false, null);
+        map.markResult(guess, attr.getValue(item));
+        const distance = lastLonLat && item.latlng ? Math.round(haversineKm(lastLonLat, item.latlng)) : null;
+        const distanceText = distance != null ? ` You were ${distance} km from its center.` : "";
+        feedback.textContent = correct ? `Correct!${distanceText}` : `Correct answer: ${attr.formatAnswer(item)}.${distanceText}`;
       },
     };
   },

@@ -3,6 +3,213 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-24 — pin-drop answer mode, region/sovereignty item counts, keep-zoom default
+
+Three requests in one round: a new "drop a pin" way to answer location
+questions (borderless map, reveal + distance-from-target on confirm),
+show each region/sovereignty option's actual item count in the wizard
+("All (236)"), and make "keep zoom between rounds" the first-listed and
+default Settings option instead of "reset every round".
+
+**Keep zoom default**: `core/settings.js`'s `defaults.keepZoom` flipped
+`false` → `true`; `ui/settingsScreen.js`'s `zoomOptions` array reordered
+so "Keep zoom between rounds" is first (its button, not "reset", is what
+now shows pre-selected the first time Settings is opened).
+
+**Region/sovereignty counts**: previously `loadDataset` only ran at the
+wizard's very last step (`startGame`), after every choice — including
+region and sovereignty — was already made, so there was no item list yet
+to count against at the point those options are actually shown. Moved
+the load to `goToRegionOrSkip` (right after answer type is settled)
+instead, threaded the loaded items through the rest of the wizard's
+config, and added `regionCount()`/`withCount()` helpers used by all three
+affected steps' `labelFn`s. A region's count sums whichever of its
+children match, for a branch (Africa, America); an option that switches
+to a different dataset entirely (Caribbean → US States) shows no count,
+since there's nothing to count in the current dataset's terms.
+`startGame` still re-awaits `loadDataset` itself for the final build (a
+no-op given the loader's own cache) rather than trusting the earlier
+load blindly, and still owns `loadSettings` (a display-time concern, not
+something any wizard step needs).
+
+**Pin-drop mode** (`location`'s new `"map-pin"` answerKind): the biggest
+piece. Player drops a pin on a map rendered with `WorldMap`'s new
+`pinMode: true` — no per-country click targets, borders, or hit-area
+assists, since a pin can land anywhere, not on a discrete feature — via
+one whole-map click listener that resolves screen coordinates through
+both the SVG's viewBox scaling and the current zoom/pan transform
+(`d3-selection`'s `pointer(event, pathsGroup)`) back to the untransformed
+space `projection.invert()` expects. Which country (if any) the resulting
+lon/lat point falls inside is resolved by a plain ray-casting
+point-in-polygon test directly on the raw GeoJSON ring coordinates
+(`_findContainingId`/`pointInFeature`, new in `WorldMap.js`) — no SVG
+geometry APIs, so it's unaffected by zoom/projection and is plain
+unit-testable. That resolved id is reported via the exact same
+`onSelect(id)` channel as map-click, so `QuizSession`/`attributes.js`'s
+existing id-equality `checkAnswer` needed zero pin-specific changes —
+only `inputs.js`'s new `"map-pin"` renderer differs, adding a
+great-circle distance (`haversineKm`, using items' existing `latlng`
+field from world-countries) between the dropped pin and the target
+country to the post-confirm feedback text, on top of the outline reveal
+`map.markResult` already provides.
+
+Scoped to datasets with real geographic coordinates only:
+`gameWizard.js`'s `availableAnswerKinds` prunes `"map-pin"` back out
+whenever `datasetMeta.projection === "identity"` (US states' pre-
+projected Albers topology has no lon/lat to invert a click to) — kept out
+of `attributes.js` itself so that module stays dataset-agnostic. Caught
+one real edge case while implementing this: answer type is picked
+*before* region, but region can switch the active dataset entirely
+(Caribbean → US States), so a player could pick "Drop a pin" while still
+on the countries dataset and only then navigate to US States — verified
+this actually reached `startGame` with an invalid `answerKind` before the
+fix; `showSubRegionStep`'s dataset-switch branch now re-validates
+`answerKind` back down to `"map-click"` at the exact point of switching.
+
+Verified via jsdom scratch scripts (project root, deleted after):
+`_findContainingId` resolving real coordinates correctly (Paris → France,
+Berlin → Germany, mid-Pacific → null), pin marker placement/
+repositioning across a reflow, the `onClick` callback signature end to
+end by capturing `WorldMap.prototype.setClickable`'s callback (real DOM
+click-to-lonlat math needs `getScreenCTM`, which jsdom doesn't
+implement — same boundary already documented for click hit-testing
+elsewhere in this file), the `inputs.js` widget's distance output
+cross-checked against an independently-written haversine calculation,
+the wizard's region/sub-region/sovereignty labels showing correct counts
+by driving `startGameWizard` through real button clicks with `fetch`
+mocked to the actual `public/data/*.json` files, the US-States exclusion
+and the answerKind-correction edge case (drove the wizard through "Drop a
+pin" then "US States", confirmed the resulting game screen used
+`map-click` behavior, not `map-pin`), and the Settings default/ordering
+change. Whether a real click's coordinates resolve correctly through
+`getScreenCTM` in an actual browser is, like the rest of this map's click
+handling, unverified in this sandbox.
+
+## 2026-09-24 — archipelago hit-area fix, take two: scope way back down
+
+User reported "a lot of hitboxes are broken now" right after the previous
+entry's change, plus a separate, unrelated complaint that the map's
+correct/wrong fill colors (green/red) were solid instead of translucent.
+
+**Fill colors**: straightforward — `.country--correct`/`.country--wrong`
+in `style.css` now also set `fill-opacity: 0.6` (not plain CSS `opacity`,
+so the border stroke stays fully solid and only the fill fades).
+
+**Hitboxes**: the previous entry's qualification rule ("any country with
+2+ parts qualifies, regardless of size") was the bug. Counted it directly:
+118 of the dataset's 238 playable countries have 2+ parts (any country
+with even one stray offshore islet in the 50m topology resolution
+counts), so the fix had accidentally put a convex-hull hit-area over
+*half the world* — including Russia, Canada, USA, China, Brazil,
+Australia, India, and every other large country with a scattering of
+tiny coastal/arctic islands. A hull spanning a whole continent's bbox,
+clipped only against other countries' single bbox-center points, is a
+bad approximation for a huge, irregularly-shaped country — this is almost
+certainly what the user was seeing as "broken."
+
+Recalibrated with actual data instead of guessing again: computed each
+multi-part country's *individual part* areas (splitting the MultiPolygon
+apart and running `pathGen.area` on each piece), sorted by total area, and
+read down the list for the value that would need to separate "wanted"
+from "not wanted." The fraction-based idea considered along the way
+(exclude if one part is >50% of the total) doesn't work — Indonesia's
+biggest island is only 28% of its total area yet is obviously still huge
+and easily clickable (250px²) — but a **pure absolute size** cutoff on the
+single biggest part does: Philippines' biggest island (Luzon, 51.46px²)
+needs to stay under the cutoff, Greece's (60.75px²) needs to stay over it,
+and every huge country's biggest part is already in the thousands of
+px², nowhere near either number. Landed on `LARGEST_PART_CAP = 55`,
+replacing the old "parts >= 2 always qualifies" rule — see the updated
+comments in `WorldMap.js` and "Map" in `DESIGN.md` for the full
+qualifying logic and the exact numbers behind it.
+
+Re-ran the same jsdom verification as before against this new rule:
+confirmed the 25+ genuinely-tiny/archipelago countries from the original
+ask (Maldives, Philippines, Bahamas, Vanuatu, Solomon Islands, Comoros,
+Cape Verde, Tonga, Micronesia, Marshall Islands, Wallis and Futuna, Saint
+Vincent and the Grenadines, Antigua and Barbuda, Brunei, Trinidad and
+Tobago, and the original microstates) still qualify, and separately
+confirmed every large/sprawling country (Russia, Canada, USA, China,
+Brazil, Australia, France, Chile, Ecuador, New Zealand, Netherlands) plus
+the previously-overreaching UK/Norway/Greece/Indonesia/Japan/Malaysia no
+longer do. Total assisted countries dropped from 118 to 93 out of 238
+playable — the remaining 93 include a number of smaller countries not
+originally named (Croatia, Denmark, Ireland, Portugal, Cuba, South Korea,
+...) whose own biggest part is modestly sized; left these in rather than
+hand-excluding them, since they're compact, safe under the same rule that
+correctly excludes the sprawling cases, and getting the same gap-fill
+benefit for them isn't a regression.
+
+While debugging, found and documented (but deliberately did not fix) an
+unrelated, pre-existing, single-instance data quirk: the topology assigns
+Ashmore and Cartier Is. the same id ("036") as Australia itself, so they
+collide in `WorldMap`'s per-id maps. Confirmed this is the *only* such
+collision in the whole dataset, and that it's functionally harmless
+either way (Ashmore and Cartier Is. genuinely is Australian territory, so
+either feature correctly resolves clicks to "Australia") — not the cause
+of this round's bug report, not touched.
+
+## 2026-09-24 — archipelago hit-area fix (Maldives, Philippines, and similar)
+
+User reported Maldives' hit-area was too small/tough to click, named
+Philippines as a similar case, and asked that the fix generalize ("check
+for similar country sizes") rather than special-case just those two.
+
+Investigated with throwaway `node -e` scripts (measuring `pathGen.area`/
+`pathGen.bounds`/part-count for every country at the real ~800px map
+scale) before writing any code, per this project's usual calibrate-first
+approach:
+
+- Maldives' bounding box (2.65px) was actually *past* the old
+  `TINY_THRESHOLD` (1.5px), so it got **no** assist circle at all despite
+  having smaller true area (0.032px²) than several countries that did —
+  a real bug, not just "needs to be bigger". Its two atolls sit only
+  ~2.65px apart on the projected map.
+- Philippines isn't tiny (139.99px² total, largest single island alone
+  ~51px²) — its problem is 48 separate parts with no gap-filling between
+  them, a different failure mode than "too small".
+- Kiribati (785px bbox) and Fiji (800px) are antimeridian-wraparound
+  artifacts in the topology data, not real archipelago shapes — any fix
+  needed to explicitly exclude these rather than build a hull from them.
+
+Replaced the old bbox-threshold-triggered `<circle>` mechanism in
+`WorldMap.js` with a padded-convex-hull `<polygon>` mechanism: any
+single-blob country under a calibrated area cutoff (`AREA_THRESHOLD_SINGLE`,
+covers the same microstates as before — Vatican City, Monaco, San Marino,
+etc.) or any country with 2+ separate parts (covers Maldives, Philippines,
+Bahamas, Vanuatu, Solomon Islands, Comoros, Cape Verde, Tonga, Micronesia,
+Marshall Islands, Wallis and Futuna, Saint Vincent and the Grenadines,
+Antigua and Barbuda, and more) gets a convex hull built from all its
+projected ring points, padded outward 3px from its centroid, as its
+click target — naturally filling the water between a country's islands,
+not just sizing up each part individually. A bbox safety cap
+(`HULL_BBOX_CAP`, 150px) excludes the Kiribati/Fiji degenerate cases.
+
+The generalization also pulls in larger multi-part countries (UK, Norway,
+Greece, Croatia, Indonesia, Japan, Malaysia, Brunei) that weren't part of
+the original ask — left in deliberately rather than hand-excluded, since
+the existing Voronoi-cell clipping (already used to keep neighboring
+microstates' assist circles from overlapping) generalizes cleanly to stop
+these larger hulls from reaching into a real neighbor's territory too
+(e.g. Brunei's hull naturally spans the gap between its two enclaves,
+which is Malaysian territory — clipped to Brunei's own Voronoi cell before
+rendering). This needed widening the Voronoi diagram from "just the tiny
+countries" to every playable country's bbox-center, so an un-assisted
+ordinary neighbor still bounds an assisted country's hull.
+
+Verified via jsdom scratch scripts (written to the project root so
+`node_modules` resolution worked, deleted after): confirmed every named
+target country now shows an assisted hit-area, confirmed Kiribati/Fiji
+stay excluded, confirmed the previously-excluded ordinary small countries
+(Luxembourg, Cyprus) still aren't assisted (no regression), confirmed
+click events still fire with the correct id after swapping the hit-area
+element from `<circle>` to `<polygon>`, and confirmed the us-states
+dataset (identity projection, single-part features only) still reflows
+without error. Whether the padded hulls are visually well-sized and the
+Voronoi clip genuinely prevents overlap in a real renderer is unverified —
+no real browser available in this sandbox (see "Environment notes" in
+DESIGN.md).
+
 ## 2026-09-24 — deploy is manual-only, by request
 
 User confirmed the live deploy works, then asked that it only upload to

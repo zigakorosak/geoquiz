@@ -19,7 +19,7 @@ meant to be addable without touching the wizard, engine, or game-screen code.
 - [Vite](https://vite.dev/) for dev server + build.
 - [d3-geo](https://d3js.org/d3-geo) + [topojson-client](https://github.com/topojson/topojson-client) to project and render the world map as SVG.
 - [d3-zoom](https://d3js.org/d3-zoom) + [d3-selection](https://d3js.org/d3-selection) for scroll-wheel/pinch/drag zoom on the map.
-- [d3-delaunay](https://d3js.org/d3-delaunay) to split overlapping tiny-country hit-circles along their Voronoi boundary (see "Map" below).
+- [d3-delaunay](https://d3js.org/d3-delaunay) to build assist hit-area hulls and split overlapping ones along their Voronoi boundary (see "Map" below).
 - No backend — fully static, data fetched from `public/data/*.json` at runtime.
 
 npm was not preinstalled on the dev machine; it's now installed system-wide (Arch `npm` package).
@@ -105,13 +105,31 @@ is gated per-subject by the chosen dataset's `supportsRegionFilter` /
 above) — a subject without geographic data would skip both and go
 straight from subject to the game.
 
-The wizard's last step (`startGame`) is the only place that actually
-calls `loadDataset` (fetches the item/topology JSON) and `loadSettings`
-(reads the persisted zoom preference) before handing off to
-`renderGame` — every earlier step works from static, already-in-memory
-registries (`subjects`, `regions`, `sovereigntyOptions`, and the static
-half of `datasetMeta`), so nothing blocks on a network request until the
-player has made every choice.
+`goToRegionOrSkip` — reached right after answer type (and, for multiple
+choice, option count) is settled — is where `loadDataset` actually gets
+called, *not* the wizard's last step: every region and sovereignty option
+shows the player how many items it'd actually leave them with (`"All
+(236)"`, `"Europe (54)"`, …), and that needs the real loaded item list,
+not just the dataset's static `datasetMeta` flags. `regionCount()`
+computes a leaf region's count as `loadedItems.filter(region.match)
+.length`, a branch's as the union of its children's own matches, and
+returns `null` (no count shown) for an option that switches to a
+*different* dataset entirely rather than filtering the current one (the
+Caribbean region's "US States" sibling) — there's no shared count to show
+against items from a different dataset. The sovereignty step's counts are
+scoped one step further, to `regionItems` (post-region, pre-sovereignty)
+rather than the whole loaded set, so switching *which* sovereignty option
+looks selected never changes what region you're counting within.
+`startGame` (the wizard's actual last step) re-awaits `loadDataset` for
+the final item list — a no-op given the loader's own cache, not a second
+real fetch — and is *still* the only place `loadSettings` (the persisted
+zoom preference) gets read, since that's a display-time concern for the
+game screen, not something any wizard step needs to know about.
+
+A subject without any region/sovereignty filtering at all (US states)
+skips this load entirely and goes straight from answer type to the game,
+same as before — nothing to show a count against, so nothing to load
+early for.
 
 ### Attributes (`core/attributes.js`)
 
@@ -313,7 +331,7 @@ Two independent, differently-scoped filters, both optional:
   is chosen, `null` (no crop, full world) otherwise.
 - `playableIds` — a **soft gate**, always passed by `game.js` (derived
   from whatever `dataset.items` currently is, after all filtering). A
-  feature only gets a click listener, normal styling, and a hit-circle
+  feature only gets a click listener, normal styling, and a hit-area
   (below) if it's in this set — *independent of whether the topology
   itself assigned it an id*. Everything else renders as an inert, muted
   `.country--unplayable` shape. This is what makes the sovereignty
@@ -324,45 +342,91 @@ Two independent, differently-scoped filters, both optional:
   never playable regardless of any setting.
 
 True microstates (Vatican City, Monaco, San Marino, Liechtenstein, Malta,
-...) get an invisible oversized `<circle>` hit-area layered on top of
-their path (stacked last in DOM order, so it wins pointer hit-testing even
-over a larger neighboring country). Sized in `_reflow`, from the feature's
-projected bounding box (`pathGen.bounds`): if the box's larger dimension
-is under `TINY_THRESHOLD` (1.5px at identity zoom on a ~800px-wide map),
-the circle is shown at a fixed `HIT_DIAMETER` (6px); otherwise it stays
-hidden and the real path alone is the click target. Both constants were
-calibrated against the actual dataset, not guessed — see the comment above
-them in `WorldMap.js` for the measured sizes that motivated the cutoff.
-The threshold deliberately excludes ordinary small-but-real countries
-(Luxembourg, Cyprus, Kosovo, Qatar, Jamaica, ...) that are perfectly
-clickable at their true size; only genuine below-a-couple-pixels
-microstates get the assist, and the resulting target itself stays modest
-rather than a large blob that could swallow clicks meant for a neighbor.
+...) and archipelagos/multi-part countries with no single dominant,
+easily-clickable landmass (Maldives, Philippines, Bahamas, Brunei, ...)
+get an invisible assist hit-area — a padded convex hull, `<polygon>` —
+layered on top of their path (stacked last in DOM order, so it wins
+pointer hit-testing even over a larger neighboring country). Built in
+`_reflow`, in two passes:
 
-Real clusters of adjacent microstates exist (the Lesser Antilles has half
-a dozen within a few hit-circle-radii of each other; Saint Martin/Sint
-Maarten are literally the same island split in two), so their 6px circles
-routinely overlap. Rather than letting DOM order arbitrarily decide which
-one wins a click in the overlap, every tiny circle is clipped
-(`clip-path`, SVG `<clipPath>` + `<polygon>`, one pre-built per playable
-feature) to its **Voronoi cell** among just the tiny centers for this
-render — the region strictly closer to that country's center than to any
-other tiny country's. `d3-delaunay` computes the diagram once per
-`_reflow` over all currently-tiny centers; the cell boundary between two
-neighbors is exactly the line equidistant from both, so their clipped
-hit-areas can never overlap, however close the real countries are. A
-country with no nearby tiny neighbor gets a cell far bigger than its own
-6px circle, so clipping is applied uniformly but is a geometric no-op for
-it — no separate "is this one actually overlapping" check needed. (SVG
-`clip-path` restricts pointer hit-testing to the clipped region, not just
-paint, in every evergreen browser, which is what makes this work for
-clicks and not just visuals — unverified here since no real browser is
-available in this sandbox, see "Environment notes".)
+- **Pass 1** decides which playable features *qualify*, from the
+  feature's projected bounding box (`pathGen.bounds`), area
+  (`pathGen.area`), and — for multi-part features — each individual
+  part's own area (`_largestPartArea`, `pathGen.area` run once per
+  `MultiPolygon` coordinate entry): a single-blob country qualifies if
+  its area is under `AREA_THRESHOLD_SINGLE` (1.2px² at identity zoom on a
+  ~800px-wide map); a multi-part country qualifies only if its single
+  *biggest* part is under `LARGEST_PART_CAP` (55px²) — total area and
+  part count aren't the signal, whether any one part is already a
+  comfortable click target on its own is. Philippines has 48 parts and a
+  large total area (140px²), but its biggest island alone is only 51px²,
+  so it still qualifies; Indonesia, Greece, the UK, Norway, Japan,
+  Malaysia, and every large country with a couple of stray offshore
+  islets (Russia, Canada, USA, Brazil, Australia, China, France, ...)
+  all have one part alone well past that, so their own path is already a
+  fine click target and doesn't need a hull spanning their full extent.
+  Either way, a feature whose bounding box's larger dimension is at or
+  past `HULL_BBOX_CAP` (150px) is skipped even if it would otherwise
+  qualify — independent of `LARGEST_PART_CAP`, this catches the rarer
+  case of a small *part* scattered far from the rest (Netherlands'
+  Caribbean islands, ~167px from the mainland) as well as topology data
+  that wraps around the antimeridian (Kiribati, Fiji), which produces a
+  bounding box spanning nearly the whole map. All three constants were
+  calibrated against the actual dataset, not guessed — see the comments
+  above them in `WorldMap.js` for the measured sizes that motivated each
+  cutoff (in particular, `LARGEST_PART_CAP` sits between Philippines'
+  51.46px² largest island, which must qualify, and Greece's 60.75px²,
+  which must not). This deliberately excludes ordinary small-but-real
+  single-blob countries (Luxembourg, Cyprus, Kosovo, Qatar, Jamaica, ...)
+  that are perfectly clickable at their true size.
+
+  *(An earlier version of this qualified every multi-part country
+  unconditionally, regardless of size — over half the dataset, including
+  every large country with even one stray offshore islet. Their hulls,
+  built from a bbox spanning a whole continent, badly broke click
+  targeting for countries anywhere near them; `LARGEST_PART_CAP` is the
+  fix — see LOG.md.)*
+- **Pass 2** builds each qualifying feature's hit-area: every ring point
+  of *every part* is projected and passed to `d3-delaunay`'s convex hull
+  (`Delaunay.from(points).hull`), then each hull vertex is pushed outward
+  from the feature's own bbox-center by a fixed `HULL_PADDING` (3px). For
+  a multi-part feature the hull already spans and fills the water between
+  its islands (a straight click between two Maldives atolls, or between
+  Luzon and Mindanao in the Philippines, now lands inside it); the
+  padding on top guarantees even a naturally tiny hull (Maldives' own two
+  atolls sit barely 2.6px apart) ends up comfortably tappable rather than
+  merely "as big as its own coastline already was". For a compact
+  single-blob microstate, the hull is close to the country's own outline,
+  so padding it is effectively the old fixed-size circle, just shaped
+  like the country instead of a perfect circle.
+
+A hull built this way can, for some qualifying countries, still nominally
+reach toward a real neighbor — Brunei's two enclaves are separated by
+Malaysian territory. Rather than hand-picking exceptions, every qualifying
+hull is clipped (`clip-path`, SVG `<clipPath>` + `<polygon>`, one
+pre-built per playable feature) to its **Voronoi cell** — computed once
+per `_reflow` over *every* playable country's bbox-center (not just
+qualifying ones, so an ordinary neighbor like Malaysia still bounds a
+qualifying country's hull even though it doesn't get a hull of its own),
+via `d3-delaunay`. The cell boundary between two sites is exactly the
+line equidistant from both, so a hull can never actually reach past the
+midpoint toward a real neighbor's own territory, however far its raw
+(unclipped) shape would otherwise extend. This is the same clipping
+mechanism this project has used since the microstate-only version of this
+feature (previously scoped to just the "tiny" subset of countries; now
+computed over the full playable set so it can safely bound larger
+multi-part hulls too) — a country with no nearby qualifying neighbor gets
+a cell far bigger than its own hull, so clipping is applied uniformly but
+is a geometric no-op for it. (SVG `clip-path` restricts pointer
+hit-testing to the clipped region, not just paint, in every evergreen
+browser, which is what makes this work for clicks and not just visuals —
+unverified here since no real browser is available in this sandbox, see
+"Environment notes".)
 
 `highlight`/`select`/`markResult`/`clearMarks` all apply their CSS class
-to both the real path *and* its hit-circle (if any) — for a country small
+to both the real path *and* its hit-area (if any) — for a country small
 enough to need one, the real shape is often too tiny to see any fill
-change on, so the circle is what actually shows the player their
+change on, so the hit-area is what actually shows the player their
 selection/result.
 
 **Disputed borders.** An optional `dashedBorders` (array of `[idA, idB]`
@@ -376,7 +440,7 @@ exactly that pair of ids returns precisely their common boundary and
 nothing else — no manual line-segment geometry needed. One `<path
 class="border--disputed">` is pre-built per configured pair at
 construction (in a `.border-lines` group, stacked above country fills but
-below the click-priority hit-circles, `pointer-events: none` so it's
+below the click-priority hit-areas, `pointer-events: none` so it's
 never itself a click target) and its `d` recomputed each `_reflow`. If
 either side of a pair isn't part of the current region crop, the path
 is cleared instead of drawn — e.g. no line renders on an Oceania-only map,
@@ -401,9 +465,9 @@ and `getTransform()` reads back the current one at any time. This is the
 "keep zoom between rounds" setting: since every round mounts a brand new
 `WorldMap` instance (prompt or answer, whichever is map-based that round),
 `game.js` reads `getTransform()` from the outgoing round's map right
-before tearing it down and, if the setting is on, feeds it back in as
-`initialTransform` for the next round's map. When the setting is off (the
-default) it passes nothing and each round starts fresh, as before.
+before tearing it down and, if the setting is on (the default), feeds it
+back in as `initialTransform` for the next round's map. When the setting
+is off, it passes nothing and each round starts fresh instead.
 
 Getting "reset on resize" and "keep the initial transform" to coexist
 needed care: `ResizeObserver` fires its callback once, asynchronously,
@@ -438,14 +502,15 @@ Answer widgets render their post-confirm feedback *text* into a separate
 may hold a full-size map (`answer-area` is a flex row centered on that
 map), and a text line sharing that row with the map would fight it for
 space. `game.js` provides a dedicated `.feedback-area` slot between the
-answer area and the action button and clears it each round. All three
-widgets say "Correct!" on a right answer; on wrong, text-guess and
-multiple-choice show the correct answer (the player's own wrong guess is
-still visible — in the disabled input for text-guess, highlighted red
-among the options for multiple-choice), and map-click explicitly names
-*both* the country the player clicked (looked up by id in `dataset.items`)
-and the correct one — a coloured map alone doesn't reliably tell you
-which country you actually hit, especially a small one.
+answer area and the action button and clears it each round. Every widget
+says "Correct!" on a right answer; on wrong, text-guess and multiple-
+choice show the correct answer (the player's own wrong guess is still
+visible — in the disabled input for text-guess, highlighted red among the
+options for multiple-choice), map-click explicitly names *both* the
+country the player clicked (looked up by id in `dataset.items`) and the
+correct one — a coloured map alone doesn't reliably tell you which
+country you actually hit, especially a small one — and map-pin (below)
+adds a distance figure to whichever of the two messages applies.
 
 Answer widgets never submit on their own. Picking a value (typing,
 clicking a country, clicking an option) is provisional and reported via
@@ -474,6 +539,44 @@ countries, not a random Pacific island). If the current pool is smaller
 than `optionCount - 1` (a tiny region playing 6-option multiple choice),
 it silently caps at however many distinct items are available rather than
 erroring or padding with anything fake.
+
+**Pin drop** (`inputs.js`'s `"map-pin"` renderer, `location`'s second
+`answerKind`) is `map-click`'s opposite: instead of a discrete "which
+country did you click" target, the player drops a pin anywhere on a
+`WorldMap` constructed with `pinMode: true` — no per-country click targets
+or borders (see "Map" above), just a single whole-map click that places a
+marker and reports `(lon, lat, containingId)`, `containingId` being
+whichever playable country's real (invisible) shape the point falls
+inside, via a plain ray-casting point-in-polygon test on the raw lon/lat
+ring coordinates (`WorldMap._findContainingId`/`pointInFeature` — no SVG
+geometry APIs, so it works identically at any zoom/pan and doesn't depend
+on real-browser layout). The widget reports `containingId` (or `null`,
+over open ocean or unplayable territory) via `onSelect`, exactly like
+map-click's country id — so `QuizSession`/`attributes.js`'s existing
+id-equality `checkAnswer` needs no pin-specific logic at all; only the
+*feedback* differs. On confirm, `map.markResult` reveals the correct
+country's actual shape (and the wrong guess's, if the pin happened to
+land inside a different real country) the same way map-click always has;
+`showResult` additionally computes a great-circle distance
+(`haversineKm`, `inputs.js`) between the pin's own lon/lat and the
+target's `latlng` field (present on every item — see "Data" below) and
+appends it to the feedback text ("You were 340 km from its center").
+There's no reclick-to-confirm shortcut here (unlike map-click/multiple-
+choice) — repositioning the pin before confirming is just another click
+anywhere, always reported via `onSelect` again, never itself a confirm.
+
+Only meaningful for a dataset with real geographic coordinates:
+`gameWizard.js`'s `availableAnswerKinds` prunes `"map-pin"` back out of
+`location`'s `answerKinds` list when `datasetMeta.projection ===
+"identity"` (US states' pre-projected Albers topology has no lon/lat to
+invert a click to) rather than the attribute itself knowing about
+datasets, keeping `attributes.js` dataset-agnostic. Since answer type is
+picked *before* region — and region can, for the Caribbean → US States
+option, silently swap to a different (identity-projection) dataset
+entirely — `showSubRegionStep`'s dataset-switch branch re-validates a
+previously-picked `"map-pin"` back down to `"map-click"` at the point of
+switching, rather than letting an already-made "identity" answer kind
+choice carry through to a dataset it doesn't apply to.
 
 After a result, the option buttons (and the text-guess `<input>`) go
 visually inert via a `locked`/`readOnly` flag their own handlers check,
@@ -587,25 +690,32 @@ us-states.json` + `us-states-topology.json`.
 - Home screen with three destinations: Games, Map (free-explore), Settings.
 - Games flow: subject (only Countries built; Capitals/Flags/Emblems/
   Currencies/Cities listed as "coming soon") → question type → answer
-  type (→ how to answer, for name: type it or multiple choice → how many
-  options, 2–6, if multiple choice) → region (Europe/Asia/Oceania/World
-  directly, or Africa/America via a sub-region screen: North America/
-  South America/Caribbean/**US States**) → sovereignty (All / All
-  Sovereign — skipped for US States, which has no such concept) → play.
-  Every step is its own screen with Back navigation all the way to home.
+  type (→ how to answer, for name: type it or multiple choice, for
+  location: click the map or drop a pin → how many options, 2–6, if
+  multiple choice) → region (Europe/Asia/Oceania/World directly, or
+  Africa/America via a sub-region screen: North America/South America/
+  Caribbean/**US States**) → sovereignty (All / All Sovereign — skipped
+  for US States, which has no such concept) → play. Every region and
+  sovereignty option shows the item count it'd leave you with ("All
+  (236)", "Europe (54)"). Every step is its own screen with Back
+  navigation all the way to home.
 - Two datasets: world countries (235 standard + 3 opt-in extra territories
   under "All") and US states (50 states + DC, reached via Region → America
   → US States rather than the Subject step — see "Regions" above). For
   countries, the map itself is cropped to the chosen region, not just
   which countries are asked about.
-- Two attributes: name, location. Three answer styles across them: type
-  the name, pick the name from 2–6 multiple-choice options, or click the
-  map. Two mode pairs: name→location (click the country) and
-  location→name (typed or multiple choice).
+- Two attributes: name, location. Four answer styles across them: type
+  the name, pick the name from 2–6 multiple-choice options, click the
+  map, or drop a pin on a borderless map (reveals the correct outline and
+  a distance-from-target figure on confirm; not offered for US states,
+  see "Widget registries" above). Two mode pairs: name→location (click
+  the country, or drop a pin) and location→name (typed or multiple
+  choice).
 - Select → confirm → result → next round flow: pick a country, a text
-  guess, or a multiple-choice option, confirm via the button, Enter, or
-  re-clicking the same selection, see the result, then advance via the
-  button or by clicking anywhere.
+  guess, a multiple-choice option, or a pin location, confirm via the
+  button, Enter, or re-clicking the same selection (pin drop has no
+  reclick shortcut — repositioning is just another click), see the
+  result, then advance via the button or by clicking anywhere.
 - Tiny countries get a small invisible click target so they're actually
   clickable/selectable at normal zoom; overlapping ones (dense clusters
   like the Lesser Antilles) are split along their Voronoi boundary so
@@ -613,8 +723,8 @@ us-states.json` + `us-states-topology.json`.
 - Serbia/Kosovo's shared border renders dashed, flagging it as disputed
   rather than an ordinary international border.
 - Map supports scroll/pinch/drag zoom (double-click-to-zoom disabled); a
-  persistent Settings preference controls whether zoom resets every round
-  (default) or carries over between rounds.
+  persistent Settings preference controls whether zoom carries over
+  between rounds (default) or resets every round.
 - Per-round timer, total/average time shown in the end-of-game summary.
 - A game always covers every item currently in play (all of the chosen
   region, or all 235/238 in World mode) — no fixed round count.

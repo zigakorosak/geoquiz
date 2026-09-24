@@ -43,7 +43,12 @@ export const attributes = {
     canBePrompt: true,
     canBeAnswer: true,
     promptKind: "map-highlight",
-    answerKinds: ["map-click"],
+    // "map-pin" (drop a pin on a borderless map, scored on which country's
+    // shape it lands in) only makes sense for datasets with real
+    // geographic coordinates — gameWizard.js prunes it back out for a
+    // dataset using a pre-projected "identity" projection (US states),
+    // where there's no lon/lat to invert a click to.
+    answerKinds: ["map-click", "map-pin"],
     getValue: (item) => item.id,
     checkAnswer: (guessId, item) => guessId === item.id,
     formatAnswer: (item) => item.name,

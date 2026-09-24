@@ -83,10 +83,21 @@ const answerKindLabels = {
   "text-guess": "Type it",
   "multiple-choice": "Multiple choice",
   "map-click": "Click the map",
+  "map-pin": "Drop a pin",
 };
 
+function availableAnswerKinds(config) {
+  // "map-pin" needs a real lon/lat to invert a click to and score a
+  // distance from — meaningless for a dataset using a pre-projected
+  // "identity" projection (US states), so it's pruned out here rather
+  // than never having been declared on the "location" attribute at all;
+  // attributes.js stays dataset-agnostic, datasetMeta.projection is
+  // already the signal that distinguishes the two cases.
+  return config.answerAttr.answerKinds.filter((k) => k !== "map-pin" || config.meta.projection !== "identity");
+}
+
 function goToAnswerKindOrSkip(container, config, goBack, onExit) {
-  const kinds = config.answerAttr.answerKinds;
+  const kinds = availableAnswerKinds(config);
   if (kinds.length > 1) {
     showAnswerKindStep(container, config, goBack, onExit);
   } else {
@@ -97,7 +108,7 @@ function goToAnswerKindOrSkip(container, config, goBack, onExit) {
 function showAnswerKindStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: `How do you want to answer with the ${config.answerAttr.label.toLowerCase()}?`,
-    options: config.answerAttr.answerKinds,
+    options: availableAnswerKinds(config),
     labelFn: (k) => answerKindLabels[k] ?? k,
     onPick: (k) => {
       const stepBack = () => showAnswerKindStep(container, config, goBack, onExit);
@@ -124,11 +135,56 @@ function showOptionCountStep(container, config, goBack, onExit) {
   });
 }
 
-function goToRegionOrSkip(container, config, goBack, onExit) {
-  if (config.meta.supportsRegionFilter) {
-    showRegionStep(container, config, goBack, onExit);
-  } else {
+// Item count a region option would leave you with, for the "All (236)"-
+// style label — null (no count shown) for an option that switches to a
+// different dataset entirely (Caribbean's "US States" sibling), since
+// there's no meaningful shared count against the currently-loaded items.
+// A branch region (Africa, America — no `match` of its own, only
+// children) counts everything any of its children would.
+function regionCount(loadedItems, region) {
+  if (!loadedItems || region.datasetKey) return null;
+  if (region.match) return loadedItems.filter(region.match).length;
+  if (region.children) return loadedItems.filter((item) => region.children.some((c) => c.match?.(item))).length;
+  return null;
+}
+
+function withCount(label, count) {
+  return count == null ? label : `${label} (${count})`;
+}
+
+function showLoadError(container, onExit) {
+  renderChoiceScreen(container, {
+    title: "Could not load game data.",
+    subtitle: "Check your connection and try again.",
+    options: [{ key: "home", label: "Back to Home" }],
+    labelFn: (o) => o.label,
+    onPick: () => onExit(),
+  });
+}
+
+async function goToRegionOrSkip(container, config, goBack, onExit) {
+  if (!config.meta.supportsRegionFilter && !config.meta.supportsSovereigntyFilter) {
     goToSovereigntyOrSkip(container, { ...config, region: getRegion("world") }, goBack, onExit);
+    return;
+  }
+  // Loaded here rather than at the very end (startGame) specifically so
+  // the region/sovereignty steps below can show each option's actual
+  // item count ("All (236)") — both need the real item list, not just
+  // the dataset's static meta.
+  container.innerHTML = '<div class="menu-screen wizard-screen"><h1>Loading…</h1></div>';
+  let loaded;
+  try {
+    loaded = await loadDataset(config.subject.datasetKey);
+  } catch (err) {
+    console.error(err);
+    showLoadError(container, onExit);
+    return;
+  }
+  const nextConfig = { ...config, loadedItems: loaded.items };
+  if (config.meta.supportsRegionFilter) {
+    showRegionStep(container, nextConfig, goBack, onExit);
+  } else {
+    goToSovereigntyOrSkip(container, { ...nextConfig, region: getRegion("world") }, goBack, onExit);
   }
 }
 
@@ -136,7 +192,7 @@ function showRegionStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: "Choose a map",
     options: regions,
-    labelFn: (r) => r.label,
+    labelFn: (r) => withCount(r.label, regionCount(config.loadedItems, r)),
     onPick: (r) => {
       const stepBack = () => showRegionStep(container, config, goBack, onExit);
       if (r.children) {
@@ -153,7 +209,7 @@ function showSubRegionStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: `Choose a ${config.regionParent.label} region`,
     options: config.regionParent.children,
-    labelFn: (r) => r.label,
+    labelFn: (r) => withCount(r.label, regionCount(config.loadedItems, r)),
     onPick: (r) => {
       const stepBack = () => showSubRegionStep(container, config, goBack, onExit);
       if (r.datasetKey) {
@@ -164,7 +220,19 @@ function showSubRegionStep(container, config, goBack, onExit) {
         // supportsSovereigntyFilter false, it naturally skips straight
         // to the game — no bespoke skip path needed here.
         const meta = datasetMeta[r.datasetKey];
-        goToRegionOrSkip(container, { ...config, subject: { ...config.subject, datasetKey: r.datasetKey }, meta }, stepBack, onExit);
+        // answerKind was picked back when the dataset was still the
+        // *previous* one (answer type comes before region in the wizard),
+        // so a choice only valid there — "map-pin" needs real lon/lat,
+        // meaningless for an "identity"-projection dataset like US States
+        // — has to be re-validated now rather than carried through as-is.
+        const answerKind =
+          config.answerKind === "map-pin" && meta.projection === "identity" ? "map-click" : config.answerKind;
+        goToRegionOrSkip(
+          container,
+          { ...config, subject: { ...config.subject, datasetKey: r.datasetKey }, meta, answerKind },
+          stepBack,
+          onExit
+        );
       } else {
         goToSovereigntyOrSkip(container, { ...config, region: r }, stepBack, onExit);
       }
@@ -175,7 +243,8 @@ function showSubRegionStep(container, config, goBack, onExit) {
 
 function goToSovereigntyOrSkip(container, config, goBack, onExit) {
   if (config.meta.supportsSovereigntyFilter) {
-    showSovereigntyStep(container, config, goBack, onExit);
+    const regionItems = config.loadedItems.filter(config.region.match);
+    showSovereigntyStep(container, { ...config, regionItems }, goBack, onExit);
   } else {
     startGame(container, { ...config, sovereignty: sovereigntyOptions[0] }, onExit);
   }
@@ -185,7 +254,7 @@ function showSovereigntyStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: "All countries, or sovereign states only?",
     options: sovereigntyOptions,
-    labelFn: (s) => s.label,
+    labelFn: (s) => withCount(s.label, config.regionItems.filter(s.match).length),
     onPick: (s) => startGame(container, { ...config, sovereignty: s }, onExit),
     onBack: goBack,
   });
@@ -194,8 +263,13 @@ function showSovereigntyStep(container, config, goBack, onExit) {
 async function startGame(container, config, onExit) {
   container.innerHTML = '<div class="menu-screen wizard-screen"><h1>Loading…</h1></div>';
   try {
+    // Already loaded once (in goToRegionOrSkip) for every dataset that has
+    // a region/sovereignty step to show counts on; loadDataset's own
+    // cache makes re-awaiting it here cheap and correct for every dataset
+    // regardless (including one, like US states, that skipped straight
+    // here without ever loading).
     const loaded = await loadDataset(config.subject.datasetKey);
-    const regionItems = loaded.items.filter(config.region.match);
+    const regionItems = config.regionItems ?? loaded.items.filter(config.region.match);
     const dataset = { ...loaded, items: regionItems.filter(config.sovereignty.match) };
     const settings = loadSettings();
     renderGame(
@@ -214,12 +288,6 @@ async function startGame(container, config, onExit) {
     );
   } catch (err) {
     console.error(err);
-    renderChoiceScreen(container, {
-      title: "Could not load game data.",
-      subtitle: "Check your connection and try again.",
-      options: [{ key: "home", label: "Back to Home" }],
-      labelFn: (o) => o.label,
-      onPick: () => onExit(),
-    });
+    showLoadError(container, onExit);
   }
 }

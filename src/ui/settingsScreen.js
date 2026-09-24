@@ -6,8 +6,8 @@
 import { loadSettings, saveSettings } from "../core/settings.js";
 
 const zoomOptions = [
-  { key: "reset", label: "Reset zoom every round", keepZoom: false },
   { key: "keep", label: "Keep zoom between rounds", keepZoom: true },
+  { key: "reset", label: "Reset zoom every round", keepZoom: false },
 ];
 
 export function renderSettings(container, onBack) {

@@ -288,8 +288,10 @@ button:disabled {
   cursor: pointer;
 }
 
-/* Invisible oversized click target for countries too small to hit
-   reliably (Monaco, Vatican City, San Marino, ...) — see WorldMap.js. */
+/* Invisible assist hit-region: a padded convex hull covering countries
+   too small to hit reliably (Monaco, Vatican City, San Marino, ...) or
+   spread across multiple islands (Maldives, Philippines, ...), filling
+   the gaps between parts — see WorldMap.js. */
 .country-hitarea {
   fill: transparent;
   pointer-events: all;
@@ -316,10 +318,49 @@ button:disabled {
 
 .country--correct {
   fill: var(--correct);
+  fill-opacity: 0.6;
 }
 
 .country--wrong {
   fill: var(--wrong);
+  fill-opacity: 0.6;
+}
+
+/* Pin-drop mode: every country renders identically (no borders between
+   them) until confirm reveals the correct one's shape — see WorldMap.js'
+   `pinMode`. Higher specificity than the plain .country / .country--*
+   rules above (two classes vs. one) is deliberate, so these always win
+   regardless of source order. */
+.world-map--pin-mode .country,
+.world-map--pin-mode .country--unplayable {
+  fill: var(--surface-raised);
+  stroke: none;
+}
+
+.world-map--pin-mode.world-map--clickable {
+  cursor: crosshair;
+}
+
+.world-map--pin-mode .country--correct {
+  fill: var(--correct);
+  fill-opacity: 0.6;
+  stroke: var(--correct);
+  stroke-width: 1.5;
+}
+
+.world-map--pin-mode .country--wrong {
+  fill: var(--wrong);
+  fill-opacity: 0.6;
+  stroke: var(--wrong);
+  stroke-width: 1.5;
+}
+
+.pin-marker {
+  r: 5;
+  fill: var(--accent);
+  stroke: #fff;
+  stroke-width: 1.5;
+  pointer-events: none;
 }
 
 .border-lines {

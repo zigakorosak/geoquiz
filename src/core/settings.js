@@ -6,7 +6,7 @@
 const STORAGE_KEY = "geo-quiz-settings";
 
 const defaults = {
-  keepZoom: false,
+  keepZoom: true,
 };
 
 export function loadSettings() {
