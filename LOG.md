@@ -3,6 +3,47 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-24 — git init, GitHub remote, deploy pipeline to Namecheap
+
+First time this project has been under version control — previously
+relied entirely on the local `archive/` tarball convention. User wants it
+on GitHub and live on their existing Namecheap (cPanel) site.
+
+- `git init`, initial commit (33 files — everything except `node_modules`/
+  `dist`/`archive`, which were already gitignored; added `archive` to
+  `.gitignore` too, since real git history now supersedes what those
+  tarball snapshots were standing in for). Remote added:
+  `https://github.com/zigakorosak/geoquiz`.
+- Target is a subdirectory, `<domain>/geoquiz/`, not the domain root —
+  added `vite.config.js` (didn't exist before, Vite was running on pure
+  defaults) with `base: "/geoquiz/"`. Verified in a real build rather than
+  assuming: checked the built `index.html`'s script/link tags *and*
+  grepped the built JS bundle for the `import.meta.env.BASE_URL`-prefixed
+  data-fetch URLs from `datasets.js` — both correctly resolved to
+  `/geoquiz/...` before treating this as done.
+- No Node/npm guaranteed on the shared cPanel host, so the build has to
+  happen elsewhere: added `.github/workflows/deploy.yml` — builds on
+  GitHub's runner (guaranteed clean Node environment) and FTPS-uploads
+  `dist/` to `public_html/geoquiz/` on push to `main`. Documented the
+  one-time secret setup (FTP_SERVER/FTP_USERNAME/FTP_PASSWORD as GitHub
+  repo secrets, plus recommending a cPanel FTP account scoped to just
+  that subdirectory rather than the full-access login) directly in
+  `DESIGN.md` under a new "Deployment" section, rather than adding a
+  third markdown file — the project convention is exactly two.
+- Deliberately did **not** handle the credential-bearing steps myself:
+  this machine had no SSH key, no git config, and no `gh` CLI at all
+  (confirmed by checking, not assumed) — pushing to GitHub and adding the
+  FTP secrets both need the user's own authentication, and FTP passwords
+  specifically shouldn't be typed into a chat session regardless of who's
+  capable of handling them. Asked two questions before touching anything
+  irreversible: what "the site" actually was (Namecheap/cPanel, not
+  GitHub Pages) and where in it this should live (a subdirectory,
+  `public_html/geoquiz`) — both had real consequences for `vite.config.js`
+  and the workflow's `server-dir`, not just cosmetic ones.
+- Not yet done: the actual `git push` (needs the user's GitHub auth) and
+  the three FTP secrets (needs the user's cPanel credentials). The
+  workflow will fail until both exist.
+
 ## 2026-09-24 — US States (the second real dataset, and the first non-country one)
 
 - Asked first where this should live before building anything, since it

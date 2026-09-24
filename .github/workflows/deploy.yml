@@ -1,0 +1,41 @@
+name: Deploy to Namecheap
+
+# Builds the static site (Node runs here, not on the shared host — cPanel
+# hosting doesn't reliably have a usable Node/npm setup for this) and
+# uploads dist/ to public_html/geoquiz via FTP/FTPS. Needs three repo
+# secrets set up first: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD — see
+# "Deployment" in DESIGN.md for exactly where to find them in cPanel and
+# how to add them.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Deploy to public_html/geoquiz via FTPS
+        uses: SamKirkland/FTP-Deploy-Action@v4
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          local-dir: ./dist/
+          server-dir: /public_html/geoquiz/

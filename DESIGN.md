@@ -649,6 +649,41 @@ us-states.json` + `us-states-topology.json`.
   `dist`, `archive`) into `archive/<timestamp>_<label>.tar.gz` and prunes
   down to the 4 most recent snapshots automatically.
 
+## Deployment
+
+Hosted at `<domain>/geoquiz/` on Namecheap shared hosting (cPanel),
+deployed from GitHub: `.github/workflows/deploy.yml` builds the site
+(Node runs in the Action, not on the shared host — cPanel hosting
+doesn't reliably have a usable npm/build setup) and uploads `dist/` to
+`public_html/geoquiz/` via FTPS on every push to `main` (or manually via
+the Actions tab's "Run workflow" button).
+
+`vite.config.js` sets `base: "/geoquiz/"` to match — this is what makes
+both the built `<script>`/`<link>` tags in `index.html` and the
+`import.meta.env.BASE_URL`-prefixed data fetches in `core/datasets.js`
+resolve to `/geoquiz/...` instead of the domain root. If the deploy path
+ever changes (different subdirectory, domain root, a subdomain), this is
+the one line that needs to change to match.
+
+**One-time setup** (not yet done as of this writing — the workflow will
+fail until these three secrets exist): in cPanel, under **FTP Accounts**,
+either use an existing account or create one scoped to `public_html/geoquiz`
+specifically (safer than using the main account's full-access login — a
+leaked secret then only exposes that one subdirectory). Namecheap FTP
+accounts support FTPS (FTP over TLS) already; no extra setup needed on the
+hosting side beyond having the credentials. Then, on GitHub:
+**github.com/zigakorosak/geoquiz → Settings → Secrets and variables →
+Actions → New repository secret**, and add:
+
+- `FTP_SERVER` — the hostname cPanel shows for the FTP account (often
+  the bare domain or `ftp.<domain>`)
+- `FTP_USERNAME` — the FTP account's username
+- `FTP_PASSWORD` — its password
+
+Secrets are write-only once saved (not even visible to repo admins
+afterward, only to the Action at run time) — there's no separate "confirm
+it worked" step beyond watching the next push's Action run go green.
+
 ## Environment notes
 
 - npm was not installed on this machine initially (only the `nodejs`
