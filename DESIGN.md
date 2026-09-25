@@ -146,15 +146,25 @@ Each attribute entry describes one quizzable fact about an item:
 | `checkAnswer(guess, item)` | correctness check |
 | `formatAnswer(item)` | human-readable value for feedback |
 
-v1 has two attributes: `name` (text prompt; answerable by typed-guess,
-with accent/case/punctuation-insensitive matching, *or* multiple choice —
-`answerKinds: ["text-guess", "multiple-choice"]`) and `location`
-(map-highlight prompt / map-click answer only — `answerKinds:
-["map-click"]`). **Adding a new attribute** (e.g. `capital`, `flag`)
-means adding one entry here — reusing `promptKind: "text"` /
-`answerKinds: ["text-guess"]` if a text widget is enough, or registering a
-new widget kind in `prompts.js`/`inputs.js` if not. The wizard, engine,
-and game screen need no changes.
+Three attributes so far: `name` and `capital` (both text prompt; answerable
+by typed-guess, with accent/case/punctuation-insensitive matching, *or*
+multiple choice — `answerKinds: ["text-guess", "multiple-choice"]`) and
+`location` (map-highlight prompt / map-click *or* map-pin answer —
+`answerKinds: ["map-click", "map-pin"]`, see "Map"/"Widget registries"
+below). **Adding a new attribute** (e.g. `flag`) means adding one entry
+here — reusing `promptKind: "text"` / `answerKinds: ["text-guess"]` if a
+text widget is enough, or registering a new widget kind in
+`prompts.js`/`inputs.js` if not. The wizard, engine, and game screen need
+no changes.
+
+Not every item necessarily has a value for every attribute — a few
+countries have no recorded capital (Antarctica, Macau, Heard Island and
+McDonald Islands), and District of Columbia has no state capital of its
+own (a federal district, not a state). `gameWizard.js`'s `isAskable(item,
+questionAttr, answerAttr)` filters these out of the actual playable item
+set (and the region/sovereignty step counts) rather than attributes.js or
+the engine needing to special-case a missing value — see "Navigation"
+above.
 
 `answerKinds` is a list because one attribute can support more than one
 *way* to answer with it. The wizard shows a picker between them only when
@@ -180,13 +190,30 @@ differently from every other dataset).
 
 `subjects.js` is one level above this — the wizard's "what to quiz about"
 list, deliberately broader than `datasetMeta`: it includes subjects with
-no dataset built yet (Capitals, Flags, Emblems, Currencies, Cities),
-listed disabled with a "Coming soon" hint so the wizard communicates the
-roadmap. Only `available: true` entries reference a real `datasetKey`
-into `datasetMeta`; picking one is what triggers `loadDataset` at the end
-of the wizard. `us-states` deliberately has **no** entry in `subjects.js`
-— it's not picked from the subject step at all, only reached via the
-region step (see "Regions" below), so it never shows up there.
+no dataset built yet (Flags, Emblems, Currencies, Cities), listed disabled
+with a "Coming soon" hint so the wizard communicates the roadmap. Only
+`available: true` entries reference a real `datasetKey` into
+`datasetMeta`; picking one is what triggers `loadDataset` at the end of
+the wizard. `us-states` deliberately has **no** entry in `subjects.js` —
+it's not picked from the subject step at all, only reached via the region
+step (see "Regions" below), so it never shows up there.
+
+Countries and Capitals both point at `datasetKey: "countries"` — the same
+data fetch, since every item already carries a name, a location, *and* a
+capital — but each subject also carries its own `attributeKeys`
+(`["name", "location"]` / `["capital", "location"]`), which
+`gameWizard.js`'s `promptAttributesFor`/`answerAttributesFor` prefer over
+the dataset's own (broader) `attributeKeys` when scoping the question/
+answer steps. This is what makes them read as two distinct games rather
+than one that bundles every fact together, without needing a second
+dataset or fetch. Since the override lives on the *subject* rather than
+being baked into the dataset, picking "US States" (which swaps
+`datasetKey` but keeps the rest of the subject object intact — see
+"Regions" below) carries whichever subject's attribute scoping was
+already chosen straight into US states too, as long as its own items
+actually have that attribute (state capitals are hand-curated directly in
+`generate-us-states-data.mjs`, since `us-atlas` carries no attribute data
+beyond id/name the way `world-countries` does for the countries dataset).
 
 ### Regions (`core/regions.js`)
 
@@ -321,6 +348,86 @@ Pacific/Caribbean — out of range for what Albers USA's fixed three-conic
 multiplex is built to project, and not what "US States" means here
 anyway). See `scripts/generate-us-states-data.mjs`.
 
+**Infinite horizontal scroll.** An unrestricted world view (no continent
+crop, `"naturalEarth1"` projection — `this.wrapEnabled`, checked once at
+construction) renders three side-by-side copies of the map's content
+instead of one: a "home" copy (the only one with click listeners on its
+own real `<path>` elements, and the only one with the tiny-country
+hit-area assist system below) flanked by a ghost copy one world-width to
+either side. Ghosts are built from SVG `<use href="#...">` references to
+the home copy's own paths/border-lines/pin-marker, not real duplicate
+elements — a `<use>` re-renders whatever its target currently looks like,
+*live*, including dynamically toggled classes (`markResult`'s
+`.country--correct`, for instance), so ghosts stay visually in sync with
+the home copy automatically. Each ghost country `<use>` also gets its own
+click listener reporting the same id its home path would (`.country-ghost`
+in `style.css` re-enables `pointer-events` for exactly these, scoped to
+non-pin-mode — border-line/pin-marker ghosts stay `pointer-events: none`,
+purely decorative), so every *visible* instance of a country is clickable,
+not just whichever one is technically "home" at the moment.
+
+`translateExtent`'s x bound is set to `[-Infinity, Infinity]` when
+wrapping is on (still `[0, width]` for y — panning off the top/bottom
+stays blocked as before) — d3-zoom's own clamping math degrades to a
+no-op at infinite bounds (confirmed directly against its `defaultConstrain`
+source, not assumed) rather than producing `NaN`, so this is a real,
+tested way to let d3-zoom's own tracked transform grow unbounded as the
+player keeps panning one direction, with no wall to hit. That raw,
+ever-growing transform is *not* what gets rendered, though: every "zoom"
+event first runs through `_wrapTransform`, which — only when the home
+copy has drifted more than `WRAP_WINDOW` (half a world-width) off-register
+— shifts it by exactly one world-width in the direction that reduces the
+drift. A whole-world-width shift is invisible on screen precisely because
+a ghost copy already occupies the position being shifted *to*. `_wrapPeriod`
+(one world-width) and `_homeLeft` (its left edge), both in projected px at
+the map's current `fitSize` scale, are recomputed every `_reflow` via
+`pathGen.bounds(this.geojson)` — needed since they change with zoom level,
+window resize, or (for a differently-scaled dataset) feature count.
+`WRAP_WINDOW` is kept at half rather than a full world-width specifically
+so the home copy — the only fully-assisted, click-precise copy — never
+drifts so far that *neither* it nor a ghost covers more than half the
+viewport; a full-period window would let it drift to the very edge of the
+ghosts' coverage, leaving the player looking mostly at ghost content with
+nothing to click until the next snap.
+
+Only one extra step is needed for pin-drop mode's click handling to keep
+working correctly under wrap: `this.currentTransform.invert(...)` (already
+used to convert a screen click into the *home* copy's own projected
+pixel space) is only correct as-is for a click that visually landed on the
+home copy — one that landed on a ghost needs its x folded back into the
+home copy's `[_homeLeft, _homeLeft + _wrapPeriod)` range first (a plain
+modulo), since ghost content is a repeat of the exact same geography one
+or more world-widths over. The modulo is a no-op for a home-copy click (or
+whenever wrapping is off), so this doesn't change anything for the
+non-wrapped case — the only one that existed before this feature.
+
+A pan/zoom gesture in progress also toggles a `.world-map--panning` class
+(via `zoomBehavior.on("start"/"end", ...)` — d3-zoom's own dispatched
+gesture-lifecycle events, not native DOM events, so bound on the zoom
+behavior itself rather than the selection) that sets `shape-rendering:
+optimizeSpeed` for the duration — a well-established SVG performance
+technique: drop rendering quality while the player is actively dragging
+and looking at the whole shape moving, not any single edge, in exchange
+for faster per-frame repaints. Repainting ~240 country paths (more,
+counting wrap's ghost copies) at full quality on every drag/wheel tick is
+real work a phone GPU in particular can fall behind on, which is what
+actually reads as "not smooth" — `will-change: transform` on each copy
+group is the complementary compositor hint, telling the browser ahead of
+time which layers move every frame instead of it discovering that mid-drag.
+
+The map's own colors (`--map-ocean`/`--map-land`/`--map-land-muted`/
+`--map-border` in `style.css`) are deliberately separate variables from
+the general `--bg`/`--surface-raised`/`--border` trio the rest of the UI
+(buttons, cards) uses — measured (WCAG-style luminance contrast ratio),
+not just eyeballed, before choosing new values: the general trio's
+ocean-vs-land contrast was only 1.31:1 and country-stroke-vs-fill 1.15:1,
+both far too low to tell land from water or one country from its
+neighbor on an unbounded map with no border to lean on the way a button
+has. The map-specific values push those to ~2.9:1 and ~3:1 respectively,
+without touching how buttons/cards look elsewhere (they read fine as-is,
+leaning on their own border + spacing rather than fill-vs-background
+contrast).
+
 Two independent, differently-scoped filters, both optional:
 
 - `filterIds` — a **hard crop**. Features that don't pass are dropped
@@ -353,39 +460,56 @@ pointer hit-testing even over a larger neighboring country). Built in
   feature's projected bounding box (`pathGen.bounds`), area
   (`pathGen.area`), and — for multi-part features — each individual
   part's own area (`_largestPartArea`, `pathGen.area` run once per
-  `MultiPolygon` coordinate entry): a single-blob country qualifies if
-  its area is under `AREA_THRESHOLD_SINGLE` (1.2px² at identity zoom on a
-  ~800px-wide map); a multi-part country qualifies only if its single
-  *biggest* part is under `LARGEST_PART_CAP` (55px²) — total area and
+  `MultiPolygon` coordinate entry): a single-blob feature qualifies if
+  its area is under `AREA_RATIO_SINGLE` (0.0007×) of the map's own
+  **even-split reference area** — `(viewport width × height) /
+  playable feature count`, i.e. the area each feature would have if the
+  map were divided evenly among all of them; a multi-part feature
+  qualifies only if its single *biggest* part is under
+  `LARGEST_PART_RATIO` (0.035×) of that same reference — total area and
   part count aren't the signal, whether any one part is already a
   comfortable click target on its own is. Philippines has 48 parts and a
-  large total area (140px²), but its biggest island alone is only 51px²,
-  so it still qualifies; Indonesia, Greece, the UK, Norway, Japan,
-  Malaysia, and every large country with a couple of stray offshore
-  islets (Russia, Canada, USA, Brazil, Australia, China, France, ...)
-  all have one part alone well past that, so their own path is already a
-  fine click target and doesn't need a hull spanning their full extent.
-  Either way, a feature whose bounding box's larger dimension is at or
-  past `HULL_BBOX_CAP` (150px) is skipped even if it would otherwise
-  qualify — independent of `LARGEST_PART_CAP`, this catches the rarer
-  case of a small *part* scattered far from the rest (Netherlands'
-  Caribbean islands, ~167px from the mainland) as well as topology data
-  that wraps around the antimeridian (Kiribati, Fiji), which produces a
-  bounding box spanning nearly the whole map. All three constants were
-  calibrated against the actual dataset, not guessed — see the comments
-  above them in `WorldMap.js` for the measured sizes that motivated each
-  cutoff (in particular, `LARGEST_PART_CAP` sits between Philippines'
-  51.46px² largest island, which must qualify, and Greece's 60.75px²,
-  which must not). This deliberately excludes ordinary small-but-real
-  single-blob countries (Luxembourg, Cyprus, Kosovo, Qatar, Jamaica, ...)
-  that are perfectly clickable at their true size.
+  large total area, but its biggest island alone is only 0.031× the
+  countries map's even-split area, so it still qualifies; Indonesia,
+  Greece, the UK, Norway, Japan, Malaysia, and every large country with a
+  couple of stray offshore islets (Russia, Canada, USA, Brazil,
+  Australia, China, France, ...) all have one part alone well past that,
+  so their own path is already a fine click target and doesn't need a
+  hull spanning their full extent. Either way, a feature whose bounding
+  box's larger dimension is at or past `HULL_BBOX_CAP` (150px, a fixed
+  px value — see its own comment in `WorldMap.js` for why that one
+  doesn't scale like the other two) is skipped even if it would
+  otherwise qualify — this catches the rarer case of a small *part*
+  scattered far from the rest (Netherlands' Caribbean islands) as well
+  as topology data that wraps around the antimeridian (Kiribati, Fiji).
 
-  *(An earlier version of this qualified every multi-part country
-  unconditionally, regardless of size — over half the dataset, including
-  every large country with even one stray offshore islet. Their hulls,
-  built from a bbox spanning a whole continent, badly broke click
-  targeting for countries anywhere near them; `LARGEST_PART_CAP` is the
-  fix — see LOG.md.)*
+  Measuring against the map's own even-split area, rather than a fixed
+  px² value, is what lets the same two ratios work correctly for both
+  datasets `WorldMap` renders — the world map fits ~240 countries into
+  800×500px, the US states map only 51 states into the same 800×500px,
+  so a country and a state at the "same" px² size mean very different
+  things about how visually/physically small they actually are.
+  Washington DC (~4.4px² at that scale — bigger than *every* country
+  microstate's own area) is the case that surfaced this: a fixed
+  threshold carried over from the countries dataset would never flag it
+  as tiny, yet DC is exactly as disproportionate among US states
+  (0.00057× that map's even-split area) as Mauritius is among countries
+  (0.00056× the countries map's) once each is measured against its own
+  map's scale. Both ratio constants were calibrated against measured
+  data, not guessed — see the comments above them in `WorldMap.js` for
+  the exact figures and boundary cases (in both datasets) that motivated
+  each cutoff. This deliberately excludes ordinary small-but-real
+  single-blob features (Luxembourg, Cyprus, Kosovo, Qatar, Jamaica,
+  Connecticut, ...) that are perfectly clickable at their true size.
+
+  *(Earlier versions of this used fixed px² thresholds instead of
+  ratios — one qualified every multi-part country unconditionally
+  regardless of size, over half the dataset, including every large
+  country with even one stray offshore islet, badly breaking click
+  targeting for countries near them; the next fixed the qualification
+  logic but calibrated its thresholds only against the countries
+  dataset, so US states too small to click reliably — DC chief among
+  them — still fell through uncaught. See LOG.md for both.)*
 - **Pass 2** builds each qualifying feature's hit-area: every ring point
   of *every part* is projected and passed to `d3-delaunay`'s convex hull
   (`Delaunay.from(points).hull`), then each hull vertex is pushed outward
@@ -724,7 +848,10 @@ us-states.json` + `us-states-topology.json`.
   rather than an ordinary international border.
 - Map supports scroll/pinch/drag zoom (double-click-to-zoom disabled); a
   persistent Settings preference controls whether zoom carries over
-  between rounds (default) or resets every round.
+  between rounds (default) or resets every round. An unrestricted World
+  view scrolls infinitely left/right (wraps around rather than stopping
+  at the antimeridian) — a continent-cropped view or the US states map
+  don't, since neither tiles into a seamless loop.
 - Per-round timer, total/average time shown in the end-of-game summary.
 - A game always covers every item currently in play (all of the chosen
   region, or all 235/238 in World mode) — no fixed round count.

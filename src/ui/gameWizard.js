@@ -26,12 +26,32 @@ import { loadSettings } from "../core/settings.js";
 import { renderChoiceScreen } from "./screenKit.js";
 import { renderGame } from "./game.js";
 
-function promptAttributesFor(meta) {
-  return resolveAttributes(meta.attributeKeys).filter((a) => a.canBePrompt);
+// A subject's own attributeKeys (see subjects.js) take priority over its
+// dataset's full list — this is what lets Countries and Capitals share
+// one dataset/fetch but still read as two separate games, each scoped to
+// its own pair of attributes rather than offering every fact at once.
+function promptAttributesFor(config) {
+  return resolveAttributes(config.subject.attributeKeys ?? config.meta.attributeKeys).filter((a) => a.canBePrompt);
 }
 
-function answerAttributesFor(meta, excludeKey) {
-  return resolveAttributes(meta.attributeKeys).filter((a) => a.canBeAnswer && a.key !== excludeKey);
+function answerAttributesFor(config, excludeKey) {
+  return resolveAttributes(config.subject.attributeKeys ?? config.meta.attributeKeys).filter(
+    (a) => a.canBeAnswer && a.key !== excludeKey
+  );
+}
+
+// Not every item necessarily has a value for every attribute (a few
+// countries have no recorded capital — Antarctica, Macau, ...; District
+// of Columbia has no state capital of its own, being a federal district
+// rather than a state) — an item missing a value for the chosen question
+// or answer attribute isn't a fair round to include. Applied to the final
+// playable item set (see startGame) and to the region/sovereignty step
+// counts so the number shown there matches what the player actually gets
+// — never to `regionItems` itself (used for the map's hard crop in
+// game.js), so an excluded item still renders muted rather than leaving a
+// hole, the same as a sovereignty-excluded one does.
+function isAskable(item, questionAttr, answerAttr) {
+  return questionAttr.getValue(item) != null && answerAttr.getValue(item) != null;
 }
 
 export function startGameWizard(container, onExit) {
@@ -56,7 +76,7 @@ function showSubjectStep(container, config, goBack, onExit) {
 function showQuestionStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: "What should we show you?",
-    options: promptAttributesFor(config.meta),
+    options: promptAttributesFor(config),
     labelFn: (a) => a.label,
     onPick: (a) =>
       showAnswerStep(container, { ...config, questionAttr: a }, () => showQuestionStep(container, config, goBack, onExit), onExit),
@@ -67,7 +87,7 @@ function showQuestionStep(container, config, goBack, onExit) {
 function showAnswerStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: "How do you want to answer?",
-    options: answerAttributesFor(config.meta, config.questionAttr.key),
+    options: answerAttributesFor(config, config.questionAttr.key),
     labelFn: (a) => a.label,
     onPick: (a) => {
       const stepBack = () => showAnswerStep(container, config, goBack, onExit);
@@ -140,12 +160,20 @@ function showOptionCountStep(container, config, goBack, onExit) {
 // different dataset entirely (Caribbean's "US States" sibling), since
 // there's no meaningful shared count against the currently-loaded items.
 // A branch region (Africa, America — no `match` of its own, only
-// children) counts everything any of its children would.
-function regionCount(loadedItems, region) {
-  if (!loadedItems || region.datasetKey) return null;
-  if (region.match) return loadedItems.filter(region.match).length;
-  if (region.children) return loadedItems.filter((item) => region.children.some((c) => c.match?.(item))).length;
-  return null;
+// children) counts everything any of its children would. Also excludes
+// items that wouldn't actually be askable with the chosen question/answer
+// attributes (see isAskable) so the number shown matches what the player
+// will actually get.
+function regionCount(config, region) {
+  const items = config.loadedItems;
+  if (!items || region.datasetKey) return null;
+  const matched = region.match
+    ? items.filter(region.match)
+    : region.children
+    ? items.filter((item) => region.children.some((c) => c.match?.(item)))
+    : null;
+  if (!matched) return null;
+  return matched.filter((item) => isAskable(item, config.questionAttr, config.answerAttr)).length;
 }
 
 function withCount(label, count) {
@@ -192,7 +220,7 @@ function showRegionStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: "Choose a map",
     options: regions,
-    labelFn: (r) => withCount(r.label, regionCount(config.loadedItems, r)),
+    labelFn: (r) => withCount(r.label, regionCount(config, r)),
     onPick: (r) => {
       const stepBack = () => showRegionStep(container, config, goBack, onExit);
       if (r.children) {
@@ -209,7 +237,7 @@ function showSubRegionStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: `Choose a ${config.regionParent.label} region`,
     options: config.regionParent.children,
-    labelFn: (r) => withCount(r.label, regionCount(config.loadedItems, r)),
+    labelFn: (r) => withCount(r.label, regionCount(config, r)),
     onPick: (r) => {
       const stepBack = () => showSubRegionStep(container, config, goBack, onExit);
       if (r.datasetKey) {
@@ -254,7 +282,11 @@ function showSovereigntyStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
     title: "All countries, or sovereign states only?",
     options: sovereigntyOptions,
-    labelFn: (s) => withCount(s.label, config.regionItems.filter(s.match).length),
+    labelFn: (s) =>
+      withCount(
+        s.label,
+        config.regionItems.filter(s.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr)).length
+      ),
     onPick: (s) => startGame(container, { ...config, sovereignty: s }, onExit),
     onBack: goBack,
   });
@@ -270,7 +302,15 @@ async function startGame(container, config, onExit) {
     // here without ever loading).
     const loaded = await loadDataset(config.subject.datasetKey);
     const regionItems = config.regionItems ?? loaded.items.filter(config.region.match);
-    const dataset = { ...loaded, items: regionItems.filter(config.sovereignty.match) };
+    // regionItems itself stays unfiltered by askability (see isAskable) —
+    // it's also what game.js crops the map to, and an item missing a
+    // value for this round's question/answer attribute should still
+    // render muted, not vanish and leave a hole, same as a sovereignty-
+    // excluded one does.
+    const dataset = {
+      ...loaded,
+      items: regionItems.filter(config.sovereignty.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr)),
+    };
     const settings = loadSettings();
     renderGame(
       container,

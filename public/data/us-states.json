@@ -1,206 +1,257 @@
 [
   {
     "id": "01",
-    "name": "Alabama"
+    "name": "Alabama",
+    "capital": "Montgomery"
   },
   {
     "id": "02",
-    "name": "Alaska"
+    "name": "Alaska",
+    "capital": "Juneau"
   },
   {
     "id": "04",
-    "name": "Arizona"
+    "name": "Arizona",
+    "capital": "Phoenix"
   },
   {
     "id": "05",
-    "name": "Arkansas"
+    "name": "Arkansas",
+    "capital": "Little Rock"
   },
   {
     "id": "06",
-    "name": "California"
+    "name": "California",
+    "capital": "Sacramento"
   },
   {
     "id": "08",
-    "name": "Colorado"
+    "name": "Colorado",
+    "capital": "Denver"
   },
   {
     "id": "09",
-    "name": "Connecticut"
+    "name": "Connecticut",
+    "capital": "Hartford"
   },
   {
     "id": "10",
-    "name": "Delaware"
+    "name": "Delaware",
+    "capital": "Dover"
   },
   {
     "id": "11",
-    "name": "District of Columbia"
+    "name": "District of Columbia",
+    "capital": null
   },
   {
     "id": "12",
-    "name": "Florida"
+    "name": "Florida",
+    "capital": "Tallahassee"
   },
   {
     "id": "13",
-    "name": "Georgia"
+    "name": "Georgia",
+    "capital": "Atlanta"
   },
   {
     "id": "15",
-    "name": "Hawaii"
+    "name": "Hawaii",
+    "capital": "Honolulu"
   },
   {
     "id": "16",
-    "name": "Idaho"
+    "name": "Idaho",
+    "capital": "Boise"
   },
   {
     "id": "17",
-    "name": "Illinois"
+    "name": "Illinois",
+    "capital": "Springfield"
   },
   {
     "id": "18",
-    "name": "Indiana"
+    "name": "Indiana",
+    "capital": "Indianapolis"
   },
   {
     "id": "19",
-    "name": "Iowa"
+    "name": "Iowa",
+    "capital": "Des Moines"
   },
   {
     "id": "20",
-    "name": "Kansas"
+    "name": "Kansas",
+    "capital": "Topeka"
   },
   {
     "id": "21",
-    "name": "Kentucky"
+    "name": "Kentucky",
+    "capital": "Frankfort"
   },
   {
     "id": "22",
-    "name": "Louisiana"
+    "name": "Louisiana",
+    "capital": "Baton Rouge"
   },
   {
     "id": "23",
-    "name": "Maine"
+    "name": "Maine",
+    "capital": "Augusta"
   },
   {
     "id": "24",
-    "name": "Maryland"
+    "name": "Maryland",
+    "capital": "Annapolis"
   },
   {
     "id": "25",
-    "name": "Massachusetts"
+    "name": "Massachusetts",
+    "capital": "Boston"
   },
   {
     "id": "26",
-    "name": "Michigan"
+    "name": "Michigan",
+    "capital": "Lansing"
   },
   {
     "id": "27",
-    "name": "Minnesota"
+    "name": "Minnesota",
+    "capital": "Saint Paul"
   },
   {
     "id": "28",
-    "name": "Mississippi"
+    "name": "Mississippi",
+    "capital": "Jackson"
   },
   {
     "id": "29",
-    "name": "Missouri"
+    "name": "Missouri",
+    "capital": "Jefferson City"
   },
   {
     "id": "30",
-    "name": "Montana"
+    "name": "Montana",
+    "capital": "Helena"
   },
   {
     "id": "31",
-    "name": "Nebraska"
+    "name": "Nebraska",
+    "capital": "Lincoln"
   },
   {
     "id": "32",
-    "name": "Nevada"
+    "name": "Nevada",
+    "capital": "Carson City"
   },
   {
     "id": "33",
-    "name": "New Hampshire"
+    "name": "New Hampshire",
+    "capital": "Concord"
   },
   {
     "id": "34",
-    "name": "New Jersey"
+    "name": "New Jersey",
+    "capital": "Trenton"
   },
   {
     "id": "35",
-    "name": "New Mexico"
+    "name": "New Mexico",
+    "capital": "Santa Fe"
   },
   {
     "id": "36",
-    "name": "New York"
+    "name": "New York",
+    "capital": "Albany"
   },
   {
     "id": "37",
-    "name": "North Carolina"
+    "name": "North Carolina",
+    "capital": "Raleigh"
   },
   {
     "id": "38",
-    "name": "North Dakota"
+    "name": "North Dakota",
+    "capital": "Bismarck"
   },
   {
     "id": "39",
-    "name": "Ohio"
+    "name": "Ohio",
+    "capital": "Columbus"
   },
   {
     "id": "40",
-    "name": "Oklahoma"
+    "name": "Oklahoma",
+    "capital": "Oklahoma City"
   },
   {
     "id": "41",
-    "name": "Oregon"
+    "name": "Oregon",
+    "capital": "Salem"
   },
   {
     "id": "42",
-    "name": "Pennsylvania"
+    "name": "Pennsylvania",
+    "capital": "Harrisburg"
   },
   {
     "id": "44",
-    "name": "Rhode Island"
+    "name": "Rhode Island",
+    "capital": "Providence"
   },
   {
     "id": "45",
-    "name": "South Carolina"
+    "name": "South Carolina",
+    "capital": "Columbia"
   },
   {
     "id": "46",
-    "name": "South Dakota"
+    "name": "South Dakota",
+    "capital": "Pierre"
   },
   {
     "id": "47",
-    "name": "Tennessee"
+    "name": "Tennessee",
+    "capital": "Nashville"
   },
   {
     "id": "48",
-    "name": "Texas"
+    "name": "Texas",
+    "capital": "Austin"
   },
   {
     "id": "49",
-    "name": "Utah"
+    "name": "Utah",
+    "capital": "Salt Lake City"
   },
   {
     "id": "50",
-    "name": "Vermont"
+    "name": "Vermont",
+    "capital": "Montpelier"
   },
   {
     "id": "51",
-    "name": "Virginia"
+    "name": "Virginia",
+    "capital": "Richmond"
   },
   {
     "id": "53",
-    "name": "Washington"
+    "name": "Washington",
+    "capital": "Olympia"
   },
   {
     "id": "54",
-    "name": "West Virginia"
+    "name": "West Virginia",
+    "capital": "Charleston"
   },
   {
     "id": "55",
-    "name": "Wisconsin"
+    "name": "Wisconsin",
+    "capital": "Madison"
   },
   {
     "id": "56",
-    "name": "Wyoming"
+    "name": "Wyoming",
+    "capital": "Cheyenne"
   }
 ]

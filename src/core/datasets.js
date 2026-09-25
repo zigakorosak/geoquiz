@@ -13,7 +13,7 @@ export const datasetMeta = {
     itemsUrl: `${import.meta.env?.BASE_URL ?? "/"}data/countries.json`,
     topologyUrl: `${import.meta.env?.BASE_URL ?? "/"}data/world-50m.json`,
     topologyObject: "countries",
-    attributeKeys: ["name", "location"],
+    attributeKeys: ["name", "location", "capital"],
     supportsRegionFilter: true,
     supportsSovereigntyFilter: true,
     // Country-id pairs whose *shared* border (not their whole outline —
@@ -31,7 +31,7 @@ export const datasetMeta = {
     itemsUrl: `${import.meta.env?.BASE_URL ?? "/"}data/us-states.json`,
     topologyUrl: `${import.meta.env?.BASE_URL ?? "/"}data/us-states-topology.json`,
     topologyObject: "states",
-    attributeKeys: ["name", "location"],
+    attributeKeys: ["name", "location", "capital"],
     // Pre-projected (Albers USA, Alaska/Hawaii insets already applied) —
     // see WorldMap.js's PROJECTIONS map and generate-us-states-data.mjs.
     projection: "identity",

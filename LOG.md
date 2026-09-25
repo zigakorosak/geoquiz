@@ -3,6 +3,241 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-25 — infinite horizontal scroll, map contrast, smoother panning
+
+Three requests: make the World map scroll infinitely left/right instead
+of stopping at an edge, improve the map's contrast, and make panning/
+zooming feel smoother (mobile specifically named as where it's roughest).
+
+**Contrast**: measured before touching anything — WCAG-style luminance
+contrast between the map's ocean (page `--bg`) and land (`--surface-
+raised`) fill was only 1.31:1, and country stroke vs. fill 1.15:1, both
+confirmed too low to reliably tell land from water or one country from
+its neighbor. Introduced dedicated `--map-ocean`/`--map-land`/`--map-
+land-muted`/`--map-border` variables (deliberately separate from the
+general `--bg`/`--surface-raised`/`--border` trio buttons/cards use,
+which reads fine as-is leaning on its own border+spacing) and picked new
+values landing at ~2.9:1 (ocean/land) and ~3:1 (land/border), verified
+with the same contrast-ratio script rather than eyeballed.
+
+**Infinite scroll**: the biggest piece. `WorldMap.js` now renders three
+side-by-side copies of an unrestricted World view's content (disabled
+for a continent-cropped view or the identity-projected US states map,
+which don't tile into a seamless loop) — a "home" copy with real click
+listeners/hit-areas, flanked by two ghost copies built from SVG `<use>`
+references to the home copy's own paths, one world-width to either side.
+`<use>` re-renders its target live (including dynamically toggled
+classes like `markResult`'s `.country--correct`), so ghosts stay in sync
+automatically; each ghost country also got its own click listener
+reporting the same id its home path would, once testing surfaced that
+relying solely on keeping the home copy "close enough" to the viewport
+would leave up to half the visible map unclickable at any given moment.
+`translateExtent`'s x bound goes to `[-Infinity, Infinity]` (confirmed
+directly against d3-zoom's own `defaultConstrain` source that this
+degrades to a no-op rather than producing NaN); every "zoom" tick then
+runs through a `_wrapTransform` step that snaps the render by exactly one
+world-width whenever the home copy drifts more than half a world-width
+off-register — invisible on screen since a ghost already occupies
+whatever position the snap shifts to.
+
+Found and fixed a real correctness bug during this work, not after:
+pin-drop mode's click handler converts a screen click to lon/lat via
+`currentTransform.invert(...)`, which is only correct for a click that
+visually landed on the *home* copy — one landing on a ghost needs its x
+folded back into the home copy's own coordinate range first (a plain
+modulo), since ghost content is a geometric repeat of the same geography
+one or more world-widths over. Caught by reasoning through the coordinate
+math before writing a test for it, then confirmed with an actual
+simulated click at an extreme wrap offset.
+
+**Smoothness**: a pan/zoom gesture in progress now toggles a
+`.world-map--panning` class (bound via `zoomBehavior.on("start"/"end",
+...)` — a bug caught by its own test: these are d3-zoom's *own*
+dispatched gesture events, not native DOM ones, so the first attempt,
+bound via the selection's `.on(...)` the same way `dblclick.zoom` is,
+silently never fired at all) that sets `shape-rendering: optimizeSpeed`
+for the gesture's duration — trading edge antialiasing for faster
+per-frame repaints while the player is looking at the whole shape moving,
+not any single edge. `will-change: transform` on each copy group is the
+complementary compositor hint. Repainting ~240 country paths (more,
+counting wrap's ghost copies) at full quality on every drag/wheel tick on
+a phone GPU is the likely actual source of the reported jank; a full
+Canvas/WebGL rewrite would help more but is out of scope for this round.
+
+Verified via jsdom: `wrapEnabled` correctly true only for an unrestricted
+naturalEarth1 view (false for a continent crop and for US states);
+correct 3-copy vs. 1-copy DOM structure; clicking a ghost country fires
+with the same id its home path would; `_wrapTransform`'s snap math
+checked directly across a range of drift/zoom-level combinations, plus
+`_applyTransform`'s ghost positioning formula; the pin-mode wrap-modulo
+fix verified with a simulated click at an extreme (home shifted a full
+world-width) offset, correctly resolving to the clicked country either
+way; markResult/highlight/hit-area-assist regression-checked against the
+pre-wrap behavior; full wizard-driven end-to-end runs for a World-mode
+map-click game (3 copies), a Europe-scoped game (1 copy, wrap correctly
+off), and a World-mode pin-drop game (3 copies, pin mode + wrap
+together); the start/end panning-class bug caught by directly invoking
+the registered handlers and checking the class actually toggled, after
+which the fix was confirmed the same way. Scratch scripts deleted after,
+per usual — real click-drag smoothness itself is, like the rest of this
+map's interaction feel, unverifiable without a real browser.
+
+## 2026-09-25 — Capitals subject (countries and US states)
+
+User asked for a Capitals subject with the same categories as Countries,
+including US state capitals within the US states game.
+
+Reused the existing `countries` dataset (world-countries already
+provides a `capital` field per item — confirmed all 238 items, no new
+fetch needed) rather than standing up a separate dataset: added a
+`capital` attribute (`attributes.js`, text prompt, typed/multiple-choice
+answer, same shape as `name`) and gave `subjects.js` entries their own
+`attributeKeys` override (`["name","location"]` for Countries,
+`["capital","location"]` for Capitals) that `gameWizard.js` now prefers
+over the dataset's full list — this is what keeps the two subjects
+scoped to different question/answer options despite sharing one dataset.
+
+For US states, `us-atlas` (unlike `world-countries`) carries no attribute
+data beyond id/name, so state capitals are hand-curated directly in
+`generate-us-states-data.mjs` (all 50 states + DC's topology names cross-
+checked against the actual feature list first, not guessed) and
+`us-states.json` regenerated. District of Columbia gets `capital: null`
+deliberately — it's a federal district, not a state, with no capital of
+its own.
+
+That null surfaced a real gap: the existing wizard/engine pipeline
+assumed every item has a value for every attribute (true for name/
+location, not for capital). Fixed generically rather than special-casing
+DC: `gameWizard.js`'s new `isAskable(item, questionAttr, answerAttr)`
+filters the final playable item set (and the region/sovereignty step
+counts, so the displayed number matches what the player actually gets)
+to items with a non-null value for both the chosen question and answer
+attribute — applied to `dataset.items`, deliberately *not* to
+`regionItems` (used for the map's hard crop), so an excluded item like DC
+still renders muted on the map rather than vanishing and leaving a hole,
+exactly like a sovereignty-excluded territory already does. This same
+filter also correctly excludes the three countries with no recorded
+capital (Antarctica, Macau, Heard Island and McDonald Islands) from
+Capitals-subject rounds, found while checking data completeness before
+writing the filter rather than after a bug report.
+
+Verified via jsdom, driving the actual wizard through real button clicks
+(`fetch` mocked to the real `public/data/*.json` files): subject step
+lists Capitals as enabled; picking it scopes the question step to
+Capital/Location (not Name); switching to US States mid-flow with
+Capitals active correctly shows "Round 1 / 50" (DC excluded) and a real
+state capital as the first prompt; DC still renders on the map as a
+muted/unplayable shape rather than being hard-cropped out; Countries
+subject's own question step is unaffected (still Name/Location only).
+Scratch scripts deleted after, per usual.
+
+## 2026-09-25 — hit-area thresholds made scale-relative (fixes tiny US states, e.g. DC)
+
+User reported small US states — Washington DC named specifically — are
+hard to hit on mobile, where there's no hover to compensate for a
+too-small tap target.
+
+Measured first rather than guessing: at the US states map's actual
+render scale (Albers-projected, fit to 800×500px), DC's own area is
+~4.4px² — comfortably *larger* than every country microstate's area
+(Vatican City 0.0004px², Monaco 0.007px², ..., Mauritius 0.94px²), so
+the existing `AREA_THRESHOLD_SINGLE` (1.2px², a fixed value calibrated
+only against the countries dataset in an earlier round) never flagged it
+as tiny at all — a real, confirmed gap, not a near-miss. Root cause:
+`WorldMap` renders both datasets into the same 800×500px viewport, but
+the world map divides that space among ~240 countries while the US
+states map divides it among only 51 states — so the "same" px² area
+means very different things on the two maps, and any fixed px²
+threshold calibrated against one dataset can't transfer to the other.
+
+Fixed by replacing both hit-area qualification constants
+(`AREA_THRESHOLD_SINGLE`, `LARGEST_PART_CAP`) with ratios
+(`AREA_RATIO_SINGLE`, `LARGEST_PART_RATIO`) measured against a new
+per-render reference, `evenSplitArea = (viewport width × height) /
+playable feature count` — the area each feature would have if the map
+were divided evenly among all of them. Recalibrated against *both*
+datasets together this time (previous rounds only checked the countries
+dataset): confirmed Washington DC's ratio (0.00057×) lines up almost
+exactly with Mauritius's (0.00056×) under this normalization — strong
+validation that even-split-area is the right common scale, not a
+coincidence — and picked `AREA_RATIO_SINGLE` (0.0007) and
+`LARGEST_PART_RATIO` (0.035) to sit cleanly between each dataset's own
+boundary cases (Mauritius/Luxembourg and DC/Rhode Island for the first;
+Philippines/Greece and Hawaii/Massachusetts for the second — Hawaii
+qualifying for hull-fill as a genuine archipelago is a bonus this
+surfaced, not something specifically asked for, but harmless and correct
+under the same logic). `HULL_BBOX_CAP` (the antimeridian/far-exclave
+safety cap) stays a fixed px value on purpose — it's guarding against a
+hit-region spanning too much of the *viewport*, which doesn't depend on
+how many features share it.
+
+Verified via jsdom: re-ran the full existing countries regression suite
+(named archipelagos/microstates still assisted, large/sprawling
+countries still excluded, total assisted count 93→95, an expected small
+shift from recalibrating against a slightly different but equally
+principled methodology) and confirmed District of Columbia, Rhode
+Island, and Delaware now get assisted on the US states map while
+Connecticut, Massachusetts, Ohio, Texas, Alaska, and California
+correctly don't; also checked DC's actual hit-region size (~8.8×9.4px,
+up from its raw ~3.6px bbox) and confirmed it's still correctly
+Voronoi-clipped against its real neighbors (Maryland, Virginia). Scratch
+scripts deleted after, per usual.
+
+## 2026-09-24 — pin-drop click coordinates: fix the actual bug real-browser testing would have caught
+
+User reported pin mode didn't work on the live site, and asked to
+double-check the correct/wrong map transparency again.
+
+**Transparency**: re-read every rule touching `.country--correct`/
+`.country--wrong` (base and pin-mode-specific) and the cascade around
+them — `fill-opacity: 0.6` is set with nothing else in the stylesheet
+overriding it at equal-or-higher specificity, and the underlying
+`--correct`/`--wrong` color values are reasonable, moderately-bright
+colors that read as visibly translucent (not "solid-looking despite the
+opacity") against this app's dark background. Source looks correct; no
+change made here. (If it still doesn't look translucent, the likely
+explanation is the same as pin mode below — a browser holding onto the
+pre-fix cached build — since it was already live at the end of the
+previous entry.)
+
+**Pin mode**: found a real bug in the click-to-lon/lat coordinate
+conversion this sandbox's jsdom-based testing structurally could not have
+caught before now. The original code (`pointer(event, this.pathsGroup)`,
+from `d3-selection`) relies on that group's `getScreenCTM()` composing
+*both* the SVG's viewBox scaling and the paths group's own live zoom/pan
+`transform` attribute into one matrix in a single read — correct in
+principle, but harder to be fully confident about across real browsers
+than doing the two steps explicitly, and `getScreenCTM` isn't implemented
+in jsdom at all, so this exact code path had only ever been exercised by
+calling the resulting callback directly (bypassing the coordinate math
+entirely) — see the previous entry's own "unverified... no real browser"
+caveat, which turned out to be hiding a real bug rather than just an
+untested-but-fine path.
+
+Replaced with two separate, individually simple steps: `getBoundingClientRect()`
+(well-supported everywhere, and — unlike `getScreenCTM` — actually
+implemented in jsdom) gives the click's position relative to the SVG's
+own top-left corner; since `_reflow` always sets `viewBox="0 0
+clientWidth clientHeight"` to match the SVG's own rendered CSS size
+exactly, that's already 1:1 with SVG user-space px, no separate viewBox
+conversion needed. `this.currentTransform.invert(...)` — `d3-zoom`'s own
+purpose-built tool for exactly this — then separately undoes the current
+zoom/pan on top of that. Also hardened the pin marker's radius as a
+direct SVG attribute (`r="5"`) rather than relying solely on the CSS `r`
+property (broadly supported, but no reason to lean on it alone when
+setting the attribute directly costs nothing).
+
+Because `getBoundingClientRect` (unlike `getScreenCTM`) *is* implemented
+in jsdom, this was actually properly testable this time: mocked the
+SVG's bounding rect to a known screen offset, dispatched a real
+`MouseEvent` with `clientX`/`clientY` computed from a known lon/lat
+projected forward, and confirmed the click handler recovers the exact
+original coordinates and resolves to the correct country — both at
+identity zoom *and* under an arbitrary applied pan/scale transform
+(previously impossible to verify end-to-end at all). Also re-ran the
+full existing pin-mode/map-click/us-states regression suite to confirm
+nothing else broke. All scratch scripts deleted after, per usual.
+
 ## 2026-09-24 — pin-drop answer mode, region/sovereignty item counts, keep-zoom default
 
 Three requests in one round: a new "drop a pin" way to answer location

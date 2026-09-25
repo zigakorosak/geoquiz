@@ -1,7 +1,7 @@
 // The attribute registry is the data-driven core of the game.
 //
-// Every quizzable fact about an item (a country's name, its location, later
-// its capital or flag, ...) is described here exactly once: how to show it
+// Every quizzable fact about an item (a country's name, its location, its
+// capital, later its flag, ...) is described here exactly once: how to show it
 // as a *question* (prompt) and how to collect + check it as an *answer*.
 // The menu, the round engine, and the game screen all read this registry —
 // none of them know about "name" or "location" specifically, so adding a
@@ -36,6 +36,17 @@ export const attributes = {
     getValue: (item) => item.name,
     checkAnswer: (guess, item) => normalizeText(guess) === normalizeText(item.name),
     formatAnswer: (item) => item.name,
+  },
+  capital: {
+    key: "capital",
+    label: "Capital",
+    canBePrompt: true,
+    canBeAnswer: true,
+    promptKind: "text",
+    answerKinds: ["text-guess", "multiple-choice"],
+    getValue: (item) => item.capital,
+    checkAnswer: (guess, item) => normalizeText(guess) === normalizeText(item.capital),
+    formatAnswer: (item) => item.capital,
   },
   location: {
     key: "location",

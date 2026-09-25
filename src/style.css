@@ -9,6 +9,19 @@
   --correct: #34c77b;
   --wrong: #e0546b;
   --border: #2c3450;
+  /* Map-specific, not shared with buttons/cards (see .country below) —
+     the general --bg/--surface-raised/--border trio reads fine on
+     bordered UI elements (spacing and a visible edge carry them), but on
+     an unbounded map a country's fill has to contrast against open ocean
+     with no border to lean on. Measured, not guessed: bg-vs-surface-raised
+     was only 1.31:1 (WCAG-style luminance contrast ratio), country
+     stroke vs fill 1.15:1 — both far too low to tell land from water or
+     one country from its neighbor. These push land/ocean to ~2.9:1 and
+     the border to ~3:1 against land. */
+  --map-ocean: #0a0e16;
+  --map-land: #4a5a88;
+  --map-land-muted: #2a3348;
+  --map-border: #05070c;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
 }
@@ -266,18 +279,61 @@ button:disabled {
   height: 100%;
   min-height: 320px;
   display: block;
+  background: var(--map-ocean);
+}
+
+/* Hints the compositor to put each copy on its own GPU layer ahead of
+   time, rather than discovering mid-drag that this group's transform
+   changes every frame — see WorldMap.js's _applyTransform. */
+.world-copy {
+  will-change: transform;
+}
+
+/* Ghost copies (WorldMap.js's infinite-scroll wrap) are decorative by
+   default — border-line and pin-marker <use> clones never need clicks —
+   but a country ghost gets pointer-events re-enabled (and its own click
+   listener, in JS) so every *visible* instance of a country is clickable,
+   not only whichever copy is currently "home". Not in pin-drop mode: a
+   single whole-map click handler already covers every copy there (the
+   coordinate math itself accounts for ghosts — see the "click" listener
+   in WorldMap.js's constructor), so re-enabling pointer-events on the
+   ghosts too would just let them steal clicks from that handler's
+   intended target on their own layer for no benefit. */
+.world-copy--ghost {
+  pointer-events: none;
+}
+
+.world-map:not(.world-map--pin-mode) .world-copy--ghost .country-ghost {
+  pointer-events: auto;
+}
+
+.world-map--clickable:not(.world-map--pin-mode) .world-copy--ghost .country-ghost {
+  cursor: pointer;
+}
+
+/* Added for the duration of an active pan/zoom gesture (d3-zoom's
+   start/end events, WorldMap.js) and removed the instant it ends. Cheap,
+   well-established trick for perceived smoothness: optimizeSpeed trades
+   antialiased edges for faster per-frame repaints while the player is
+   actively dragging/pinching and looking at the whole shape moving, not
+   any single edge — repainting ~240 country paths (more, counting the
+   infinite-scroll wrap's ghost copies) at full quality on every drag/wheel
+   tick is real work a phone GPU in particular can fall behind on, which
+   is what actually reads as "not smooth". */
+.world-map--panning {
+  shape-rendering: optimizeSpeed;
 }
 
 .country {
-  fill: var(--surface-raised);
-  stroke: var(--bg);
+  fill: var(--map-land);
+  stroke: var(--map-border);
   stroke-width: 0.5;
   /* keep border thickness constant as d3-zoom scales the map */
   vector-effect: non-scaling-stroke;
 }
 
 .country--unplayable {
-  fill: var(--surface);
+  fill: var(--map-land-muted);
 }
 
 .world-map--clickable .country:not(.country--unplayable):hover {
@@ -333,7 +389,7 @@ button:disabled {
    regardless of source order. */
 .world-map--pin-mode .country,
 .world-map--pin-mode .country--unplayable {
-  fill: var(--surface-raised);
+  fill: var(--map-land);
   stroke: none;
 }
 

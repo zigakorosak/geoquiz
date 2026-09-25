@@ -8,7 +8,7 @@
 import { geoNaturalEarth1, geoIdentity, geoPath } from "d3-geo";
 import { feature, mesh } from "topojson-client";
 import { zoom, zoomIdentity } from "d3-zoom";
-import { select, pointer } from "d3-selection";
+import { select } from "d3-selection";
 import { Delaunay } from "d3-delaunay";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -23,45 +23,83 @@ const PROJECTIONS = {
   naturalEarth1: () => geoNaturalEarth1(),
   identity: () => geoIdentity(),
 };
-// A single-blob country (no second landmass to speak of) gets an assist
-// hit-region if its own projected area (px², at a ~800px-wide map) is
-// under this. Calibrated against the actual dataset: true microstates
-// (Vatican City 0.0004px², Monaco 0.007px², San Marino 0.04px²,
-// Liechtenstein 0.08px², Bahrain 0.28px², Mauritius 0.94px²) sit under
-// this; ordinary small-but-real countries (Luxembourg 1.63px², Cyprus
-// 3.12px²) don't, and shouldn't get one.
-const AREA_THRESHOLD_SINGLE = 1.2;
-// A country made of 2+ separate parts qualifies too, but only if none of
+// Both thresholds below are *ratios* against a map's own "even-split"
+// reference area — (viewport width × height) / playable feature count,
+// i.e. the area each feature would have if the map were divided evenly
+// among all of them — rather than fixed px² values. This matters because
+// this same WorldMap renders very differently-scaled datasets into the
+// same viewport: the world map fits ~240 countries into 800×500px
+// (even-split ≈ 1674px²), but the US states map fits only 51 states into
+// the same 800×500px (even-split ≈ 7843px², ~4.7× bigger) — a fixed px²
+// "is this tiny" cutoff calibrated for one badly undersizes or oversizes
+// on the other. Washington DC is a perfect illustration: its own area
+// (~4.4px² at that scale) is comfortably *larger* than every country
+// microstate's, so a fixed threshold carried over from the countries
+// dataset would never flag it as tiny — yet DC is proportionally just as
+// much of an outlier among US states (0.00057× the states map's
+// even-split area) as Mauritius is among countries (0.00056× the
+// countries map's) once each is measured against its own map's scale.
+
+// A single-blob feature (no second part) gets an assist hit-region if its
+// own area is under this fraction of the map's even-split reference.
+// Calibrated against the countries dataset: true microstates (Vatican
+// City, Monaco, San Marino, Liechtenstein, Bahrain, Mauritius — 0.00022×
+// to 0.00056×) sit under this; ordinary small-but-real countries
+// (Luxembourg 0.00097×, Cyprus 0.0019×) don't. Confirmed to transfer
+// correctly to the US states dataset: DC (0.00057×) sits under it the
+// same way Mauritius does; every other state (Rhode Island, the next
+// smallest, at 0.0083×) sits well clear.
+const AREA_RATIO_SINGLE = 0.0007;
+// A feature made of 2+ separate parts qualifies too, but only if none of
 // its individual parts is already big enough to be a comfortable click
-// target on its own (px², same ~800px-wide-map scale) — total area or
-// part *count* isn't the signal: Philippines has 48 parts and a large
-// total area (140px²) but its biggest single island is only 51px², so it
-// still needs the gaps between islands filled in; Indonesia, Greece, the
-// UK, Norway, Japan, Malaysia, Croatia, and every large sprawling country
+// target on its own — total area or part *count* isn't the signal:
+// Philippines has 48 parts and a large total area, but its biggest single
+// island is only 0.031× the countries map's even-split area, so it still
+// needs the gaps between islands filled in; Indonesia, Greece, the UK,
+// Norway, Japan, Malaysia, Croatia, and every large sprawling country
 // with a few stray offshore islets (Russia, Canada, USA, Brazil,
 // Australia, China, ...) all have one part alone well past this, so
 // their existing path is already a perfectly good click target and
 // doesn't need (or safely tolerate — see HULL_BBOX_CAP) a hull spanning
 // their full extent. Calibrated to sit strictly between Philippines'
-// 51.46px² (must qualify) and Greece's 60.75px² (must not).
-const LARGEST_PART_CAP = 55;
-// Safety cap (px, bounding-box max dimension), independent of
-// LARGEST_PART_CAP: catches a handful of cases that would otherwise slip
-// through it — a country whose *largest* part is small but whose parts
-// are scattered across a huge span, either because it has real
-// far-offshore territory (Netherlands' Caribbean islands, ~167px from the
-// mainland) or because the raw topology data wraps around the
-// antimeridian and produces a bogus bounding box spanning almost the
-// whole map (Kiribati 785px, Fiji 800px). No genuine, safe-to-hull-fill
-// case in the actual dataset gets anywhere near this (Indonesia, the
-// widest real one excluded solely by LARGEST_PART_CAP, is 103px;
-// Micronesia, the widest one that still qualifies, is 57px).
+// 0.031× (must qualify) and Greece's 0.036× (must not) — and, checked
+// against the US states dataset, between Hawaii's 0.035× (a genuine
+// archipelago, qualifies) and Massachusetts' 0.069× (Nantucket/Martha's
+// Vineyard are real islands, but the mainland is already an easy target,
+// so it correctly doesn't). Every mainland-dominant state with a couple
+// of stray coastal islets in the topology (Ohio, Florida, New York,
+// Alabama, ...) sits at 0.35× or higher — nowhere close.
+const LARGEST_PART_RATIO = 0.035;
+// Safety cap (px, bounding-box max dimension) — deliberately *not*
+// scaled like the ratios above, since viewport size itself (not feature
+// count) is what it's guarding: no legitimate hit-region should ever
+// span a large fraction of the visible map regardless of how few or many
+// features share it. Independent of LARGEST_PART_RATIO, it catches a
+// handful of cases that would otherwise slip through: a feature whose
+// *largest* part is small but whose parts are scattered across a huge
+// span, either because it has real far-offshore territory (Netherlands'
+// Caribbean islands, ~167px from the mainland) or because the raw
+// topology data wraps around the antimeridian and produces a bogus
+// bounding box spanning almost the whole map (Kiribati 785px, Fiji
+// 800px). No genuine, safe-to-hull-fill case in either dataset gets
+// anywhere near this (Indonesia, the widest real one excluded solely by
+// LARGEST_PART_RATIO, is 103px; Hawaii, the widest one that qualifies
+// under the current datasets, is ~91px).
 const HULL_BBOX_CAP = 150;
 // Every hit-region hull vertex gets pushed outward from the feature's own
 // centroid by this many px, so even a naturally tiny/compact hull (two
 // Maldives atolls barely 2.6px apart) ends up comfortably tappable
 // instead of just "sized to its own coastline".
 const HULL_PADDING = 3;
+// How far (as a fraction of one full world-width, in current screen px)
+// the "home" copy is allowed to drift off-register before wrapping snaps
+// it back by exactly one world-width — see _wrapTransform. Kept well
+// under 1 (a full period) rather than right at the edge: the two ghost
+// copies are visual-only (see the constructor), so the home copy — the
+// only one that's actually clickable — needs to stay substantially
+// on-screen at all times, not just barely touching it, or the player
+// would be looking at content they can't tap until the next snap.
+const WRAP_WINDOW = 0.5;
 
 // Standard even-odd ray-casting point-in-polygon test, run directly on raw
 // lon/lat ring coordinates (pin mode's `_findContainingId` is the only
@@ -116,6 +154,18 @@ export class WorldMap {
     this.pinLonLat = null;
     this._instanceId = `wm${instanceCounter++}`;
 
+    // Infinite horizontal wrap only makes sense for an unrestricted
+    // world-scale view: a continent crop (filterIds set) doesn't tile
+    // into a seamless globe (you'd just see the same regional chunk
+    // repeat), and a pre-projected "identity" topology (US states'
+    // Albers projection) has no periodic lon/lat structure to wrap at
+    // all. See _wrapTransform/_applyTransform for how the wrap itself
+    // works, and the per-feature loop below for how "one copy" of the
+    // map's content is built once and reused for all three.
+    this.wrapEnabled = !filterIds && (projection ?? "naturalEarth1") !== "identity";
+    this._wrapPeriod = null; // one world-width, in projected px at the current fitSize scale — set in _reflow
+    this._homeLeft = null; // left edge of that same world, in the same units
+
     const fullGeojson = feature(topology, topology.objects[objectKey]);
     // When restricted to a continent, drop everything else entirely (not
     // just visually) so the projection fits to, and only renders, that
@@ -125,9 +175,6 @@ export class WorldMap {
       ? { type: "FeatureCollection", features: fullGeojson.features.filter((f) => f.id && filterIds.has(f.id)) }
       : fullGeojson;
     this.geojson = geojson;
-    this.featuresById = new Map();
-    this.hitAreasById = new Map();
-    this.hitClipsById = new Map();
 
     this.projection = (PROJECTIONS[projection] ?? PROJECTIONS.naturalEarth1)();
     this.pathGen = geoPath(this.projection);
@@ -144,43 +191,77 @@ export class WorldMap {
     this.defs = document.createElementNS(SVG_NS, "defs");
     this.svg.appendChild(this.defs);
 
-    this.pathsGroup = document.createElementNS(SVG_NS, "g");
-    this.svg.appendChild(this.pathsGroup);
-    // Two more groups stacked after every country path, in this order:
-    // dashed disputed-border lines (visible on top of fills, but never
-    // clickable), then hit-circles last so a tiny country's assist circle
-    // always wins pointer hit-testing over a neighbouring country's much
-    // larger shape.
+    // Three side-by-side copies of the same content when wrapping is on
+    // (just one otherwise): -1 (a "ghost" one world-width to the left),
+    // 0 (the "home" copy — the only one with hit-areas/the tiny-country
+    // click-precision assist), +1 (a ghost to the right). _applyTransform
+    // positions each one `offset` world-widths away from the home copy on
+    // every zoom/pan tick, and _wrapTransform keeps the home copy from
+    // ever drifting so far off-register that it or a ghost stops covering
+    // at least half the viewport — see the WRAP_WINDOW comment above. The
+    // ghost copies are built from SVG `<use>` references to the home
+    // copy's own paths rather than real duplicate elements: a `<use>`
+    // re-renders whatever its target currently looks like live, including
+    // dynamically toggled classes (e.g. markResult's `.country--correct`),
+    // so the ghosts automatically stay visually in sync with the home
+    // copy without this class updating them itself. Each country ghost
+    // also gets its own click listener (see further down) reporting the
+    // same id its home path would, so every *visible* instance of a
+    // country is clickable, not just whichever copy happens to be "home"
+    // at the moment — border-line and pin-marker ghosts stay
+    // `pointer-events: none` (style.css), purely decorative.
+    this.copyOffsets = this.wrapEnabled ? [-1, 0, 1] : [0];
+    this.copyGroups = new Map(); // offset -> <g>
+    for (const offset of this.copyOffsets) {
+      const group = document.createElementNS(SVG_NS, "g");
+      group.setAttribute("class", offset === 0 ? "world-copy world-copy--home" : "world-copy world-copy--ghost");
+      this.svg.appendChild(group);
+      this.copyGroups.set(offset, group);
+    }
+    this.homeGroup = this.copyGroups.get(0);
+
+    // Everything below is built once, directly, into the home copy;
+    // ghost copies (if any) are populated as <use> clones of it further
+    // down.
+    this.featuresById = new Map(); // playable id -> home copy's <path>
+    this.hitAreasById = new Map();
+    this.hitClipsById = new Map();
+
     this.borderGroup = document.createElementNS(SVG_NS, "g");
     this.borderGroup.setAttribute("class", "border-lines");
-    this.pathsGroup.appendChild(this.borderGroup);
+    this.homeGroup.appendChild(this.borderGroup);
     this.hitGroup = document.createElementNS(SVG_NS, "g");
     this.hitGroup.setAttribute("class", "hit-areas");
-    this.pathsGroup.appendChild(this.hitGroup);
+    this.homeGroup.appendChild(this.hitGroup);
 
     // The dropped-pin marker (pin mode only) — decorative, never itself a
     // click target (pointer-events: none, see style.css), so every click
     // on the map — including one that lands on top of the current pin —
     // reaches the whole-map click listener below and repositions it.
     this.pinMarker = document.createElementNS(SVG_NS, "circle");
+    this.pinMarker.id = `${this._instanceId}-pin`;
     this.pinMarker.setAttribute("class", "pin-marker");
+    this.pinMarker.setAttribute("r", "5"); // also in style.css; set directly too rather than relying solely on CSS geometry-property support
     this.pinMarker.style.display = "none";
-    this.pathsGroup.appendChild(this.pinMarker);
+    this.homeGroup.appendChild(this.pinMarker);
 
     // Data-driven, not hardcoded to any specific pair: dashedBorders is a
     // list of [idA, idB] country-id pairs (see core/datasets.js) whose
     // *shared* border — extracted via topojson's mesh(), not their whole
     // outline — renders dashed, to flag a disputed frontier instead of
     // drawing it like a normal international border.
-    this.borderLines = (dashedBorders ?? []).map(([idA, idB]) => {
+    this.borderLines = (dashedBorders ?? []).map(([idA, idB], i) => {
       const path = document.createElementNS(SVG_NS, "path");
+      path.id = `${this._instanceId}-border-${i}`;
       path.setAttribute("class", "border--disputed");
       path.style.pointerEvents = "none";
       this.borderGroup.appendChild(path);
       return { idA, idB, path };
     });
 
-    for (const f of geojson.features) {
+    this._pathsByIndex = []; // home copy's <path> per geojson.features index (playable or not) — read back in _reflow to set each `d`
+
+    for (const [index, f] of geojson.features.entries()) {
       // "Playable" gates click handling, normal styling, and a hit-circle —
       // independent of whether the topology happens to have assigned this
       // feature an id. This is what lets e.g. Kosovo exist in the topology
@@ -190,16 +271,11 @@ export class WorldMap {
       const playable = Boolean(f.id) && (!playableIds || playableIds.has(f.id));
 
       const path = document.createElementNS(SVG_NS, "path");
+      path.id = `${this._instanceId}-f${index}`;
       path.setAttribute("class", "country" + (playable ? "" : " country--unplayable"));
 
       if (playable) {
         path.dataset.id = f.id;
-        // Still tracked in pin mode — needed so markResult() can find and
-        // highlight the correct answer's (and, if the pin landed inside
-        // some other country, the wrong guess's) real shape after
-        // confirm — just never given its own click listener or hit-area,
-        // since pin mode has no per-country click targets at all (see the
-        // whole-map click listener below instead).
         this.featuresById.set(f.id, path);
 
         if (!this.pinMode) {
@@ -211,7 +287,9 @@ export class WorldMap {
           // convex hull around a country's parts (see _computeHull) — this
           // covers both compact microstates (hull ~= a small rounded blob)
           // and archipelagos (hull spans and fills the gaps between
-          // islands) with one mechanism.
+          // islands) with one mechanism. Home copy only (not ghosted) —
+          // this is a click-precision assist, and the home copy is always
+          // the one within reach of the viewport (see WRAP_WINDOW).
           const hitArea = document.createElementNS(SVG_NS, "polygon");
           hitArea.setAttribute("class", "country-hitarea");
           hitArea.style.display = "none"; // shown only if the shape qualifies, in _reflow
@@ -238,16 +316,59 @@ export class WorldMap {
         }
       }
 
-      this.pathsGroup.insertBefore(path, this.borderGroup);
+      this.homeGroup.insertBefore(path, this.borderGroup);
+      this._pathsByIndex.push(path);
+    }
+
+    // Ghost <use> clones — one per home-copy path/border line/pin marker,
+    // in each ghost group. Ignored entirely when wrapping is off. A
+    // ghost's own click listener (playable features only, same as the
+    // home copy's) fires with the *same* id its home path would — clicks
+    // work identically on a ghost as on the home copy, rather than
+    // relying only on the wrap-snap keeping the home copy close enough to
+    // the viewport that a ghost is rarely clicked at all (WRAP_WINDOW
+    // still guarantees at least half the viewport is always the clickable
+    // home copy, but "at least half" isn't "all of it").
+    for (const offset of this.copyOffsets) {
+      if (offset === 0) continue;
+      const group = this.copyGroups.get(offset);
+      for (const path of this._pathsByIndex) {
+        const use = this._makeUse(path.id);
+        use.setAttribute("class", "country-ghost");
+        const fId = path.dataset.id;
+        if (fId && !this.pinMode) {
+          use.addEventListener("click", () => {
+            if (this.clickEnabled && this.onClick) this.onClick(fId);
+          });
+        }
+        group.appendChild(use);
+      }
+      for (const { path } of this.borderLines) group.appendChild(this._makeUse(path.id));
+      group.appendChild(this._makeUse(this.pinMarker.id));
     }
 
     this.currentTransform = initialTransform ?? zoomIdentity;
     this.zoomBehavior = zoom()
       .scaleExtent([1, 10])
+      .on("start", () => this.svg.classList.add("world-map--panning"))
       .on("zoom", (event) => {
-        this.currentTransform = event.transform;
-        this.pathsGroup.setAttribute("transform", String(event.transform));
-      });
+        this.currentTransform = this._wrapTransform(event.transform);
+        this._applyTransform(this.currentTransform);
+      })
+      // A cheap, well-established SVG performance trick: while a pan/zoom
+      // gesture is actively in progress, drop rendering quality (blockier
+      // edges, no antialiasing niceties) in exchange for faster per-frame
+      // repaints, then restore full quality the instant it ends — the
+      // player is looking at the whole shape while moving, not a single
+      // edge, so the drop is barely noticeable, but repainting ~240
+      // country paths (more with wrap's ghost copies) at full quality on
+      // every drag/wheel tick is real work that a phone GPU in particular
+      // can fall behind on, which is what actually reads as "not smooth".
+      // These are d3-zoom's own dispatched "start"/"end" gesture events
+      // (via `zoomBehavior.on`), not native DOM events — unlike
+      // "dblclick.zoom" below, they don't exist to bind via the
+      // selection's own `.on(...)`.
+      .on("end", () => this.svg.classList.remove("world-map--panning"));
     this._selection = select(this.svg);
     this._selection.call(this.zoomBehavior);
     // Double-click-to-zoom is d3-zoom's default, but it fights with
@@ -259,14 +380,41 @@ export class WorldMap {
     if (this.pinMode) {
       // One click target for the whole map, rather than per-feature
       // listeners — a pin can land anywhere, not just on a discrete
-      // country shape. `pointer(event, this.pathsGroup)` (not `this.svg`)
-      // resolves the click through both the SVG's own viewBox scaling
-      // *and* the paths group's current zoom/pan transform, landing back
-      // in the same untransformed pixel space `this.projection` was fit
-      // to — exactly what `.invert()` expects.
+      // country shape. Three steps, each using the simplest, most
+      // broadly-reliable API for that one job, rather than one call doing
+      // it all at once:
+      //  1. `getBoundingClientRect()` gives the click's position relative
+      //     to the SVG's own top-left corner, in CSS px. `_reflow` always
+      //     sets `viewBox="0 0 clientWidth clientHeight"` to match the
+      //     SVG's own rendered size exactly (`.world-map` is `width/
+      //     height: 100%` of the same container `clientWidth`/
+      //     `clientHeight` come from), so viewBox scaling is always 1:1
+      //     here — CSS px *is* SVG user-space px, no further conversion
+      //     needed for that part.
+      //  2. `this.currentTransform.invert(...)` (d3-zoom's own tool for
+      //     exactly this) separately undoes the *home* copy's current
+      //     zoom/pan on top of that, landing back in the same
+      //     untransformed pixel space `this.projection` was fit to.
+      //  3. If wrapping is on, that (x, y) is only correct as-is when the
+      //     click actually landed on the home copy — one that visually
+      //     landed on a ghost (see the constructor) needs its x folded
+      //     back into the home copy's own [_homeLeft, _homeLeft +
+      //     _wrapPeriod) range first, since ghost content is a repeat of
+      //     the exact same geography one or more world-widths over.
+      //     Skipped whenever a click *did* land on the home copy — the
+      //     modulo is a no-op there — so this doesn't change anything for
+      //     the (far more common, and the only possible before this
+      //     feature existed) non-wrapped case.
       this.svg.addEventListener("click", (event) => {
         if (!this.clickEnabled) return;
-        const [x, y] = pointer(event, this.pathsGroup);
+        const rect = this.svg.getBoundingClientRect();
+        const sx = event.clientX - rect.left;
+        const sy = event.clientY - rect.top;
+        let [x, y] = this.currentTransform.invert([sx, sy]);
+        if (this.wrapEnabled && this._wrapPeriod) {
+          const left = this._homeLeft ?? 0;
+          x = (((x - left) % this._wrapPeriod) + this._wrapPeriod) % this._wrapPeriod + left;
+        }
         const lonlat = this.projection.invert?.([x, y]);
         if (!lonlat || !Number.isFinite(lonlat[0]) || !Number.isFinite(lonlat[1])) return;
         this._dropPinAt(lonlat[0], lonlat[1]);
@@ -287,6 +435,17 @@ export class WorldMap {
     this._reflow({ resetZoom: false });
   }
 
+  _makeUse(targetId) {
+    const use = document.createElementNS(SVG_NS, "use");
+    // Both attribute forms: plain `href` is all modern evergreen browsers
+    // need (SVG2), `xlink:href` is the older fallback some engines still
+    // required — setting both costs nothing and avoids relying on exactly
+    // which one this app's target browsers want.
+    use.setAttributeNS(null, "href", `#${targetId}`);
+    use.setAttributeNS("http://www.w3.org/1999/xlink", "xlink:href", `#${targetId}`);
+    return use;
+  }
+
   _reflow({ resetZoom } = {}) {
     const width = this.container.clientWidth || 800;
     const height = this.container.clientHeight || 500;
@@ -298,20 +457,35 @@ export class WorldMap {
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
     this.projection.fitSize([width, height], this.geojson);
 
-    // Pass 1: lay out every path. For every playable feature, also note
-    // its bbox center as a Voronoi site (used below to bound assist
-    // hit-regions against every real neighbor, not just other assisted
-    // countries), and flag it as "qualifying" for an assist hit-region if
-    // it's a compact single-blob microstate or has multiple separate
-    // parts (an archipelago) — see the threshold constants above.
+    if (this.wrapEnabled) {
+      const b = this.pathGen.bounds(this.geojson);
+      if (Number.isFinite(b[0][0]) && Number.isFinite(b[1][0])) {
+        this._homeLeft = b[0][0];
+        this._wrapPeriod = b[1][0] - b[0][0];
+      }
+    }
+
+    // The reference area both hit-region thresholds are measured against
+    // — see the comment above AREA_RATIO_SINGLE/LARGEST_PART_RATIO for
+    // why this needs to scale with the map's own viewport/feature-count,
+    // not be a fixed px² value shared by every dataset this class renders.
+    const evenSplitArea = this.featuresById.size > 0 ? (width * height) / this.featuresById.size : Infinity;
+
+    // Pass 1: lay out every path (home copy — ghost copies are <use>
+    // references and update automatically). For every playable feature,
+    // also note its bbox center as a Voronoi site (used below to bound
+    // assist hit-regions against every real neighbor, not just other
+    // assisted countries), and flag it as "qualifying" for an assist
+    // hit-region if it's a compact single-blob microstate or has multiple
+    // separate parts (an archipelago) — see the threshold constants above.
     const sites = []; // { id, cx, cy }
     const qualifying = []; // { id, f, cx, cy }
-    for (const f of this.geojson.features) {
-      const path = this.featuresById.get(f.id) ?? this._findUnplayablePath(f);
+    this.geojson.features.forEach((f, index) => {
+      const path = this._pathsByIndex[index];
       if (path) path.setAttribute("d", this.pathGen(f));
 
       const hitArea = this.hitAreasById.get(f.id);
-      if (!hitArea) continue;
+      if (!hitArea) return;
 
       hitArea.removeAttribute("clip-path");
       hitArea.style.display = "none";
@@ -320,21 +494,21 @@ export class WorldMap {
       const bw = bounds[1][0] - bounds[0][0];
       const bh = bounds[1][1] - bounds[0][1];
       const bboxMax = Math.max(bw, bh);
-      if (!Number.isFinite(bboxMax)) continue;
+      if (!Number.isFinite(bboxMax)) return;
       const cx = (bounds[0][0] + bounds[1][0]) / 2;
       const cy = (bounds[0][1] + bounds[1][1]) / 2;
       sites.push({ id: f.id, cx, cy });
 
-      if (bboxMax >= HULL_BBOX_CAP) continue; // antimeridian-degenerate, or a real but far-flung exclave — skip
+      if (bboxMax >= HULL_BBOX_CAP) return; // antimeridian-degenerate, or a real but far-flung exclave — skip
       const isMulti = f.geometry?.type === "MultiPolygon";
       const qualifies = isMulti
-        ? this._largestPartArea(f) < LARGEST_PART_CAP
+        ? this._largestPartArea(f) < LARGEST_PART_RATIO * evenSplitArea
         : (() => {
             const area = this.pathGen.area(f);
-            return Number.isFinite(area) && area < AREA_THRESHOLD_SINGLE;
+            return Number.isFinite(area) && area < AREA_RATIO_SINGLE * evenSplitArea;
           })();
       if (qualifies) qualifying.push({ id: f.id, f, cx, cy });
-    }
+    });
 
     // Pass 2: build a padded convex hull for each qualifying country
     // (fills the gaps between an archipelago's islands; pads a compact
@@ -398,8 +572,58 @@ export class WorldMap {
       }
     }
 
-    this.zoomBehavior.extent([[0, 0], [width, height]]).translateExtent([[0, 0], [width, height]]);
+    this.zoomBehavior
+      .extent([[0, 0], [width, height]])
+      .translateExtent(this.wrapEnabled ? [[-Infinity, 0], [Infinity, height]] : [[0, 0], [width, height]]);
     this._selection.call(this.zoomBehavior.transform, resetZoom ? zoomIdentity : this.currentTransform);
+  }
+
+  // If wrapping is on and the home copy has drifted more than
+  // WRAP_WINDOW of one world-width off-register, shifts the transform by
+  // exactly one world-width (in the direction that reduces the drift) so
+  // it snaps back within the window. A world-width's worth of horizontal
+  // shift is invisible on screen — the ghost copies (exact <use> clones,
+  // one world-width to either side) already occupy exactly the positions
+  // the shift moves *to*, so nothing visibly jumps. Never touches
+  // d3-zoom's own internally-tracked transform (only `translateExtent`
+  // does that, and it's unbounded on x here — see _reflow) — this just
+  // decides what to *render*, each tick, independent of that internal
+  // bookkeeping, which sidesteps any feedback-loop risk from calling
+  // zoomBehavior.transform() from inside its own "zoom" handler.
+  _wrapTransform(t) {
+    if (!this.wrapEnabled || !this._wrapPeriod) return t;
+    const periodPx = this._wrapPeriod * t.k;
+    if (!Number.isFinite(periodPx) || periodPx <= 0) return t;
+    const windowPx = periodPx * WRAP_WINDOW;
+    const homeLeft = this._homeLeft ?? 0;
+    let tx = t.x;
+    let screenLeft = homeLeft * t.k + tx;
+    let guard = 0;
+    while (screenLeft > windowPx && guard++ < 1000) {
+      tx -= periodPx;
+      screenLeft -= periodPx;
+    }
+    while (screenLeft < -windowPx && guard++ < 1000) {
+      tx += periodPx;
+      screenLeft += periodPx;
+    }
+    return tx === t.x ? t : zoomIdentity.translate(tx, t.y).scale(t.k);
+  }
+
+  // Renders a (possibly wrapped) transform: the home copy gets it as-is,
+  // each ghost copy gets the same transform shifted by its own ±1 world-
+  // width offset (in *screen* px, i.e. already multiplied by the current
+  // scale — see the comment on _wrapTransform for why a whole-world shift
+  // reads as visually seamless).
+  _applyTransform(t) {
+    for (const [offset, group] of this.copyGroups) {
+      if (offset === 0) {
+        group.setAttribute("transform", String(t));
+      } else {
+        const shift = this._wrapPeriod * t.k * offset;
+        group.setAttribute("transform", `translate(${t.x + shift},${t.y}) scale(${t.k})`);
+      }
+    }
   }
 
   // Places (or moves) the pin marker at a given lon/lat and remembers it
@@ -473,14 +697,6 @@ export class WorldMap {
     });
   }
 
-  _findUnplayablePath(f) {
-    // Unplayable features aren't in featuresById (no stable id, or a
-    // stable id that isn't currently playable); locate by index instead
-    // since geojson.features order matches DOM order.
-    const index = this.geojson.features.indexOf(f);
-    return this.pathsGroup.children[index] ?? null;
-  }
-
   getTransform() {
     return this.currentTransform;
   }
@@ -515,10 +731,13 @@ export class WorldMap {
     );
   }
 
-  // Applies to both the real path and its hit-region (if any) — for a
-  // country small enough to need one, the real shape is often too tiny to
-  // see any fill change on, so the hit-region is what actually shows the
-  // player their selection/result.
+  // Applies to both the real path (every copy — ghost copies are <use>
+  // clones of the home path, so they pick up its classes automatically;
+  // only the home copy's own hit-region additionally needs the class
+  // added directly, since it's a separate element, not a clone) — for a
+  // country small enough to need a hit-region, the real shape is often
+  // too tiny to see any fill change on, so the hit-region is what
+  // actually shows the player their selection/result.
   _mark(id, className) {
     const path = this.featuresById.get(id);
     if (path) path.classList.add(className);
