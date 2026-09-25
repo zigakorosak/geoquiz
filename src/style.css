@@ -367,7 +367,12 @@ button:disabled {
 }
 
 .country--selected {
-  fill: var(--accent-dim);
+  /* --accent-dim (a dark, desaturated blue) was the fill here, which read
+     as plain grey once the map's land fill (--map-land) got lightened for
+     contrast — see the "better contrast" round in LOG.md. --accent
+     itself, translucent, reads as clearly blue at a glance instead. */
+  fill: var(--accent);
+  fill-opacity: 0.55;
   stroke: var(--accent);
   stroke-width: 1.5;
 }

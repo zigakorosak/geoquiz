@@ -3,6 +3,25 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-25 — fix selected-country color (grey, not blue) — a side effect of the contrast round
+
+User reported a "Could not load game data" error trying Capitals → US
+States, which didn't reproduce across an extensive set of jsdom-driven
+navigation paths (both question/answer orderings, map-click, pin-mode
+downgrade, multiple-choice, text-guess, full round confirm + advance) —
+confirmed by curl that the deployed `us-states.json`/topology files
+themselves were fine. User then confirmed it actually works; likely a
+transient issue (deploy propagation, network hiccup, or a stale cache),
+not a real bug — left as-is rather than chasing further.
+
+Real, separate bug: `.country--selected` (the provisional-pick state,
+before confirming) used `--accent-dim` as its fill — a dark, desaturated
+blue that read fine against the *old* near-black land fill, but reads as
+plain grey against the lightened `--map-land` from the previous "better
+contrast" round. Changed to a translucent `--accent` (the brighter blue)
+instead, which reads as clearly blue at a glance — checked by actually
+computing the blended RGB result (`#4d76c9`), not just eyeballing the CSS.
+
 ## 2026-09-25 — infinite horizontal scroll, map contrast, smoother panning
 
 Three requests: make the World map scroll infinitely left/right instead
