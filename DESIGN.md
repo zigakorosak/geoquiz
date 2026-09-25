@@ -459,29 +459,69 @@ pointer hit-testing even over a larger neighboring country). Built in
 - **Pass 1** decides which playable features *qualify*, from the
   feature's projected bounding box (`pathGen.bounds`), area
   (`pathGen.area`), and — for multi-part features — each individual
-  part's own area (`_largestPartArea`, `pathGen.area` run once per
-  `MultiPolygon` coordinate entry): a single-blob feature qualifies if
-  its area is under `AREA_RATIO_SINGLE` (0.0007×) of the map's own
-  **even-split reference area** — `(viewport width × height) /
-  playable feature count`, i.e. the area each feature would have if the
-  map were divided evenly among all of them; a multi-part feature
-  qualifies only if its single *biggest* part is under
-  `LARGEST_PART_RATIO` (0.035×) of that same reference — total area and
-  part count aren't the signal, whether any one part is already a
-  comfortable click target on its own is. Philippines has 48 parts and a
-  large total area, but its biggest island alone is only 0.031× the
-  countries map's even-split area, so it still qualifies; Indonesia,
-  Greece, the UK, Norway, Japan, Malaysia, and every large country with a
-  couple of stray offshore islets (Russia, Canada, USA, Brazil,
-  Australia, China, France, ...) all have one part alone well past that,
-  so their own path is already a fine click target and doesn't need a
-  hull spanning their full extent. Either way, a feature whose bounding
-  box's larger dimension is at or past `HULL_BBOX_CAP` (150px, a fixed
-  px value — see its own comment in `WorldMap.js` for why that one
-  doesn't scale like the other two) is skipped even if it would
-  otherwise qualify — this catches the rarer case of a small *part*
-  scattered far from the rest (Netherlands' Caribbean islands) as well
-  as topology data that wraps around the antimeridian (Kiribati, Fiji).
+  part's own area (`_largestPartAreas`, `pathGen.area` run once per
+  `MultiPolygon` coordinate entry, keeping the two biggest): a
+  single-blob feature qualifies if its area is under `AREA_RATIO_SINGLE`
+  (0.0007×) of the map's own **even-split reference area** —
+  `(viewport width × height) / playable feature count`, i.e. the area
+  each feature would have if the map were divided evenly among all of
+  them. A multi-part feature's own biggest part is checked against that
+  same reference too, but in **two tiers**, not one — total area and
+  part count still aren't the signal either way, whether any one part is
+  already a comfortable click target on its own is, but "comfortable"
+  alone isn't quite sufficient either (see below):
+  - Under `LARGEST_PART_TIER1_RATIO` (0.018×), it qualifies
+    unconditionally — genuinely small regardless of what its other parts
+    look like (Philippines' 48 islands and Washington DC's own single
+    part both ultimately reduce to this same "is the biggest piece
+    small" question, just applied per-part vs. to the whole feature).
+  - Between that and `LARGEST_PART_TIER2_RATIO` (0.035×), it needs a
+    second part too — one that's at least `SECOND_PART_RATIO` (0.15×) of
+    the biggest part's own area, not a negligible speck. This is the
+    fix for a real bug the plain single-tier version had: Portugal's
+    mainland (0.030×) sat just as close to the qualifying side of a
+    single 0.035× cutoff as Philippines' Luzon (0.031×) did, so both
+    qualified — but Portugal's *second* part, the Azores, is a genuine
+    afterthought (0.008× mainland Portugal, ~52px away), while
+    Philippines' second-biggest island, Mindanao, is 0.88× the size of
+    its biggest, Luzon — a real second landmass, not a speck. Filling
+    the "gap" between Portugal and the Azores produced a hull 18× larger
+    than Portugal's own real area (bigger than Philippines' own hull,
+    despite Portugal not being any kind of real archipelago) — exactly
+    the "redundant, doesn't make sense" hitbox this two-tier check
+    exists to catch. Croatia, Ireland, Cuba, and similar "one dominant
+    mainland plus an afterthought" countries hit the same fix the same
+    way.
+  Above `LARGEST_PART_TIER2_RATIO`, nothing qualifies regardless of a
+  second part's size — Indonesia, Greece, the UK, Norway, Japan,
+  Malaysia, and every large country with a couple of stray offshore
+  islets (Russia, Canada, USA, Brazil, Australia, China, France, ...)
+  all have one part alone well past that, so their own path is already a
+  fine click target and doesn't need a hull spanning their full extent.
+  Either way, a feature whose bounding box's larger dimension is at or
+  past `HULL_BBOX_CAP` (150px, a fixed px value — see its own comment in
+  `WorldMap.js` for why that one doesn't scale like the ratios) is
+  skipped even if it would otherwise qualify — this catches the rarer
+  case of a small *part* scattered far from the rest (Netherlands'
+  Caribbean islands) as well as topology data that wraps around the
+  antimeridian (Kiribati, Fiji).
+
+  A separate, unrelated bug shared the same symptom (a hit-region that
+  didn't make sense) and got fixed alongside this: the actual topology
+  data assigns Ashmore and Cartier Is. the same id as Australia itself
+  ("036" — most likely because the uninhabited territory was never given
+  its own code upstream). `hitAreasById`, keyed by id like `featuresById`,
+  only has one entry per id — without a guard, whichever of the two
+  features `_reflow`'s per-feature pass visited *last* silently decided
+  what that shared entry's qualification/hull looked like, which in
+  practice meant Ashmore and Cartier's own tiny single-part shape (which
+  trivially "qualifies" as tiny) was overwriting mainland Australia's
+  correct, and correctly non-qualifying, one. A `processedHitAreaIds` set
+  in `_reflow` now skips every occurrence of an id past the first —
+  harmless, since both features already get their own click listener
+  pointed at the same id regardless (a click on either correctly
+  resolves to "Australia"), so nothing about clicking either shape
+  changes; only which one gets to define the *hit-region* does.
 
   Measuring against the map's own even-split area, rather than a fixed
   px² value, is what lets the same two ratios work correctly for both

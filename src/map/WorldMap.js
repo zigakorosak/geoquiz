@@ -50,31 +50,43 @@ const PROJECTIONS = {
 // same way Mauritius does; every other state (Rhode Island, the next
 // smallest, at 0.0083×) sits well clear.
 const AREA_RATIO_SINGLE = 0.0007;
-// A feature made of 2+ separate parts qualifies too, but only if none of
-// its individual parts is already big enough to be a comfortable click
-// target on its own — total area or part *count* isn't the signal:
-// Philippines has 48 parts and a large total area, but its biggest single
-// island is only 0.031× the countries map's even-split area, so it still
-// needs the gaps between islands filled in; Indonesia, Greece, the UK,
-// Norway, Japan, Malaysia, Croatia, and every large sprawling country
-// with a few stray offshore islets (Russia, Canada, USA, Brazil,
-// Australia, China, ...) all have one part alone well past this, so
-// their existing path is already a perfectly good click target and
-// doesn't need (or safely tolerate — see HULL_BBOX_CAP) a hull spanning
-// their full extent. Calibrated to sit strictly between Philippines'
-// 0.031× (must qualify) and Greece's 0.036× (must not) — and, checked
-// against the US states dataset, between Hawaii's 0.035× (a genuine
-// archipelago, qualifies) and Massachusetts' 0.069× (Nantucket/Martha's
-// Vineyard are real islands, but the mainland is already an easy target,
-// so it correctly doesn't). Every mainland-dominant state with a couple
-// of stray coastal islets in the topology (Ohio, Florida, New York,
-// Alabama, ...) sits at 0.35× or higher — nowhere close.
-const LARGEST_PART_RATIO = 0.035;
+// A multi-part feature's qualification has two tiers, both measured
+// against its *largest* part's own area (not total area or part count —
+// Philippines has 48 parts and a large total, but what actually matters
+// is whether any one part is already a comfortable click target):
+//
+// - Under LARGEST_PART_TIER1_RATIO (0.018), it qualifies unconditionally
+//   — the largest part alone is small enough that widening/gap-filling is
+//   clearly warranted regardless of whether a second part is significant.
+//   This is what correctly includes Washington DC-scale cases on the US
+//   states map (Rhode Island 0.0083×, Delaware 0.0172×) as well as every
+//   genuine small archipelago (Vanuatu 0.0012×, Bahamas 0.0011×, ...).
+// - Between that and LARGEST_PART_TIER2_RATIO (0.035), it *additionally*
+//   needs a second part that's a real, comparably-sized landmass — at
+//   least SECOND_PART_RATIO (0.15) of the largest part's own area — not
+//   just a negligible speck. This is what separates Philippines (second-
+//   biggest island, Mindanao, is 0.88× its biggest, Luzon — a real second
+//   landmass that legitimately needs its own gap filled) and Hawaii
+//   (0.18×) from Portugal (Azores are 0.008× mainland Portugal — a
+//   negligible speck ~52px away that inflates the hull to 18× Portugal's
+//   own real area, bigger than Philippines' hull despite Portugal not
+//   being any kind of real archipelago) and the same pattern in Croatia
+//   (0.013×), Ireland (0.002×), Cuba (0.021×), and similar "one dominant
+//   mainland plus an afterthought" countries that don't need gap-filling
+//   at all — their own path is already a perfectly good click target.
+// Above LARGEST_PART_TIER2_RATIO, nothing qualifies regardless of a
+// second part's size — Indonesia, Greece, the UK, Norway, Japan,
+// Malaysia, and every large sprawling country with a few stray offshore
+// islets (Russia, Canada, USA, Brazil, Australia, China, ...) all have
+// one part alone well past this.
+const LARGEST_PART_TIER1_RATIO = 0.018;
+const LARGEST_PART_TIER2_RATIO = 0.035;
+const SECOND_PART_RATIO = 0.15;
 // Safety cap (px, bounding-box max dimension) — deliberately *not*
 // scaled like the ratios above, since viewport size itself (not feature
 // count) is what it's guarding: no legitimate hit-region should ever
 // span a large fraction of the visible map regardless of how few or many
-// features share it. Independent of LARGEST_PART_RATIO, it catches a
+// features share it. Independent of LARGEST_PART_TIER2_RATIO, it catches a
 // handful of cases that would otherwise slip through: a feature whose
 // *largest* part is small but whose parts are scattered across a huge
 // span, either because it has real far-offshore territory (Netherlands'
@@ -83,7 +95,7 @@ const LARGEST_PART_RATIO = 0.035;
 // bounding box spanning almost the whole map (Kiribati 785px, Fiji
 // 800px). No genuine, safe-to-hull-fill case in either dataset gets
 // anywhere near this (Indonesia, the widest real one excluded solely by
-// LARGEST_PART_RATIO, is 103px; Hawaii, the widest one that qualifies
+// LARGEST_PART_TIER2_RATIO, is 103px; Hawaii, the widest one that qualifies
 // under the current datasets, is ~91px).
 const HULL_BBOX_CAP = 150;
 // Every hit-region hull vertex gets pushed outward from the feature's own
@@ -466,7 +478,7 @@ export class WorldMap {
     }
 
     // The reference area both hit-region thresholds are measured against
-    // — see the comment above AREA_RATIO_SINGLE/LARGEST_PART_RATIO for
+    // — see the comment above AREA_RATIO_SINGLE/LARGEST_PART_TIER1_RATIO/LARGEST_PART_TIER2_RATIO for
     // why this needs to scale with the map's own viewport/feature-count,
     // not be a fixed px² value shared by every dataset this class renders.
     const evenSplitArea = this.featuresById.size > 0 ? (width * height) / this.featuresById.size : Infinity;
@@ -480,12 +492,32 @@ export class WorldMap {
     // separate parts (an archipelago) — see the threshold constants above.
     const sites = []; // { id, cx, cy }
     const qualifying = []; // { id, f, cx, cy }
+    const processedHitAreaIds = new Set(); // guards against a topology quirk — see below
     this.geojson.features.forEach((f, index) => {
       const path = this._pathsByIndex[index];
       if (path) path.setAttribute("d", this.pathGen(f));
 
       const hitArea = this.hitAreasById.get(f.id);
       if (!hitArea) return;
+
+      // A handful of ids in the actual topology data are shared by two
+      // *different* features — Ashmore and Cartier Is. carries Australia's
+      // own id ("036") rather than one of its own, most likely because the
+      // upstream topology never assigned the uninhabited territory a
+      // separate code. `hitAreasById` (like `featuresById`) has one entry
+      // per id, so without this guard, whichever of the two features this
+      // forEach visits *last* would silently overwrite the first one's
+      // qualification/hull with its own — in practice, Ashmore and
+      // Cartier's own tiny single-part shape (which trivially qualifies as
+      // "tiny") clobbering mainland Australia's correct, and correctly
+      // non-qualifying, one. Since both features already carry the same
+      // id and get their own click listener pointed at it (see the
+      // constructor), skipping every occurrence but the first here costs
+      // nothing — a click anywhere on either shape still resolves
+      // correctly — it just stops a later, unrelated shape from deciding
+      // what the *first* one's hit-region looks like.
+      if (processedHitAreaIds.has(f.id)) return;
+      processedHitAreaIds.add(f.id);
 
       hitArea.removeAttribute("clip-path");
       hitArea.style.display = "none";
@@ -502,7 +534,12 @@ export class WorldMap {
       if (bboxMax >= HULL_BBOX_CAP) return; // antimeridian-degenerate, or a real but far-flung exclave — skip
       const isMulti = f.geometry?.type === "MultiPolygon";
       const qualifies = isMulti
-        ? this._largestPartArea(f) < LARGEST_PART_RATIO * evenSplitArea
+        ? (() => {
+            const [largest, second] = this._largestPartAreas(f);
+            if (largest < LARGEST_PART_TIER1_RATIO * evenSplitArea) return true;
+            if (largest >= LARGEST_PART_TIER2_RATIO * evenSplitArea) return false;
+            return second >= SECOND_PART_RATIO * largest;
+          })()
         : (() => {
             const area = this.pathGen.area(f);
             return Number.isFinite(area) && area < AREA_RATIO_SINGLE * evenSplitArea;
@@ -651,14 +688,22 @@ export class WorldMap {
   }
 
   // The projected area (px², at the map's current fitSize scale) of a
-  // MultiPolygon feature's single biggest part — see LARGEST_PART_CAP.
-  _largestPartArea(f) {
-    let max = 0;
+  // MultiPolygon feature's biggest and second-biggest parts — see
+  // LARGEST_PART_TIER1_RATIO/TIER2_RATIO/SECOND_PART_RATIO above.
+  _largestPartAreas(f) {
+    let largest = 0;
+    let second = 0;
     for (const coords of f.geometry.coordinates) {
       const area = this.pathGen.area({ type: "Polygon", coordinates: coords });
-      if (Number.isFinite(area) && area > max) max = area;
+      if (!Number.isFinite(area)) continue;
+      if (area > largest) {
+        second = largest;
+        largest = area;
+      } else if (area > second) {
+        second = area;
+      }
     }
-    return max;
+    return [largest, second];
   }
 
   // Projects every ring point of a feature (all parts, at the map's

@@ -3,6 +3,75 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-25 — full hit-region audit: fix over-large "redundant" hulls (Portugal et al.) and an id-collision bug
+
+User reported Finland has a "weird polygonal hitbox that is redundant"
+and asked for a full audit of every country's hit-region.
+
+Checked Finland directly first: it doesn't qualify for a hit-region at
+all under the current code (its largest part, mainland Finland, is
+252.87px² — nowhere near LARGEST_PART_TIER2_RATIO's threshold), so
+whatever the user saw wasn't from the code as it stood at the time of
+the report — most likely a stale cached bundle from an earlier, more
+permissive iteration of this same qualification logic (see the
+2026-09-24 archipelago-hitbox-fix entries). Didn't chase that further;
+instead took "check if the hitboxes make sense" as a genuine invitation
+to audit all 238 countries' actual qualification data rather than one
+report, which turned up two real, fixable issues:
+
+**Over-large hulls for countries that don't need one.** Computed
+hull-area-to-real-area ratios for every currently-qualifying country and
+found Portugal's hull was 18× its own real area (924.85px² for a
+51.51px² country) — bigger, in absolute terms, than Philippines' hull
+(730.28px² for a country nearly 3× Portugal's size), despite Portugal
+not being any kind of real archipelago. Root cause: the existing
+single-tier "is the largest part small enough" check couldn't
+distinguish Portugal (mainland 0.030× the even-split reference,
+*barely* under the old 0.035× cutoff) from Philippines (Luzon, 0.031×,
+also barely under) — they're nearly tied on that one signal. What
+actually separates them is the *second*-biggest part: Philippines'
+Mindanao is 0.88× the size of Luzon (a real second landmass); Portugal's
+Azores are 0.008× mainland Portugal (a negligible speck ~52px away that
+the hull nonetheless has to stretch to cover). Rebuilt the qualification
+logic around two tiers instead of one: genuinely tiny largest parts
+(under 0.018×) still qualify unconditionally — this is what keeps
+Washington DC-scale cases (Rhode Island, Delaware) and every small
+archipelago (Vanuatu, Bahamas, ...) working exactly as the previous
+round left them — but a *moderate*-sized largest part (0.018–0.035×)
+now additionally needs a real second part (≥0.15× the largest) to
+qualify. Fixes Portugal, Croatia, Ireland, Cuba, Malawi, South Korea,
+Panama, and similar "one dominant mainland plus an afterthought"
+countries; verified every originally-requested country (Maldives,
+Philippines, Bahamas, Vanuatu, Solomon Islands, Trinidad and Tobago, the
+microstates, ...) and the previous round's US-states fixes (DC, Rhode
+Island, Delaware, Hawaii) all still qualify exactly as before. Total
+assisted countries: 95 → 81.
+
+**Australia/Ashmore and Cartier Is. id collision.** Found while auditing
+the ratio table — an entry labeled "Australia" with a hull 12,000× its
+supposed real area turned out to be a pre-existing topology quirk
+(flagged but deliberately left alone in an earlier round): Ashmore and
+Cartier Is. carries Australia's own id ("036") rather than one of its
+own, and `hitAreasById`'s one-entry-per-id map let whichever of the two
+features `_reflow` processed last silently decide the shared entry's
+qualification — in practice, Ashmore and Cartier's own tiny shape
+overwriting mainland Australia's correct, non-qualifying one every
+render. Given the broader audit surfaced it as a real, visible case (not
+just a theoretical one), fixed it this time: a `processedHitAreaIds`
+set in `_reflow` skips every occurrence of an id past the first. Both
+shapes still resolve clicks correctly either way — confirmed directly,
+clicking each dispatches the same id — only which one gets to shape the
+*hit-region* changes.
+
+Verified via jsdom: `_largestPartAreas` (renamed from `_largestPartArea`,
+now returns both the biggest and second-biggest part) and the two-tier
+qualification check tested directly against real geometry for every
+named example above; confirmed Australia's hit-region is correctly
+hidden and both id-036 shapes independently dispatch clicks resolving to
+the same id; re-ran the complete "must stay assisted" list from every
+prior hitbox round (both datasets) with none missing. Scratch scripts
+deleted after, per usual.
+
 ## 2026-09-25 — fix selected-country color (grey, not blue) — a side effect of the contrast round
 
 User reported a "Could not load game data" error trying Capitals → US
