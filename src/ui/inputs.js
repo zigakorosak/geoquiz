@@ -16,20 +16,6 @@
 import { WorldMap } from "../map/WorldMap.js";
 import { shuffle } from "../core/engine.js";
 
-const EARTH_RADIUS_KM = 6371;
-
-// Great-circle distance between two `[lat, lon]` points (world-countries'
-// own field order — see core/datasets.js items) — used only by "map-pin"'s
-// post-confirm feedback.
-function haversineKm([lat1, lon1], [lat2, lon2]) {
-  const toRad = (d) => (d * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
-}
-
 const renderers = {
   "multiple-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
     const correctValue = attr.getValue(item);
@@ -217,9 +203,11 @@ const renderers = {
       initialTransform,
       pinMode: true,
     });
-    let lastLonLat = null;
+    let lastLon = null;
+    let lastLat = null;
     map.setClickable(true, (lon, lat, containingId) => {
-      lastLonLat = [lat, lon]; // match items' own [lat, lon] latlng field order
+      lastLon = lon;
+      lastLat = lat;
       onSelect(containingId);
     });
 
@@ -236,8 +224,14 @@ const renderers = {
       showResult({ guess, item, correct }) {
         map.setClickable(false, null);
         map.markResult(guess, attr.getValue(item));
-        const distance = lastLonLat && item.latlng ? Math.round(haversineKm(lastLonLat, item.latlng)) : null;
-        const distanceText = distance != null ? ` You were ${distance} km from its center.` : "";
+        // 0 whenever the pin already landed inside the target's own shape
+        // (distanceToBorderKm's own inside check) — a correct guess is
+        // always exactly this case, but a wrong guess can be too, in the
+        // (borderless-map, so invisible at guess time) gap between two
+        // features' hulls never actually landing outside either one.
+        const rawDistance = lastLon != null && lastLat != null ? map.distanceToBorderKm(lastLon, lastLat, attr.getValue(item)) : null;
+        const distance = rawDistance != null ? Math.round(rawDistance) : null;
+        const distanceText = distance != null ? ` You were ${distance} km from its border.` : "";
         feedback.textContent = correct ? `Correct!${distanceText}` : `Correct answer: ${attr.formatAnswer(item)}.${distanceText}`;
       },
     };

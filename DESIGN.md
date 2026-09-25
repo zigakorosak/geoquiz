@@ -718,16 +718,29 @@ on real-browser layout). The widget reports `containingId` (or `null`,
 over open ocean or unplayable territory) via `onSelect`, exactly like
 map-click's country id — so `QuizSession`/`attributes.js`'s existing
 id-equality `checkAnswer` needs no pin-specific logic at all; only the
-*feedback* differs. On confirm, `map.markResult` reveals the correct
-country's actual shape (and the wrong guess's, if the pin happened to
-land inside a different real country) the same way map-click always has;
-`showResult` additionally computes a great-circle distance
-(`haversineKm`, `inputs.js`) between the pin's own lon/lat and the
-target's `latlng` field (present on every item — see "Data" below) and
-appends it to the feedback text ("You were 340 km from its center").
-There's no reclick-to-confirm shortcut here (unlike map-click/multiple-
-choice) — repositioning the pin before confirming is just another click
-anywhere, always reported via `onSelect` again, never itself a confirm.
+*feedback* differs. Every country renders identically (no border between
+them, `.world-map--pin-mode .country`) until confirm — the reveal only
+ever draws *one* outline, the target's own (`.world-map--pin-mode
+.country--correct` gets `stroke`; `.country--wrong` deliberately doesn't,
+just a red fill with no outline of its own, so a miss never reads as "two
+countries both got confirmed borders"). `showResult` additionally calls
+the new `map.distanceToBorderKm(lon, lat, id)` (`WorldMap.js`) — 0 if the
+pin's own lon/lat already falls inside the target's shape (`pointInFeature`,
+reused from the `containingId` lookup above), otherwise the closest
+distance from that point to any segment of *any* ring of *any* part of the
+target's real outline (a local tangent-plane flattening around the pin's
+own latitude, `lonLatToLocalKm`, turns each segment's closest-point check
+into plain 2D geometry — accurate enough for a "how far off" readout given
+border segments are short relative to the earth's curvature, without
+pulling in a full geodesic library) — and appends that to the feedback
+text ("You were 340 km from its border"). This intentionally measures
+against the country's actual *shape*, not its centroid (the old
+`haversineKm`-to-`item.latlng` approach): a pin landing deep inside a large
+or oddly-shaped country would otherwise report "hundreds of km away" from
+a guess that was, in fact, correct. There's no reclick-to-confirm shortcut
+here (unlike map-click/multiple-choice) — repositioning the pin before
+confirming is just another click anywhere, always reported via `onSelect`
+again, never itself a confirm.
 
 Only meaningful for a dataset with real geographic coordinates:
 `gameWizard.js`'s `availableAnswerKinds` prunes `"map-pin"` back out of

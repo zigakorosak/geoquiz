@@ -3,6 +3,59 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-25 — smaller pin marker, single-outline reveal, border-distance feedback
+
+Three pin-drop-mode requests: shrink the dropped-pin marker, only reveal
+the *target* country's outline after answering (not the wrong guess's
+too), and measure the post-confirm distance figure against the target's
+actual border rather than its centroid — with an inside guess reporting
+exactly 0 km rather than some nonzero distance to a point elsewhere in the
+country.
+
+**Pin size**: `WorldMap.js`'s `pinMarker` radius and `style.css`'s
+`.pin-marker { r }` both went from 5px to 3px (stroke-width 1.5 → 1 to
+match).
+
+**Single-outline reveal**: `.world-map--pin-mode .country--wrong` already
+had no border before this round's fill-vs-stroke read — turns out it *did*
+draw one (`stroke: var(--wrong)`), same as `.country--correct`. Removed
+it: a wrong guess now shows only as a red fill patch on the otherwise
+still-borderless landmass, while the correct country's own outline (the
+only one now drawn) is what actually gets revealed. `.country--correct`
+itself was untouched — that's the one deliberate exception the borderless
+mode was already built around.
+
+**Border-distance**: previously, `map-pin`'s feedback measured a
+great-circle distance (`haversineKm`, `inputs.js`) from the dropped pin to
+the target item's `latlng` field — its centroid. This meant a pin dropped
+well inside a large or oddly-shaped country (Brazil, Chile, ...) could
+still report "you were 400 km away" despite being a correct guess, which
+reads as contradictory feedback. Replaced with a new `WorldMap.distanceToBorderKm(lon,
+lat, id)`: returns 0 if the point is already inside the feature (reusing
+`pointInFeature`, the same point-in-polygon test `_findContainingId`
+already relies on for `containingId`), otherwise the minimum distance to
+any edge of any ring of any part of that feature's real outline. Distance-
+to-segment itself uses a local tangent-plane flattening centered on the
+pin's own latitude (`lonLatToLocalKm`) so the actual closest-point search
+is plain 2D geometry rather than needing a full geodesic segment-distance
+routine — accurate enough for a "how far off" readout given how short a
+border segment is relative to the earth's curvature. `haversineKm` and the
+`item.latlng`-based calculation in `inputs.js` were deleted outright (no
+longer called from anywhere); the `latlng` field itself stays in
+`countries.json` since `generate-data.mjs` still writes it and nothing else
+depended on removing it.
+
+Verified via a throwaway jsdom script (deleted after, per usual) against
+the real `world-50m.json` topology: a point in central Paris resolves to
+exactly 0 km against France's id; a point in central Madrid resolves to
+~351 km against France's border (plausible — Madrid is roughly that far
+from the nearest point on the French border, not from Paris); a point just
+north of the Pyrenees resolves to ~12 km, i.e. genuinely close to the
+border as expected; an unknown id returns `null` (guarded against in
+`inputs.js` so `Math.round(null)` — which JS silently coerces to `0` —
+never masks a real lookup failure as a false "0 km"). `npm run build`
+clean.
+
 ## 2026-09-25 — full hit-region audit: fix over-large "redundant" hulls (Portugal et al.) and an id-collision bug
 
 User reported Finland has a "weird polygonal hitbox that is redundant"

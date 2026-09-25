@@ -409,18 +409,20 @@ button:disabled {
   stroke-width: 1.5;
 }
 
+/* No stroke here (unlike .country--correct above) — pin mode reveals only
+   the target's own outline after answering, not a wrong guess's, so a
+   miss reads as a plain red patch on the otherwise borderless landmass
+   rather than implying two countries both have "confirmed" outlines. */
 .world-map--pin-mode .country--wrong {
   fill: var(--wrong);
   fill-opacity: 0.6;
-  stroke: var(--wrong);
-  stroke-width: 1.5;
 }
 
 .pin-marker {
-  r: 5;
+  r: 3;
   fill: var(--accent);
   stroke: #fff;
-  stroke-width: 1.5;
+  stroke-width: 1;
   pointer-events: none;
 }
 

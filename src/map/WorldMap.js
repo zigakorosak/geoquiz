@@ -145,6 +145,59 @@ function pointInFeature(lon, lat, feature) {
   return false;
 }
 
+const EARTH_RADIUS_KM = 6371;
+
+// Flattens lon/lat to a local tangent-plane xy (km) around a fixed
+// reference latitude, purely so a border segment's closest point can be
+// found with plain planar geometry — good enough for a "how far off was
+// your guess" readout (border segments are short relative to the earth's
+// curvature) without pulling in a full geodesic library.
+function lonLatToLocalKm(lon, lat, refLat) {
+  const rad = Math.PI / 180;
+  return [lon * rad * Math.cos(refLat * rad) * EARTH_RADIUS_KM, lat * rad * EARTH_RADIUS_KM];
+}
+
+// Distance (km, via the local-plane approximation above) from (lon, lat) to
+// the nearest point on the segment [lon1,lat1]-[lon2,lat2], clamped to the
+// segment itself (not the infinite line through it).
+function pointToSegmentKm(lon, lat, [lon1, lat1], [lon2, lat2]) {
+  const [px, py] = lonLatToLocalKm(lon, lat, lat);
+  const [ax, ay] = lonLatToLocalKm(lon1, lat1, lat);
+  const [bx, by] = lonLatToLocalKm(lon2, lat2, lat);
+  const dx = bx - ax;
+  const dy = by - ay;
+  const lenSq = dx * dx + dy * dy;
+  let t = lenSq === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+}
+
+function ringMinDistanceKm(lon, lat, ring) {
+  let min = Infinity;
+  for (let i = 0; i < ring.length - 1; i++) {
+    const d = pointToSegmentKm(lon, lat, ring[i], ring[i + 1]);
+    if (d < min) min = d;
+  }
+  return min;
+}
+
+// Nearest-border distance (km) from a point to a feature's own outline —
+// every ring of every part (an archipelago's coastline is still its
+// border, same as a mainland's), not just the outer boundary of its
+// largest part. Returns null only if the feature has no polygon geometry
+// at all.
+function featureBorderDistanceKm(lon, lat, feature) {
+  const geometry = feature.geometry;
+  const polygons =
+    geometry?.type === "MultiPolygon" ? geometry.coordinates : geometry?.type === "Polygon" ? [geometry.coordinates] : null;
+  if (!polygons) return null;
+  let min = Infinity;
+  for (const polygon of polygons) {
+    for (const ring of polygon) min = Math.min(min, ringMinDistanceKm(lon, lat, ring));
+  }
+  return Number.isFinite(min) ? min : null;
+}
+
 let instanceCounter = 0;
 
 export class WorldMap {
@@ -238,6 +291,10 @@ export class WorldMap {
     this.featuresById = new Map(); // playable id -> home copy's <path>
     this.hitAreasById = new Map();
     this.hitClipsById = new Map();
+    // id -> raw geojson feature (not just playable ones' <path> elements) —
+    // used by distanceToBorderKm, which needs the actual ring coordinates,
+    // not anything SVG/projection-dependent.
+    this._geometryById = new Map(geojson.features.filter((f) => f.id).map((f) => [f.id, f]));
 
     this.borderGroup = document.createElementNS(SVG_NS, "g");
     this.borderGroup.setAttribute("class", "border-lines");
@@ -253,7 +310,7 @@ export class WorldMap {
     this.pinMarker = document.createElementNS(SVG_NS, "circle");
     this.pinMarker.id = `${this._instanceId}-pin`;
     this.pinMarker.setAttribute("class", "pin-marker");
-    this.pinMarker.setAttribute("r", "5"); // also in style.css; set directly too rather than relying solely on CSS geometry-property support
+    this.pinMarker.setAttribute("r", "3"); // also in style.css; set directly too rather than relying solely on CSS geometry-property support
     this.pinMarker.style.display = "none";
     this.homeGroup.appendChild(this.pinMarker);
 
@@ -685,6 +742,20 @@ export class WorldMap {
       if (pointInFeature(lon, lat, f)) return f.id;
     }
     return null;
+  }
+
+  // Distance (km) from a lon/lat point to the nearest edge of feature `id`'s
+  // own outline — 0 if the point already falls inside it. Used by pin-drop
+  // mode's post-confirm feedback: "how far off was this guess" is more
+  // useful measured against the country's actual shape than against its
+  // centroid, especially for large or oddly-shaped countries where a pin
+  // dropped well inside the border can otherwise read as "hundreds of km
+  // from the center".
+  distanceToBorderKm(lon, lat, id) {
+    const f = this._geometryById.get(id);
+    if (!f) return null;
+    if (pointInFeature(lon, lat, f)) return 0;
+    return featureBorderDistanceKm(lon, lat, f);
   }
 
   // The projected area (px², at the map's current fitSize scale) of a
