@@ -1440,6 +1440,20 @@ us-states.json` + `us-states-topology.json`.
   <short-label>`). This tars the whole project (excluding `node_modules`,
   `dist`, `archive`) into `archive/<timestamp>_<label>.tar.gz` and prunes
   down to the 10 most recent snapshots automatically.
+- **Release scripts** (`scripts/git-push.sh`, `scripts/deploy.sh`,
+  `scripts/push-deploy.sh`, `scripts/archive-p-d.sh`): the three mechanical
+  action sequences this project repeats — "push", "push and deploy",
+  "archive, push, and deploy" — each collapsed into one script instead of
+  a hand-typed add/commit/push (+ trigger/watch the Actions run) sequence
+  every time. `git-push.sh "message"` stages everything (`.gitignore`
+  already keeps `archive/`, `node_modules`, `dist` out of it), refuses to
+  commit anything whose staged path *looks* like a credential (`.env`,
+  `secret`, `credential`, `.pem`, `id_rsa` — a blunt safety net, not a
+  substitute for actually looking), commits, and pushes. `deploy.sh`
+  triggers the (manual-only — see Deployment below) GitHub Actions
+  workflow and waits for it to finish, reporting pass/fail rather than
+  firing-and-forgetting. `push-deploy.sh`/`archive-p-d.sh` just sequence
+  these (and `archive.sh`) — no logic of their own.
 
 ## Deployment
 
