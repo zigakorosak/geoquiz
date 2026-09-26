@@ -45,23 +45,65 @@ export const datasetMeta = {
   },
 };
 
-const loaded = new Map();
+// Items and topology are cached (and fetched) *separately*, because they
+// have very different weights and very different consumers: the items file
+// is small (~100KB for countries) and the wizard needs it early to show
+// region/sovereignty item counts, while the topology is the heavy part
+// (~750KB for the 50m world map) and nothing needs it until the game
+// screen actually mounts a map. Splitting them means picking through the
+// wizard never waits on — or even requests — the big file; it starts
+// downloading on the final "Loading…" screen right before gameplay.
+//
+// Both caches hold *promises*, not results, so concurrent callers share
+// one in-flight fetch. A failed fetch is evicted so a retry (e.g. going
+// back and re-entering after a network blip) actually re-attempts instead
+// of replaying the cached rejection forever.
+const itemsCache = new Map();
+const topologyCache = new Map();
+
+// Check r.ok before parsing: a 404 typically returns an HTML error page,
+// and letting that hit r.json() surfaces as a cryptic JSON parse error
+// instead of saying which file failed to load.
+const fetchJson = (url) =>
+  fetch(url).then((r) => {
+    if (!r.ok) throw new Error(`Failed to load ${url}: HTTP ${r.status}`);
+    return r.json();
+  });
+
+function cachedFetch(cache, key, url) {
+  if (!cache.has(key)) {
+    const promise = fetchJson(url);
+    promise.catch(() => {
+      if (cache.get(key) === promise) cache.delete(key);
+    });
+    cache.set(key, promise);
+  }
+  return cache.get(key);
+}
 
 export function listDatasetMeta() {
   return Object.values(datasetMeta);
 }
 
+// The lightweight half: just the quizzable items. What the wizard's
+// region/sovereignty steps await for their counts.
+export function loadItems(key) {
+  const meta = datasetMeta[key];
+  if (!meta) return Promise.reject(new Error(`Unknown dataset: ${key}`));
+  return cachedFetch(itemsCache, key, meta.itemsUrl);
+}
+
+// The heavyweight half: the map topology. Only awaited where a map is
+// actually about to render (startGame, map explore).
+export function loadTopology(key) {
+  const meta = datasetMeta[key];
+  if (!meta) return Promise.reject(new Error(`Unknown dataset: ${key}`));
+  return cachedFetch(topologyCache, key, meta.topologyUrl);
+}
+
 export async function loadDataset(key) {
-  if (loaded.has(key)) return loaded.get(key);
   const meta = datasetMeta[key];
   if (!meta) throw new Error(`Unknown dataset: ${key}`);
-
-  const [items, topology] = await Promise.all([
-    fetch(meta.itemsUrl).then((r) => r.json()),
-    fetch(meta.topologyUrl).then((r) => r.json()),
-  ]);
-
-  const dataset = { ...meta, items, topology };
-  loaded.set(key, dataset);
-  return dataset;
+  const [items, topology] = await Promise.all([loadItems(key), loadTopology(key)]);
+  return { ...meta, items, topology };
 }

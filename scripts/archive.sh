@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Snapshots the project into archive/ as a timestamped tarball, then prunes
-# down to the 4 most recent archives (oldest deleted first).
+# down to the 10 most recent archives (oldest deleted first).
 #
 # Usage: scripts/archive.sh [short-label]
 set -euo pipefail
@@ -21,7 +21,7 @@ tar \
 echo "Archived to archive/${name}.tar.gz"
 
 mapfile -t archives < <(ls -1t archive/*.tar.gz)
-max=4
+max=10
 if [ "${#archives[@]}" -gt "$max" ]; then
   for old in "${archives[@]:$max}"; do
     echo "Pruning old archive: $old"

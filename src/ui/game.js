@@ -49,11 +49,12 @@ export function renderGame(
       : null;
 
   // Soft gate, always active: only items actually in play this game (after
-  // region + sovereignty filtering) are clickable/normally styled.
-  // Everything else on the map (Indian Ocean Ter., Siachen Glacier, or
-  // Kosovo/Somaliland/N. Cyprus when "All Sovereign" excludes them)
-  // renders muted like today's "unplayable" shapes, regardless of
-  // whether the topology itself assigned it an id.
+  // region + sovereignty filtering) are clickable/normally styled. Any
+  // real country outside it (out-of-region members, or Kosovo/Somaliland/
+  // N. Cyprus when "All Sovereign" excludes them) renders muted and inert.
+  // Id-less terrain shapes (Siachen Glacier, Indian Ocean Ter.) are a
+  // separate case — plain ground, never muted — see WorldMap.js's
+  // `.country--terrain`.
   const playableIds = new Set(dataset.items.map((i) => i.id));
 
   container.innerHTML = "";
@@ -255,7 +256,16 @@ export function renderGame(
       const li = document.createElement("li");
       li.className = entry.correct ? "summary-correct" : "summary-wrong";
       const time = roundTimes[i] != null ? ` (${roundTimes[i].toFixed(1)}s)` : "";
-      li.textContent = `${entry.item.name}: ${entry.correct ? "correct" : `wrong (was ${entry.correctValue})`}${time}`;
+      // Label each round by what the player was actually *shown* — the
+      // question value, not always the item's name. In a Capitals game the
+      // prompt was "Paris", so "Paris: wrong (was France)" tells the whole
+      // story; labeling by item name produced "France: wrong (was France)",
+      // the answer echoed as its own correction. When the correction would
+      // just repeat the label (name→location games: both are the country's
+      // name), drop it rather than echo it.
+      const label = questionAttr.formatAnswer(entry.item);
+      const correction = entry.correct || entry.correctValue === label ? "" : ` (was ${entry.correctValue})`;
+      li.textContent = `${label}: ${entry.correct ? "correct" : "wrong"}${correction}${time}`;
       list.appendChild(li);
     });
 
@@ -265,7 +275,11 @@ export function renderGame(
     playAgain.addEventListener("click", () =>
       renderGame(
         container,
-        { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount },
+        // The full config this game was started with — anything omitted
+        // here silently reverts to its default on replay (pinTarget was
+        // once missing, so a Capital-scored pin game replayed as
+        // Region-scored).
+        { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount, pinTarget },
         onExit
       )
     );

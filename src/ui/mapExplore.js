@@ -24,6 +24,7 @@ export function renderMapExplore(container, onBack) {
   back.className = "exit-button";
   back.textContent = "← Back";
   back.addEventListener("click", () => {
+    cancelled = true;
     map?.destroy();
     onBack();
   });
@@ -38,9 +39,15 @@ export function renderMapExplore(container, onBack) {
   container.appendChild(root);
 
   let map = null;
+  let cancelled = false;
 
   loadDataset("countries")
     .then((dataset) => {
+      // Back was clicked while the data was still loading — building the
+      // map now would mount it into a detached node and leak the whole
+      // WorldMap (its ResizeObserver keeps observing the detached
+      // container, holding the topology alive).
+      if (cancelled) return;
       mapArea.textContent = "";
       map = new WorldMap(mapArea, {
         topology: dataset.topology,

@@ -128,6 +128,39 @@ const WRAP_WINDOW = 0.5;
 // already reachable. 50 clears that with a little headroom.
 const MIN_ZOOM = 1;
 const MAX_ZOOM = 50;
+// How long after d3-zoom's "end" a gesture must stay quiet before the map
+// treats it as settled (de-promotes the GPU layers so the render sharpens,
+// re-pads the assist hulls — see _onGestureSettle). Longer than d3's own
+// ~150ms wheel-idle window, so a multi-notch wheel zoom reads as one
+// gesture instead of settling (and re-rasterizing) between notches.
+const GESTURE_SETTLE_MS = 200;
+// How far the svg's own rendered box extends beyond the wrapper's visible
+// window on each side, as a fraction of that side's own width/height — see
+// the "zoom" handler's frozen branch and _reflow's viewBox/sizing setup.
+// Frozen zoom scales the whole svg element as a raster; scaling it DOWN
+// (zooming out) shrinks that raster toward its own top-left corner, and
+// without extra pre-rendered margin around the visible window, the area
+// it stops covering has nothing real behind it — reported as looking
+// "weird" even though the wrapper's matching ocean background means it's
+// not literally a color mismatch, just an obviously shrinking picture
+// rather than a map that keeps showing real geography as you zoom out.
+// The margin is real map content (the same geometry that's always
+// rendered, including ghost copies — nothing new is drawn for this, it's
+// purely a matter of how much of the existing scene the svg's own
+// viewBox/box size reveals), so overscanning it means a zoom-out gesture
+// keeps showing genuine geography right up to the tolerance below, then
+// degrades to plain (correctly-colored) ocean beyond it rather than
+// anything jarring.
+//
+// Tolerance: with margin M = ratio × side, a zoom-out from k=b down to
+// k=t (scale = t/b < 1) leaves the shrunk raster still covering the full
+// window as long as scale ≥ 1 / (1 + 2×ratio) — i.e. RATIO 0.75 covers
+// any single gesture that doesn't shrink k by more than 2.5×. Doubling
+// the margin quadruples the rendered pixel count, so this is a real
+// three-way trade (coverage vs. GPU raster size vs. paint cost of the
+// wider Pass-1 layout at settle) — 0.75 was chosen as comfortably past
+// any realistic single wheel/pinch burst without the raster ballooning.
+const ZOOM_OVERSCAN_RATIO = 0.75;
 // The dropped-pin marker's on-screen radius (px), held constant regardless
 // of zoom level — see the "zoom" handler below, which counter-scales the
 // SVG `r` attribute against the current transform's scale so the pin
@@ -246,6 +279,20 @@ function localKmToLonLat(x, y, refLat) {
 // scale consistently.
 function nearestPointOnSegmentKm(lon, lat, [lon1, lat1], [lon2, lat2]) {
   const refLat = lat;
+  // Bring both segment endpoints onto the query point's own longitude
+  // branch (±360° as needed) before flattening — the earth is round, and
+  // the shortest path from a pin in Chile (lon ≈ -75) to Australia's
+  // border (lon ≈ 145) crosses the Pacific/antimeridian, not the ~220°
+  // of map interior a raw longitude difference measures. Normalizing each
+  // endpoint independently can't tear a segment: both endpoints of any
+  // real border segment are within a fraction of a degree of each other,
+  // so they always round to the same branch. The returned nearest point
+  // keeps the shifted longitude (possibly outside ±180) on purpose — the
+  // caller projects it via _projectWithWrap, which turns that shift into
+  // "draw toward the ghost copy", i.e. the line visibly takes the short
+  // way across the seam.
+  lon1 += 360 * Math.round((lon - lon1) / 360);
+  lon2 += 360 * Math.round((lon - lon2) / 360);
   const [px, py] = lonLatToLocalKm(lon, lat, refLat);
   const [ax, ay] = lonLatToLocalKm(lon1, lat1, refLat);
   const [bx, by] = lonLatToLocalKm(lon2, lat2, refLat);
@@ -256,7 +303,16 @@ function nearestPointOnSegmentKm(lon, lat, [lon1, lat1], [lon2, lat2]) {
   t = Math.max(0, Math.min(1, t));
   const cx = ax + t * dx;
   const cy = ay + t * dy;
-  return { point: localKmToLonLat(cx, cy, refLat), distanceKm: Math.hypot(px - cx, py - cy) };
+  const point = localKmToLonLat(cx, cy, refLat);
+  // The planar math above only *picks* the candidate point on the segment
+  // — a job it's fine at, since a border segment's endpoints are at most a
+  // few km apart, bounding any pick error by the segment's own length.
+  // The distance itself is measured with a real great circle: the flat
+  // approximation's error grows with range and was off by thousands of km
+  // for cross-Pacific queries (a Chile pin vs. Australia's border read
+  // ~15,300km planar vs. ~11,300km true), exactly the case the longitude
+  // normalization above exists to serve.
+  return { point, distanceKm: haversineKm([lon, lat], point) };
 }
 
 function ringNearestBorderPoint(lon, lat, ring) {
@@ -355,7 +411,23 @@ export class WorldMap {
     // Stop mobile browsers from hijacking pinch/scroll for page zoom so
     // d3-zoom sees the gesture instead.
     this.svg.style.touchAction = "none";
-    container.appendChild(this.svg);
+    // The svg's parent wrapper exists for the frozen-zoom mechanism (see
+    // the "zoom" handler): during a zoom gesture the svg element itself
+    // gets a CSS transform, so (a) the zoom listeners must live on this
+    // untransformed wrapper — d3's pointer math reads the listener
+    // element's bounding rect, which must not move mid-gesture — and
+    // (b) the wrapper clips (`overflow: hidden`) and paints the ocean
+    // color, so the area a scaled-down svg no longer covers reads as
+    // plain ocean rather than page background until the settle repaint.
+    this.viewportEl = document.createElement("div");
+    this.viewportEl.className = "world-viewport";
+    this.viewportEl.style.touchAction = "none";
+    // A CSS transform on the svg must scale from its top-left, matching
+    // how the zoom delta below is derived. Set once; harmless when no
+    // transform is applied.
+    this.svg.style.transformOrigin = "0 0";
+    this.viewportEl.appendChild(this.svg);
+    container.appendChild(this.viewportEl);
 
     this.defs = document.createElementNS(SVG_NS, "defs");
     this.svg.appendChild(this.defs);
@@ -388,6 +460,20 @@ export class WorldMap {
       this.copyGroups.set(offset, group);
     }
     this.homeGroup = this.copyGroups.get(0);
+    // All actual content lives in this inner, untransformed group; the
+    // homeGroup wrapper above carries the zoom/pan transform. The split
+    // exists so each ghost copy can be a SINGLE `<use>` of this group's id
+    // (see the ghost loop below) — referencing homeGroup itself would
+    // clone its transform attribute and double-apply it. One group-use per
+    // ghost instead of ~250 per-element clones cuts the DOM roughly 3x,
+    // which is what makes gesture-start layer rasterization (and every
+    // frame's paint bookkeeping) cheap; it also removes the whole
+    // "forgot to clone the new element into the ghosts" bug class — a
+    // ghost now reflects the home content by construction, whatever gets
+    // added to it later.
+    this.contentGroup = document.createElementNS(SVG_NS, "g");
+    this.contentGroup.id = `${this._instanceId}-content`;
+    this.homeGroup.appendChild(this.contentGroup);
 
     // Pin mode only: two merged paths standing in for every per-country
     // fill — see _reflow, where their `d`s are set via topojson.merge().
@@ -407,8 +493,8 @@ export class WorldMap {
     this.pinPlayableLandmass.id = `${this._instanceId}-landmass-playable`;
     this.pinPlayableLandmass.setAttribute("class", "pin-landmass pin-landmass--playable");
     if (this.pinMode) {
-      this.homeGroup.appendChild(this.pinLandmass);
-      this.homeGroup.appendChild(this.pinPlayableLandmass);
+      this.contentGroup.appendChild(this.pinLandmass);
+      this.contentGroup.appendChild(this.pinPlayableLandmass);
     }
 
     // Everything below is built once, directly, into the home copy;
@@ -423,16 +509,40 @@ export class WorldMap {
     // see the "zoom" handler below for why.
     this._hullBaseById = new Map();
     // id -> raw geojson feature (not just playable ones' <path> elements) —
-    // used by revealBorderDistance, which needs the actual ring coordinates,
-    // not anything SVG/projection-dependent.
-    this._geometryById = new Map(this.geojson.features.filter((f) => f.id).map((f) => [f.id, f]));
+    // used by revealBorderDistance/revealCapitalDistance and pin mode's
+    // revealPath, which need the actual ring coordinates, not anything
+    // SVG/projection-dependent. A handful of topology ids are shared by
+    // two different features (Ashmore and Cartier Is. carries Australia's
+    // own "036" — same quirk _reflow's hit-area pass guards against), and
+    // a naive Map keeps whichever came *last* — which made every
+    // Australia reveal/distance measure against the tiny islet instead of
+    // the mainland (a Chile pin read 14,521km "to Australia's border",
+    // i.e. to Ashmore, vs. the true ~8,960km). Same-id features are merged
+    // into one MultiPolygon here instead: both shapes genuinely ARE that
+    // id's territory, so containment, nearest-border, and the reveal
+    // outline should all cover the union.
+    this._geometryById = new Map();
+    for (const f of this.geojson.features) {
+      if (!f.id) continue;
+      const existing = this._geometryById.get(f.id);
+      if (!existing) {
+        this._geometryById.set(f.id, f);
+        continue;
+      }
+      const polysOf = (g) => (g.type === "MultiPolygon" ? g.coordinates : [g.coordinates]);
+      this._geometryById.set(f.id, {
+        type: "Feature",
+        id: f.id,
+        geometry: { type: "MultiPolygon", coordinates: [...polysOf(existing.geometry), ...polysOf(f.geometry)] },
+      });
+    }
 
     this.borderGroup = document.createElementNS(SVG_NS, "g");
     this.borderGroup.setAttribute("class", "border-lines");
-    this.homeGroup.appendChild(this.borderGroup);
+    this.contentGroup.appendChild(this.borderGroup);
     this.hitGroup = document.createElementNS(SVG_NS, "g");
     this.hitGroup.setAttribute("class", "hit-areas");
-    this.homeGroup.appendChild(this.hitGroup);
+    this.contentGroup.appendChild(this.hitGroup);
 
     // The dropped-pin marker (pin mode only) — decorative itself
     // (pointer-events: none, see style.css), but paired with a separate,
@@ -445,7 +555,7 @@ export class WorldMap {
     this.pinMarker.setAttribute("class", "pin-marker");
     this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX)); // kept in sync with the current zoom scale by the "zoom" handler below
     this.pinMarker.style.display = "none";
-    this.homeGroup.appendChild(this.pinMarker);
+    this.contentGroup.appendChild(this.pinMarker);
 
     // Set via setClickable's third argument; invoked by the whole-map click
     // listener when a click lands close enough to the pin already down (see
@@ -462,7 +572,7 @@ export class WorldMap {
     this.pinBorderLine.id = `${this._instanceId}-pin-border-line`;
     this.pinBorderLine.setAttribute("class", "pin-border-line");
     this.pinBorderLine.style.display = "none";
-    this.homeGroup.appendChild(this.pinBorderLine);
+    this.contentGroup.appendChild(this.pinBorderLine);
     this._revealedBorderTarget = null; // { pinLonLat, point } — re-projected on every _reflow, see below
 
     // The capital's own exact point, shown only by revealCapitalDistance —
@@ -474,7 +584,7 @@ export class WorldMap {
     this.capitalMarker.setAttribute("class", "capital-marker");
     this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX)); // kept in sync with the current zoom scale by the "zoom" handler below, same as pinMarker
     this.capitalMarker.style.display = "none";
-    this.homeGroup.appendChild(this.capitalMarker);
+    this.contentGroup.appendChild(this.capitalMarker);
     this._revealedCapitalPoint = null; // lon/lat — re-projected on every _reflow, see below
 
     // Pin mode renders NO per-country paths at all (see the per-feature
@@ -492,7 +602,7 @@ export class WorldMap {
     this.revealPath.setAttribute("class", "country");
     this.revealPath.style.pointerEvents = "none";
     this._revealedFeatureId = null; // kept so _reflow can re-project it
-    if (this.pinMode) this.homeGroup.appendChild(this.revealPath);
+    if (this.pinMode) this.contentGroup.appendChild(this.revealPath);
 
     // Data-driven, not hardcoded to any specific pair: dashedBorders is a
     // list of [idA, idB] country-id pairs (see core/datasets.js) whose
@@ -588,47 +698,22 @@ export class WorldMap {
         this.hitClipsById.set(f.id, { clipId, polygon });
       }
 
-      this.homeGroup.insertBefore(path, this.borderGroup);
+      this.contentGroup.insertBefore(path, this.borderGroup);
       this._pathsByIndex.push(path);
     }
 
-    // Ghost <use> clones — one per home-copy path/border line/pin marker,
-    // in each ghost group. Ignored entirely when wrapping is off. A
-    // ghost's own click listener (playable features only, same as the
-    // home copy's) fires with the *same* id its home path would — clicks
-    // work identically on a ghost as on the home copy, rather than
-    // relying only on the wrap-snap keeping the home copy close enough to
-    // the viewport that a ghost is rarely clicked at all (WRAP_WINDOW
-    // still guarantees at least half the viewport is always the clickable
-    // home copy, but "at least half" isn't "all of it").
+    // Each ghost copy is exactly ONE element: a `<use>` of the entire
+    // content group (see contentGroup above for why that's the referent
+    // and what it buys). Ghosts are fully inert (`pointer-events: none`,
+    // style.css) — clicks that land over ghost content fall through to the
+    // <svg> itself and are resolved *geometrically* by the click listener
+    // below, the same coordinate-folding approach pin mode has always
+    // used. That replaced per-country ghost <use> clones with their own
+    // listeners, which were the bulk of the DOM (~480 elements on the
+    // world map) and of every gesture-start layer rasterization.
     for (const offset of this.copyOffsets) {
       if (offset === 0) continue;
-      const group = this.copyGroups.get(offset);
-      // Inserted first, same as in the home group, so they stay the bottom
-      // layers here too. In pin mode these are the *only* country-shaped
-      // things a ghost copy carries — there are no per-country paths to
-      // clone, so the loop below is skipped entirely.
-      if (this.pinMode) {
-        group.appendChild(this._makeUse(this.pinLandmass.id));
-        group.appendChild(this._makeUse(this.pinPlayableLandmass.id));
-        group.appendChild(this._makeUse(this.revealPath.id));
-      }
-      for (const path of this._pathsByIndex) {
-        if (!path) continue; // pin mode — no per-country paths exist
-        const use = this._makeUse(path.id);
-        use.setAttribute("class", "country-ghost");
-        const fId = path.dataset.id;
-        if (fId) {
-          use.addEventListener("click", () => {
-            if (this.clickEnabled && this.onClick) this.onClick(fId);
-          });
-        }
-        group.appendChild(use);
-      }
-      for (const { path } of this.borderLines) group.appendChild(this._makeUse(path.id));
-      group.appendChild(this._makeUse(this.pinMarker.id));
-      group.appendChild(this._makeUse(this.pinBorderLine.id));
-      group.appendChild(this._makeUse(this.capitalMarker.id));
+      this.copyGroups.get(offset).appendChild(this._makeUse(this.contentGroup.id));
     }
 
     // `initialTransform` (the "keep zoom between rounds" setting) wins when
@@ -637,43 +722,134 @@ export class WorldMap {
     this._initialTransform = initialTransform ?? null;
     this._hasAppliedInitialTransform = false;
     this.currentTransform = initialTransform ?? zoomIdentity;
+    // Perf bookkeeping for the "zoom" handler below: the k the counter-
+    // scaled elements were last updated for (null = never, so the first
+    // tick always runs) and the k the assist hulls were last re-padded at
+    // (kept separately since hull re-padding tolerates a small k drift —
+    // see the handler; must never be 0, it's used as a divisor-ish base).
+    this._lastCounterScaleK = null;
+    this._lastHullPadK = 1;
+    this._settleTimer = null; // pending _onGestureSettle, if a gesture just ended
+    this._gestureActive = false; // between d3-zoom's start and end events
+    // Current overscan margin in px, per axis (see ZOOM_OVERSCAN_RATIO) —
+    // recomputed every _reflow from that reflow's own width/height, and
+    // read by the frozen-zoom CSS transform's correction term below. Safe
+    // at 0 before the constructor's own first _reflow call: no real user
+    // gesture can begin before that synchronous call has already run.
+    this._overscanX = 0;
+    this._overscanY = 0;
+    // While non-null, the map is in "frozen zoom": the inner groups still
+    // carry this transform, and the difference between it and the live
+    // d3 transform is applied as a CSS transform on the svg element (a
+    // plain compositor update, no SVG repaint) — see the "zoom" handler.
+    this._frozenBase = null;
+    this._suppressGestureHooks = false; // programmatic transform syncs must not re-trigger gesture bookkeeping
     this.zoomBehavior = zoom()
       // Real min/max set per-reflow below, once the actual fit scale is
       // known — this initial value is just a safe placeholder before the
       // constructor's own _reflow() call runs.
       .scaleExtent([1, 10])
       .on("zoom", (event) => {
-        this.currentTransform = this._wrapTransform(event.transform);
+        const t = event.transform;
+        // Frozen zoom: the moment a live gesture changes `k`, stop
+        // touching the SVG entirely and express every further tick as a
+        // CSS transform on the svg element instead. Rationale: browsers
+        // (Chromium in particular) don't reliably compositor-promote
+        // *inner* SVG groups, so per-tick attribute transforms repaint
+        // the full ~240-path scene — that repaint was the zoom lag. The
+        // svg element itself is an ordinary compositable box, so scaling
+        // it is a pure compositor operation at any tick rate. The inner
+        // groups keep the gesture-start transform (`_frozenBase`); the
+        // CSS delta D is chosen so D ∘ base = t, meaning screen positions
+        // match `currentTransform` exactly — clicks and math stay
+        // consistent mid-gesture. The raster this scales only contains
+        // what was on screen at gesture start, so a fast zoom-out shows
+        // plain ocean beyond it until the settle repaint fills it in —
+        // the standard slippy-map trade, and deliberate. Wrap-snapping is
+        // also deferred while frozen (a snap moves content by a whole
+        // world-width, which ghosts make invisible on the live path but
+        // a frozen raster would show as a jump).
+        //
+        // Pure pans (k unchanged, and no freeze already in progress) stay
+        // on the live path below: they repaint, which was measured as
+        // acceptable, and in exchange never show edge gaps.
+        if (this._gestureActive && (this._frozenBase !== null || t.k !== this.currentTransform.k)) {
+          if (this._frozenBase === null) {
+            this._frozenBase = this.currentTransform;
+            this.viewportEl.classList.add("world-viewport--zooming");
+          }
+          this.currentTransform = t;
+          const b = this._frozenBase;
+          const scale = t.k / b.k;
+          // The svg's own box is now bigger than the wrapper's window —
+          // it's positioned at (-marginX, -marginY) so its *content* still
+          // lines up with the wrapper exactly at rest (see _reflow) — so a
+          // CSS transform pivoting on the box's own top-left (0 0, i.e.
+          // viewBox coordinate -marginX/-marginY) needs a correction beyond
+          // the plain `t.x - scale*b.x` used when the box exactly matched
+          // the window: expanding the derivation of
+          // `screen = boxPos + D(pixelInBox)` out to a target of
+          // `screen = t.x + t.k*worldX` (see ZOOM_OVERSCAN_RATIO's comment
+          // for the full algebra) gives an extra `-margin*(scale-1)` term
+          // per axis. Exact at any scale, not an approximation — without
+          // it the map would visibly drift by margin*(scale-1) px (many
+          // hundreds of px at typical zoom factors), zoom-in included.
+          const dx = t.x - scale * b.x - this._overscanX * (scale - 1);
+          const dy = t.y - scale * b.y - this._overscanY * (scale - 1);
+          this.svg.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+          return;
+        }
+
+        this.currentTransform = this._wrapTransform(t);
         this._applyTransform(this.currentTransform);
-        this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX / this.currentTransform.k));
+
+        // Everything below exists only to counter-scale against `k` — so
+        // when `k` didn't change (a pure pan/drag, the most common gesture
+        // by far), skip all of it. A pan tick is then just the transform
+        // updates above, nothing else touching the DOM.
+        const k = this.currentTransform.k;
+        if (k === this._lastCounterScaleK) return;
+        this._lastCounterScaleK = k;
+
+        this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX / k));
         // Same counter-scaling as the pin marker itself, and for the same
         // reason: this circle lives in the same zoomed/panned `<g>` as
         // every country path, so without this its radius would grow/shrink
         // with the map instead of staying a constant on-screen size.
-        this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX / this.currentTransform.k));
-        // Same idea for every tiny/archipelago country's assist hit-area:
-        // its padding (HULL_PADDING) lives in the same pre-zoom coordinate
-        // space as the rest of the map, so without this it would balloon
-        // proportionally with zoom — a 3px assist margin at the default
-        // view becomes a comically oversized blob dwarfing the country's
-        // own real border once zoomed in far enough (reported directly:
-        // "the borders of any selected country are strange... some are
-        // oddly missing" — the real border wasn't missing, it was being
-        // visually swallowed by its own hit-area). Reapplies padding to the
-        // *cached unpadded* hull (`_hullBaseById`, set once in _reflow) —
-        // cheap enough to do on every tick, unlike re-running the Delaunay
-        // hull itself.
-        if (this._hullBaseById.size > 0) {
-          const k = this.currentTransform.k;
-          for (const [id, base] of this._hullBaseById) {
-            const hitArea = this.hitAreasById.get(id);
-            if (!hitArea) continue;
-            const padded = this._padHull(base.points, base.cx, base.cy, HULL_PADDING / k);
-            hitArea.setAttribute("points", padded.map(([x, y]) => `${x},${y}`).join(" "));
-          }
-        }
+        this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX / k));
+        // The assist-hull re-padding (the expensive counter-scale, ~80
+        // polygon `points` rebuilds) deliberately does NOT happen here —
+        // it runs once per gesture, at settle time (_onGestureSettle),
+        // never on a live zoom tick. Mid-gesture the hulls just carry the
+        // previous gesture's padding: they're invisible hit-assists, a
+        // few px of stale margin while the player is actively pinching is
+        // unobservable, and nobody clicks a microstate mid-pinch.
+      })
+      // Gesture lifecycle: track whether a live gesture is in progress
+      // (the frozen-zoom branch above only ever engages inside one) and
+      // defer the expensive per-gesture work — baking the frozen
+      // transform, hull re-padding — to a single settle callback. The
+      // settle is debounced rather than run straight from "end" because a
+      // wheel zoom is many short start/end gesture cycles in quick
+      // succession (d3-zoom closes a wheel gesture after ~150ms idle) —
+      // baking and re-freezing between every wheel notch would repaint
+      // exactly as often as the un-optimized version did.
+      .on("start.gesture", () => {
+        if (this._suppressGestureHooks) return;
+        clearTimeout(this._settleTimer);
+        this._gestureActive = true;
+      })
+      .on("end.gesture", () => {
+        if (this._suppressGestureHooks) return;
+        this._gestureActive = false;
+        clearTimeout(this._settleTimer);
+        this._settleTimer = setTimeout(() => this._onGestureSettle(), GESTURE_SETTLE_MS);
       });
-    this._selection = select(this.svg);
+    // Zoom listeners on the WRAPPER (see viewportEl above), never the svg:
+    // during frozen zoom the svg carries a CSS transform, and d3 derives
+    // pointer coordinates from the listener element's own geometry — which
+    // therefore must not move mid-gesture.
+    this._selection = select(this.viewportEl);
     this._selection.call(this.zoomBehavior);
     // Double-click-to-zoom is d3-zoom's default, but it fights with
     // clicking a country to select/confirm it (a quick double click reads
@@ -681,12 +857,15 @@ export class WorldMap {
     // pinch, and drag zoom are untouched.
     this._selection.on("dblclick.zoom", null);
 
-    if (this.pinMode) {
-      // One click target for the whole map, rather than per-feature
-      // listeners — a pin can land anywhere, not just on a discrete
-      // country shape. Three steps, each using the simplest, most
-      // broadly-reliable API for that one job, rather than one call doing
-      // it all at once:
+    {
+      // Whole-map click listener, installed in every mode. Pin mode uses
+      // it for everything (a pin can land anywhere, not on a discrete
+      // shape); map-click mode uses it only for clicks that fell through
+      // to the <svg> itself — i.e. over a ghost copy or open ocean, since
+      // home-copy paths/hit-areas have their own listeners and are hit
+      // first — resolving the country geometrically, exactly like pin
+      // mode's containment lookup. Coordinate handling, three steps, each
+      // using the simplest, most broadly-reliable API for that one job:
       //  1. `getBoundingClientRect()` gives the click's position relative
       //     to the SVG's own top-left corner, in CSS px. `_reflow` always
       //     sets `viewBox="0 0 clientWidth clientHeight"` to match the
@@ -711,7 +890,18 @@ export class WorldMap {
       //     feature existed) non-wrapped case.
       this.svg.addEventListener("click", (event) => {
         if (!this.clickEnabled) return;
-        const rect = this.svg.getBoundingClientRect();
+        // In map-click mode, anything interactive on the home copy (a
+        // country path, a hull hit-area) handles its own click and is a
+        // more specific target than the <svg>; only fall-through clicks
+        // (ghost content, ocean, terrain) reach here with the svg itself
+        // as the target. Pin mode's content is all pointer-events: none,
+        // so every click arrives this way there regardless.
+        if (!this.pinMode && event.target !== this.svg) return;
+        // The wrapper's rect, not the svg's: during frozen zoom the svg
+        // carries a CSS transform and its client rect moves with it,
+        // while the wrapper stays put at the viewport box these
+        // calculations are defined against.
+        const rect = this.viewportEl.getBoundingClientRect();
         const sx = event.clientX - rect.left;
         const sy = event.clientY - rect.top;
         let [x, y] = this.currentTransform.invert([sx, sy]);
@@ -739,10 +929,25 @@ export class WorldMap {
         if (this.pinLonLat && this._onPinConfirm) {
           const pinPoint = this.projection(this.pinLonLat);
           if (pinPoint) {
+            // The x-difference is computed *modularly* under wrap, not
+            // linearly: the fold above maps every click into
+            // [_homeLeft, _homeLeft + _wrapPeriod), so a pin sitting near
+            // one edge of that period (i.e. near the antimeridian) and a
+            // click landing visually just across the seam would otherwise
+            // measure almost a full world-width apart and re-drop instead
+            // of confirming. Shortest-way-around is the actual on-screen
+            // distance. A no-op whenever wrap is off or the pair is
+            // nowhere near the seam.
+            let dx = x - pinPoint[0];
+            if (this.wrapEnabled && this._wrapPeriod) {
+              const p = this._wrapPeriod;
+              dx = ((dx % p) + p) % p;
+              if (dx > p / 2) dx -= p;
+            }
             // Compare in *screen* px so the tolerance means the same thing
             // at every zoom level, matching how the pin marker itself is
             // drawn at a constant on-screen size.
-            const screenDist = Math.hypot(x - pinPoint[0], y - pinPoint[1]) * this.currentTransform.k;
+            const screenDist = Math.hypot(dx, y - pinPoint[1]) * this.currentTransform.k;
             if (screenDist <= PIN_RADIUS_PX + PIN_CONFIRM_PADDING_PX) {
               this._onPinConfirm();
               return;
@@ -752,8 +957,16 @@ export class WorldMap {
 
         const lonlat = this.projection.invert?.([x, y]);
         if (!lonlat || !Number.isFinite(lonlat[0]) || !Number.isFinite(lonlat[1])) return;
-        this._dropPinAt(lonlat[0], lonlat[1]);
-        if (this.onClick) this.onClick(lonlat[0], lonlat[1], this._findContainingId(lonlat[0], lonlat[1]));
+        if (this.pinMode) {
+          this._dropPinAt(lonlat[0], lonlat[1]);
+          if (this.onClick) this.onClick(lonlat[0], lonlat[1], this._findContainingId(lonlat[0], lonlat[1]));
+        } else {
+          // Ghost-country click (map-click mode): report the same id the
+          // home path's own listener would have. Ocean/terrain resolves to
+          // null — not a selection, so nothing fires.
+          const id = this._findContainingId(lonlat[0], lonlat[1]);
+          if (id && this.onClick) this.onClick(id);
+        }
       });
     }
 
@@ -782,6 +995,10 @@ export class WorldMap {
   }
 
   _reflow({ resetZoom } = {}) {
+    // A resize mid-zoom-gesture: bake the frozen state first so the
+    // layout below starts from real inner transforms, not a stale base
+    // plus a CSS delta.
+    this._bakeFrozenZoom();
     const width = this.container.clientWidth || 800;
     const height = this.container.clientHeight || 500;
     if (width === 0 || height === 0) return;
@@ -789,7 +1006,27 @@ export class WorldMap {
     if (resetZoom === undefined) resetZoom = Boolean(sizeChanged);
     this._lastSize = { width, height };
 
-    this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    // The svg's own rendered box is bigger than the wrapper's window by
+    // the overscan margin on every side (see ZOOM_OVERSCAN_RATIO), and
+    // positioned so that its content still lines up with the wrapper
+    // exactly at rest: viewBox min-x/min-y = -margin, box width/height =
+    // size + 2*margin, box position = -margin. A point at logical (0,0)
+    // then renders at box-pixel (margin), which combined with the box's
+    // own (-margin) position lands back at wrapper-relative screen (0,0) —
+    // i.e. every existing calculation that treats the wrapper's window as
+    // exactly [0,width]×[0,height] (fitSize below, click math, wrap
+    // period, hit areas, ghost translate math) needs no changes at all;
+    // only the frozen-zoom CSS transform's correction term (see the "zoom"
+    // handler) depends on the margin, via `_overscanX`/`_overscanY` below.
+    this._overscanX = width * ZOOM_OVERSCAN_RATIO;
+    this._overscanY = height * ZOOM_OVERSCAN_RATIO;
+    const boxWidth = width + 2 * this._overscanX;
+    const boxHeight = height + 2 * this._overscanY;
+    this.svg.setAttribute("viewBox", `${-this._overscanX} ${-this._overscanY} ${boxWidth} ${boxHeight}`);
+    this.svg.style.left = `${-this._overscanX}px`;
+    this.svg.style.top = `${-this._overscanY}px`;
+    this.svg.style.width = `${boxWidth}px`;
+    this.svg.style.height = `${boxHeight}px`;
     // One projection for every region: always the whole dataset fitted to
     // the viewport, so k=1 means the same thing in every game and the
     // region only decides the starting transform (_defaultTransform).
@@ -965,6 +1202,7 @@ export class WorldMap {
         // that dispatch doesn't fire (e.g. an already-identity transform
         // that d3-zoom treats as a no-op).
         const k = this.currentTransform?.k || 1;
+        this._lastHullPadK = k; // fresh hulls are padded for this k — the zoom handler's drift check starts from here
         const padded = this._padHull(rawHull, q.cx, q.cy, HULL_PADDING / k);
         hitArea.setAttribute("points", padded.map(([x, y]) => `${x},${y}`).join(" "));
         hitArea.style.display = "";
@@ -977,9 +1215,10 @@ export class WorldMap {
       }
     }
 
-    // Disputed-border lines: only relevant if both sides of the pair
-    // actually survived the continent hard-crop (if any) this render —
-    // e.g. neither Serbia nor Kosovo exist on an Oceania-only map.
+    // Disputed-border lines. (The presence check below dates from when a
+    // region was a hard crop that could remove one side of a pair; the
+    // map now always renders the full dataset, so it only guards against
+    // a configured id that doesn't exist in the topology at all.)
     if (this.borderLines.length > 0) {
       const presentIds = new Set(this.geojson.features.map((f) => f.id).filter(Boolean));
       const topologyObject = this.topology.objects[this.objectKey];
@@ -1012,7 +1251,7 @@ export class WorldMap {
     if (this._revealedBorderTarget) {
       const { pinLonLat, point } = this._revealedBorderTarget;
       const p1 = this.projection(pinLonLat);
-      const p2 = this.projection(point);
+      const p2 = this._projectWithWrap(point);
       if (p1 && p2) {
         this.pinBorderLine.setAttribute("x1", p1[0]);
         this.pinBorderLine.setAttribute("y1", p1[1]);
@@ -1022,7 +1261,7 @@ export class WorldMap {
     }
     // Same idea for the revealed capital marker, if one's currently shown.
     if (this._revealedCapitalPoint) {
-      const p = this.projection(this._revealedCapitalPoint);
+      const p = this._projectWithWrap(this._revealedCapitalPoint);
       if (p) {
         this.capitalMarker.setAttribute("cx", p[0]);
         this.capitalMarker.setAttribute("cy", p[1]);
@@ -1049,7 +1288,14 @@ export class WorldMap {
     } else {
       target = resetZoom ? this._defaultTransform(width, height) : this.currentTransform;
     }
+    // Programmatic, not a user gesture — without the suppression this
+    // dispatch would run the start/end gesture hooks and, when the target
+    // k differs from the current one (a resize reset, the constructor's
+    // initial framing), enter frozen-zoom mode for a spurious 200ms of
+    // CSS-scaled blur before the settle baked it.
+    this._suppressGestureHooks = true;
     this._selection.call(this.zoomBehavior.transform, target);
+    this._suppressGestureHooks = false;
   }
 
   // Where a fresh map starts: a zoom/pan transform framing `focusIds`
@@ -1110,11 +1356,29 @@ export class WorldMap {
   // scale — see the comment on _wrapTransform for why a whole-world shift
   // reads as visually seamless).
   _applyTransform(t) {
+    const viewWidth = this._lastSize?.width ?? 0;
     for (const [offset, group] of this.copyGroups) {
       if (offset === 0) {
         group.setAttribute("transform", String(t));
       } else {
         const shift = this._wrapPeriod * t.k * offset;
+        // Cull a ghost whose entire world-width lies outside the viewport
+        // — which is almost always, once zoomed in even slightly, since a
+        // ghost sits a full world-width from the home copy. `visibility`
+        // rather than `display` deliberately: it skips paint and hit-
+        // testing without a layout/compositor-layer teardown, so toggling
+        // it at the boundary while dragging stays cheap. At k=1 with the
+        // seam on screen the ghosts overlap the viewport and stay visible,
+        // exactly as before — this only ever hides paint the player
+        // couldn't see anyway (measured as the dominant per-frame cost:
+        // each visible ghost is a full second/third copy of ~240 paths for
+        // the browser to consider every tick).
+        const left = (this._homeLeft ?? 0) * t.k + t.x + shift;
+        const right = left + this._wrapPeriod * t.k;
+        const hidden = viewWidth > 0 && (right < 0 || left > viewWidth);
+        const value = hidden ? "hidden" : "";
+        if (group.style.visibility !== value) group.style.visibility = value;
+        if (hidden) continue; // no need to keep updating a hidden ghost's transform
         group.setAttribute("transform", `translate(${t.x + shift},${t.y}) scale(${t.k})`);
       }
     }
@@ -1144,6 +1408,22 @@ export class WorldMap {
     return null;
   }
 
+  // Projects a [lon, lat] whose longitude may deliberately sit outside
+  // ±180° (a wrap-normalized point — see nearestPointOnSegmentKm and
+  // revealCapitalDistance): the in-range part projects normally, and each
+  // full ±360° of shift becomes ± one world-width in projected x — i.e.
+  // the position of that same geography in the neighbouring ghost copy.
+  // This is what lets a reveal line/marker visibly take the short way
+  // across the antimeridian seam instead of spanning the whole map
+  // interior. A plain projection for any in-range longitude.
+  _projectWithWrap([lon, lat]) {
+    const norm = ((lon + 180) % 360 + 360) % 360 - 180;
+    const p = this.projection([norm, lat]);
+    if (!p) return null;
+    if (this.wrapEnabled && this._wrapPeriod) p[0] += ((lon - norm) / 360) * this._wrapPeriod;
+    return p;
+  }
+
   // Draws pinBorderLine from the last-dropped pin to `point` ([lon, lat])
   // and remembers it for re-projection on later reflows — shared by
   // revealBorderDistance and revealCapitalDistance below, which differ only
@@ -1151,7 +1431,7 @@ export class WorldMap {
   _revealLineTo(point) {
     this._revealedBorderTarget = { pinLonLat: this.pinLonLat, point };
     const p1 = this.projection(this.pinLonLat);
-    const p2 = this.projection(point);
+    const p2 = this._projectWithWrap(point);
     if (p1 && p2) {
       this.pinBorderLine.setAttribute("x1", p1[0]);
       this.pinBorderLine.setAttribute("y1", p1[1]);
@@ -1199,9 +1479,17 @@ export class WorldMap {
   // `null` if the dataset has no capital coordinates for this item.
   revealCapitalDistance(capitalLatLng) {
     if (!this.pinLonLat || !capitalLatLng) return null;
-    const point = [capitalLatLng[1], capitalLatLng[0]];
+    // Shift the capital's longitude onto the pin's branch (±360°) so the
+    // reveal line and marker take the short way around — a pin in Chile
+    // aiming at Canberra should draw across the Pacific seam (into the
+    // ghost copy, via _projectWithWrap), not across the whole map
+    // interior. The distance itself needs no such care: haversine is
+    // periodic in longitude and always returns the short way.
+    const pinLon = this.pinLonLat[0];
+    const capLon = capitalLatLng[1] + 360 * Math.round((pinLon - capitalLatLng[1]) / 360);
+    const point = [capLon, capitalLatLng[0]];
     this._revealedCapitalPoint = point;
-    const p = this.projection(point);
+    const p = this._projectWithWrap(point);
     if (p) {
       this.capitalMarker.setAttribute("cx", p[0]);
       this.capitalMarker.setAttribute("cy", p[1]);
@@ -1304,6 +1592,61 @@ export class WorldMap {
     });
   }
 
+  // Runs once, shortly after a pan/zoom gesture ends (debounced — see the
+  // "end.gesture" handler). Three jobs:
+  //  1. Bake any frozen zoom (_bakeFrozenZoom): the one full vector
+  //     repaint per gesture, which is also what makes the zoomed view
+  //     sharp — the CSS-scaled gesture raster is inherently blurry.
+  //  2. Restore the pin/capital markers' constant on-screen radii (they
+  //     rode the scaled raster during the gesture).
+  //  3. Re-pad the tiny-country assist hulls for the final zoom level —
+  //     the expensive counter-scale (~80 polygon rebuilds); once per
+  //     gesture is all the precision an invisible hit-assist needs.
+  _onGestureSettle() {
+    this._settleTimer = null;
+    this._bakeFrozenZoom();
+    const k = this.currentTransform.k;
+    // Marker radii were left alone during a frozen gesture (they scaled
+    // with the raster like everything else) — bring them back to their
+    // constant on-screen size now.
+    if (k !== this._lastCounterScaleK) {
+      this._lastCounterScaleK = k;
+      this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX / k));
+      this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX / k));
+    }
+    if (this._hullBaseById.size > 0 && k !== this._lastHullPadK) {
+      this._lastHullPadK = k;
+      for (const [id, base] of this._hullBaseById) {
+        const hitArea = this.hitAreasById.get(id);
+        if (!hitArea) continue;
+        const padded = this._padHull(base.points, base.cx, base.cy, HULL_PADDING / k);
+        hitArea.setAttribute("points", padded.map(([x, y]) => `${x},${y}`).join(" "));
+      }
+    }
+  }
+
+  // Exits frozen zoom (see the "zoom" handler): clears the svg's CSS
+  // transform, applies the final (now wrap-snapped) transform to the
+  // inner groups — the one full vector repaint per gesture, which is also
+  // what makes the zoomed view sharp — and re-syncs d3's own internal
+  // transform if the wrap snap moved x, so the next gesture's deltas
+  // start from what's actually rendered. No-op when not frozen.
+  _bakeFrozenZoom() {
+    if (this._frozenBase === null) return;
+    this._frozenBase = null;
+    this.svg.style.transform = "";
+    this.viewportEl.classList.remove("world-viewport--zooming");
+    const snapped = this._wrapTransform(this.currentTransform);
+    const needSync = snapped !== this.currentTransform;
+    this.currentTransform = snapped;
+    this._applyTransform(snapped);
+    if (needSync) {
+      this._suppressGestureHooks = true;
+      this._selection.call(this.zoomBehavior.transform, snapped);
+      this._suppressGestureHooks = false;
+    }
+  }
+
   getTransform() {
     return this.currentTransform;
   }
@@ -1390,8 +1733,9 @@ export class WorldMap {
   }
 
   destroy() {
+    clearTimeout(this._settleTimer);
     this._resizeObserver.disconnect();
     this._selection.on(".zoom", null);
-    this.svg.remove();
+    this.viewportEl.remove();
   }
 }

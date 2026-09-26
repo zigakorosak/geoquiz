@@ -3,6 +3,378 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-26 — zoom-out overscan margin: the shrinking-raster gap goes away
+
+Follow-up to the frozen-zoom round below: fast is fixed, but reported as
+"zoom out looks weird, I want the whole screen constantly filled" —
+zoom-in was already fine.
+
+Diagnosis: the frozen raster is a picture of exactly what was on screen
+at gesture start. Zooming OUT means CSS-scaling that picture down, which
+shrinks it toward its own top-left corner — the area it stops covering
+has nothing behind it. It's not a literal color mismatch (`.world-map`
+and `.world-viewport` already share the ocean color), it's that a map
+visibly shrinking into a smaller floating picture doesn't read as "the
+map," even where the surrounding area happens to be the right color.
+Zoom-in never showed this because growing a raster overflows the
+wrapper (clipped), never falls short of it.
+
+Fix: give the svg's own rendered box — and its viewBox — real margin
+beyond the wrapper's visible window (`ZOOM_OVERSCAN_RATIO = 0.75`, so
+75% extra on every side), positioned with a compensating `left`/`top`
+offset so its content still lines up with the wrapper exactly at rest.
+This isn't new content — the full dataset (and, horizontally, the ghost
+copies) was already in the DOM at every zoom level; overscan just changes
+how much of that existing scene the svg's own box reveals. So a zoom-out
+gesture now keeps showing genuine geography instead of a static picture,
+degrading only past a real burst (tolerance: `scale ≥ 1/2.5`, i.e. more
+than a 2.5× zoom-out within one ~200ms gesture).
+
+The one piece of actual new math: overscanning means the frozen-zoom CSS
+transform's delta formula (`translate(...) scale(...)` on the svg) needs
+a correction term. Derived by expanding `screen = boxPosition +
+D(pixelInBox)` against the desired `screen = t.x + t.k·worldX` (full
+algebra in `ZOOM_OVERSCAN_RATIO`'s own comment): `-margin·(scale−1)` per
+axis, on top of the existing `t.x - scale·b.x`. This is exact at any
+scale, not an approximation scoped to zoom-out — skip it and the map
+drifts by hundreds of px at ordinary zoom factors, zoom-in included,
+which is why it's applied unconditionally rather than only when shrinking.
+
+Nothing else needed to change. The click handler, wrap-period math, ghost
+translate math, hit areas, and `_defaultTransform` all already treated
+the wrapper's own `getBoundingClientRect()` as the true `[0,width]×
+[0,height]` window (unrelated to the svg's own box size) — margin only
+had to be threaded through the one place that measures the svg's box
+directly, the CSS transform delta.
+
+Verified: overscan sizing (`_overscanX`/`Y`, viewBox, svg left/top/width/
+height) matches the ratio exactly; a click landing mid-frozen-gesture
+still resolves to the correct country (the real correctness proof, not
+just that the numbers look right); the CSS transform's actual value
+matches the derived formula recomputed independently; settle still bakes
+and clears correctly with overscan in place; a resize recomputes the
+margin and clears any in-flight freeze first; the wrap-seam pin-confirm
+case and the identity-projection (US states, no wrap) path both still
+work mid-frozen. All 10 wizard/gameplay e2e paths green, zero window
+errors. `npm run build` clean.
+
+## 2026-09-26 — frozen zoom: gesture ticks moved off the SVG entirely
+
+Reported: still laggy when zooming fast, after two prior rounds of zoom
+perf work. The diagnosis this time reaches the actual bottom: our JS per
+tick was already near-zero, so the remaining cost had to be the browser's
+own paint — and it was. Per-tick transform updates on inner SVG `<g>`
+elements repaint the full ~240-path scene, because browsers (Chromium in
+particular) don't reliably compositor-promote *inner* SVG elements even
+under `will-change` — which is why the previous round's
+`will-change: transform` on the copy groups helped less than expected:
+the hint was being applied somewhere the engine largely ignores it.
+
+The fix is the standard slippy-map technique. When a live gesture changes
+`k`, the map freezes: inner groups keep the gesture-start transform, and
+every further tick is a CSS transform on the `<svg>` element itself —
+an ordinary compositable box in every engine, so each tick is pure
+compositor work, zero SVG repaint. The delta is chosen so composed
+positions equal `currentTransform` exactly, so clicks keep working
+mid-gesture (verified). At settle (200ms), `_bakeFrozenZoom` applies the
+final transform to the inner groups — the one vector repaint per gesture,
+which is also what sharpens the view — and re-syncs d3's internal
+transform if the deferred wrap-snap moved x (snapping mid-gesture would
+visibly jump the frozen raster by a world-width; on the live path ghosts
+mask that, on a frozen raster nothing does).
+
+Structural consequences, each with a reason:
+- A new untransformed `.world-viewport` wrapper hosts the zoom listeners
+  — d3 reads pointer coordinates from the listener element's own rect,
+  which must not move while the svg is CSS-transformed. It also clips
+  and paints ocean, so the areas a scaled-down raster stops covering
+  read as more ocean (not page background) until settle.
+- The click handler's coordinate origin moved to the wrapper's rect for
+  the same reason.
+- `_reflow`'s programmatic transform dispatch (and the bake's own
+  re-sync) suppress the gesture hooks — without that, construction
+  itself entered frozen mode and the first paint spent 200ms blurry.
+- Pure pans (k unchanged) stay on the live repaint path on purpose:
+  measured acceptable, and they never show edge gaps.
+- The prior round's `.world-map--gesturing .world-copy { will-change }`
+  rule is gone — superseded, and per the above, largely inert anyway.
+
+Trade-offs accepted, per the explicit "does not have to be instant"
+guidance from the blur round: mid-gesture the view is a scaled raster
+(blurry, and a fast zoom-out shows ocean beyond what was on screen at
+gesture start), sharpening and filling in at settle.
+
+Verified via jsdom, driving real d3 gesture dispatches: construction not
+frozen; a zoom tick freezes (class on, inner transforms untouched, CSS
+delta on the svg) and a second tick reuses the same base; a click
+mid-frozen resolves to the right country; settle clears the CSS, bakes
+k into the inner groups, restores marker radii, re-syncs d3 after a
+forced wrap-snap; pure pans never freeze and update inner transforms
+live; a reflow mid-freeze bakes first; destroy removes the wrapper. All
+10 wizard/gameplay e2e paths green, zero window errors. `npm run build`
+clean.
+
+## 2026-09-26 — ghosts collapsed to one <use> each; round-world pin distances; Australia id bug resurfaced and fixed at the root
+
+Two asks: zoom still "feels like it is loading" rather than snappy, and
+pin-mode distances must treat the world as round — a pin in Chile aiming
+at Australia should measure (and draw) across the Pacific, not the long
+way over the map interior.
+
+**Snappiness: ghost copies are now one element each.** The gesture-scoped
+`will-change` from the previous round made zoom sharp-after-settle, but
+promoting the layers at gesture *start* still rasterized everything —
+and the bulk of "everything" was the ghost copies' ~480 per-country
+`<use>` clones. Restructured: all home content moved into an inner,
+untransformed `contentGroup` (the transform stays on the `homeGroup`
+wrapper — referencing homeGroup itself would clone its transform and
+double-apply it), and each ghost is now a single `<use>` of that group.
+~480 rasterizable ghost elements → 2. Bonus: ghosts now mirror home
+content *by construction* — the "forgot to clone the new element into
+the ghosts" bug class (bit twice before: pin-confirm hit-area, capital
+marker) is structurally gone. Ghost clicks, which previously rode on
+per-clone listeners, are resolved geometrically instead: ghosts are
+fully inert, a click over one falls through to the `<svg>` itself, and
+the whole-map listener (now installed in every mode, not just pin mode)
+folds x into the home period and runs `_findContainingId` — home paths
+and hit-areas are more specific event targets and still handle their own
+clicks, so nothing double-fires; ocean/terrain resolve to null and no-op.
+
+**Round-world distances.** Three distinct fixes, found by testing the
+actual Chile→Australia case rather than assuming one patch would do:
+
+- *Longitude branch normalization* (`nearestPointOnSegmentKm`): segment
+  endpoints are shifted ±360° onto the pin's own branch before the
+  closest-point math, so the search measures across the antimeridian
+  when that's shorter. (The capital distance needed nothing: haversine
+  is periodic in longitude and always was shortest-path.)
+- *Great-circle measurement*: with the branch fixed, the reported
+  distance was still ~3,000km off — the local tangent-plane
+  approximation is documented as short-range and at 140° of longitude it
+  isn't one. The planar math now only picks the candidate point on each
+  segment (error bounded by the segment's own few-km length); the
+  distance to it is measured with `haversineKm`.
+- *The `_geometryById` id collision*: still 14,521km vs a hand-computed
+  true minimum of 8,961km — because the lookup map kept only the *last*
+  feature per id, and Ashmore and Cartier Is. shares Australia's "036"
+  (the exact quirk the hit-area pass has guarded against since the
+  hitbox-audit round; this second map wasn't guarded). Every Australia
+  reveal/distance was measuring against the tiny islet — including pin
+  mode's post-confirm reveal, which drew the islet instead of the
+  mainland. Same-id features are now merged into one MultiPolygon at
+  construction, fixing containment, nearest-border, and the reveal
+  outline in one place. (True nearest point from Chile turns out to be
+  Macquarie Island at ~8,961km — genuinely part of Australia's polygon.)
+
+The reveal line and capital marker draw the short way too:
+`_projectWithWrap` converts a branch-shifted longitude into ± one
+world-width of projected x, i.e. the line points into the neighbouring
+ghost copy across the seam (verified: Chile→Australia line exits past the
+home copy's left edge; capital marker lands at negative x in the left
+ghost).
+
+Verified end to end: Chile→Australia border reads exactly the
+hand-computed 8,961km; Chile→Canberra 11,160km; Madrid→France still
+~351km and inside-France still 0; ghost-position clicks in map-click mode
+resolve to the right country with home-path clicks firing exactly once
+and ocean clicks not at all; pin-mode's Australia reveal now includes the
+mainland; all 10 wizard/gameplay paths green with zero window errors.
+`npm run build` clean.
+
+## 2026-09-26 — blurry-after-zoom fixed by scoping will-change to gestures; hull re-pad moved off live ticks
+
+Reported: zooming in leaves the map blurry until a pan sharpens it, and
+fast zooming still lags.
+
+Both trace to the same thing: `will-change: transform` sat on the copy
+groups *permanently*. That promotes each copy to a compositor layer, so a
+zoom scales the layer's cached raster — cheap (good mid-gesture) but
+inherently blurry when scaled up, and with the hint never removed the
+browser had no reason to ever re-rasterize. The pan "fixing" it was just
+an unrelated invalidation forcing the repaint that should have happened on
+its own. This is the textbook just-in-time `will-change` pattern applied
+backwards, and the fix is to turn it the right way around: a
+`.world-map--gesturing` class (toggled from d3-zoom's own start/end
+gesture events) carries the hint only while a gesture is live, and a
+debounced settle (`GESTURE_SETTLE_MS` = 200ms, deliberately longer than
+d3's ~150ms wheel-idle so a multi-notch wheel zoom is one gesture, not a
+layer-thrash per notch) drops it afterwards. De-promoted, the SVG renders
+as plain vectors through the current transform — sharp at any zoom by
+construction. Explicitly per the request: sharpening a beat *after* the
+gesture, never during it, so it costs no frames while moving.
+
+The settle callback (`_onGestureSettle`) also took over the assist-hull
+re-padding — the ~80-polygon `points` rebuild that previously ran on live
+zoom ticks (throttled to 2% k-steps, still ~25 times across a 2x pinch).
+It now runs exactly once per gesture. Mid-gesture the hulls keep the
+previous padding, which is unobservable: they're invisible hit-assists,
+and nobody is clicking a microstate mid-pinch. Live zoom ticks are now
+just the transform updates plus two marker-radius attributes.
+
+Note on reusing d3-zoom's start/end events: an earlier round removed
+these handlers when killing the `optimizeSpeed` trick — the removal was
+about that trick specifically, not the events, which remain the correct
+(and only) gesture-lifecycle hook. Programmatic `zoomBehavior.transform`
+calls emit the same lifecycle, so a `_reflow` also triggers one harmless
+settle pass.
+
+Verified via jsdom, driving the real zoom behavior: the gesturing class
+is present across a 20-tick zoom burst and gone ~200ms after it stops;
+hull `points` writes during the burst are exactly 0 and exactly 1 at
+settle, with `_lastHullPadK` syncing to the final k; back-to-back
+gestures inside the settle window keep the class alive (no thrash);
+`destroy()` with a settle pending doesn't fire on a dead map. Six
+representative end-to-end game paths re-run green, zero window errors.
+`npm run build` clean.
+
+## 2026-09-26 — perf: pan/zoom tick costs cut, map topology deferred to game start
+
+Two asks: smoother zooming/panning, and stop loading "everything" before
+the player has even picked a map.
+
+**Deferred topology.** Measured first: the map topology is 756KB — 88% of
+the countries dataset's total payload — while the items file the wizard
+actually needs for its region/sovereignty counts is only 102KB.
+`datasets.js` now caches and fetches the two halves separately
+(`loadItems` / `loadTopology`, both promise-cached so concurrent callers
+share one in-flight fetch, with failed fetches evicted so a retry after a
+network blip actually retries). `goToRegionOrSkip` awaits only
+`loadItems`; the topology's first request happens on `startGame`'s own
+Loading screen, right before the map mounts. Verified with a fetch spy
+driven through the real wizard: at the region step only `countries.json`
+has been requested (counts render correctly from it), `world-50m.json`
+first appears after the sovereignty pick, and the game mounts fine.
+
+**Pan ticks stripped to the minimum.** Everything in the zoom handler
+past the transform updates exists to counter-scale against `k` — marker
+radii, assist-hull re-padding — and `k` doesn't change during a drag. One
+`k === _lastCounterScaleK` check now skips all of it on pure pans
+(verified: 50 pan ticks → zero hull/marker attribute writes, was 50×~80
+polygon string rebuilds). Hull re-padding also tolerates 2% k-drift
+before re-running (≤0.06px error in a 3px margin), so a continuous
+2x→4x pinch re-pads 25 times instead of 50.
+
+**Off-screen ghost culling.** Once zoomed in even slightly, the two wrap
+ghost copies — each a full extra copy of ~240 country elements — sit a
+whole world-width off-screen, yet the browser still had to consider them
+every frame. `_applyTransform` now hides a ghost (`visibility: hidden`,
+deliberately not `display: none` — skips paint and hit-testing without
+compositor-layer teardown churn at the boundary) whenever its entire
+span lies outside the viewport, and stops updating its transform while
+hidden. Verified per-ghost independence on the one case where it matters:
+Asia's default framing renders its content *via* the left ghost — that
+one stays visible while the right one culls; at k=1 both stay visible
+exactly as before.
+
+Full 10-path end-to-end suite re-run green with zero window errors after
+all three changes. `npm run build` clean.
+
+## 2026-09-26 — full-project audit: 4 rounds, 9 fixes
+
+Asked to sweep the whole project for issues repeatedly until clean. Four
+passes: (1) a full read of all 21 source files, (2) a second read of
+everything the first pass hadn't scrutinized, (3) a behavioral sweep
+driving all 10 wizard-path × game-mode combinations end to end in jsdom,
+(4) behavioral verification of the round-2 fixes plus a TODO/console.log
+sweep. Round 3/4 surfaced nothing new beyond one harness artifact (jsdom
+SVG elements have no `.click()` — dispatch a MouseEvent instead; the app
+was fine), which is the signal the audit had converged.
+
+Fixes, roughly by severity:
+
+- **Pin confirm broke at the antimeridian seam** (`WorldMap.js`). The
+  whole-map click handler folds every click's x modulo into the home
+  period, but measured the distance to the pin *linearly* — a pin near
+  lon 180 (Fiji) with a click visually 4px across the seam folded to the
+  far end of the period, measured ~a full world-width away, and re-dropped
+  instead of confirming. The x-difference is now computed modularly
+  (shortest way around). Regression-tested with exactly that Fiji case.
+- **"Play Again" silently dropped `pinTarget`** (`game.js`). A
+  Capital-scored pin game replayed as Region-scored, because the summary's
+  replay call re-listed every config field by hand and this one was
+  missing. Verified by playing a capital game to summary, replaying, and
+  confirming the feedback still says "from the capital".
+- **Summary lines were wrong for Capitals games** (`game.js`). A missed
+  round rendered as "France: wrong (was France)" — the item's *name* as
+  label with itself as the correction, and the actual prompt ("Paris")
+  nowhere. Lines are now labeled by the question value the player was
+  shown ("Paris: wrong (was France)"), and the correction is dropped when
+  it would just echo the label (name→location games now read "France:
+  wrong"). Verified behaviorally in both directions.
+- **mapExplore leaked a WorldMap on back-during-load** (`mapExplore.js`).
+  The dataset fetch resolving after Back built the map into a detached
+  node, whose ResizeObserver kept the whole topology alive. A `cancelled`
+  flag now skips construction.
+- **Zero-count wizard options could start an empty game** (`gameWizard.js`).
+  A region/sovereignty option whose count is 0 would construct a
+  QuizSession with an empty pool and crash the round screen on
+  `getValue(undefined)`. No option is actually zero with today's data,
+  but the count is already computed for every label, so `disabledFn:
+  count === 0` on all three counted steps (region, sub-region,
+  sovereignty) makes it unreachable. Dataset-switch entries (US States,
+  count `null`) stay enabled since `null !== 0`.
+- **404s surfaced as JSON parse errors** (`datasets.js`). `loadDataset`
+  now checks `r.ok` and throws "Failed to load <url>: HTTP <status>"
+  instead of letting an HTML error page hit `r.json()`.
+- **Two `haversineKm`s with opposite argument orders** (`inputs.js` takes
+  `[lat, lon]`, `WorldMap.js` takes `[lon, lat]` — same name, both
+  module-private, a collision waiting for the first cross-module
+  refactor). The inputs one is now `haversineKmLatLon`, with the
+  convention spelled out at the definition.
+- **Stale comments from the one-map refactor**: the dashed-border block
+  and `isAskable` still described the removed hard-crop model; `game.js`'s
+  `playableIds` comment still listed Siachen/Indian Ocean Ter. as muted
+  (they're `.country--terrain` now); `inputs.js` still described the
+  deleted pin hit-area element. All updated to match the code.
+
+Also checked and found genuinely fine (listed so the next audit doesn't
+re-litigate them): the favicon (exists in `public/`, Vite rewrites the
+base correctly — checked `dist/index.html` before "fixing" it),
+`settings.js`'s parse fallback, `screenKit`, `engine`'s shuffle/round
+logic, both generator scripts, pin-mode `markResult`'s single-reveal
+invariant (two-argument marking is unreachable there and documented as
+such), and the summary/back-navigation listener guards. `npm run build`
+clean; all 10 end-to-end paths green with zero window errors.
+
+## 2026-09-26 — pin mode for Countries: it already worked, but the wizard hid it behind a nonsense question
+
+Asked to add pin mode to the Countries subject — borderless map, correct if
+the pin lands inside the country. Checked before building anything: that
+path already existed and worked (Countries → Name → Location on the Map →
+Drop a pin → Region), and "Region" scoring is exactly the described
+behaviour.
+
+So the feature wasn't missing; its *discoverability* was. After picking
+"Drop a pin" the wizard asked "Score the pin against the region, or the
+capital?" — and in the Countries subject "Capital" is incoherent: the
+prompt is a country's name, and pinning its capital is a different game
+than the one just chosen. A question that shouldn't have been asked at all
+made the mode look like it belonged to something else.
+
+Fixed by only asking when the answer can be meaningful:
+`offersCapitalPinTarget` checks whether `capital` is in the subject's own
+`attributeKeys` (core/subjects.js) — true for Capitals, false for Countries
+— reusing the same attribute scoping every other wizard step already keys
+off rather than special-casing subject keys, so a future subject gets the
+right behaviour without touching this. When false the step is skipped and
+`pinTarget: "region"` is used directly, mirroring how
+`goToAnswerKindOrSkip` already skips the answer-kind step when there's only
+one option.
+
+Deliberately did *not* stop at "it already works" — that's the failure
+mode logged in MISTAKES.md §1b one round earlier (correctly identifying
+something and calling it resolved, when the complaint was really about how
+it presented).
+
+Verified via jsdom: Countries → Name → Location now goes straight from
+"Drop a pin" into the region step with no target question, while Capitals →
+Capital → Location still offers Region/Capital. End-to-end Countries
+pin round confirms the map renders borderless (1 `path.country` — the
+post-confirm reveal only), a pin inside the target scores "Correct! You
+were 0 km from its border", and a pin in the wrong country scores
+"Correct answer: Åland Islands. You were 5115 km from its border".
+`npm run build` clean.
+
 ## 2026-09-26 — the "triangle" was mine after all; pin confirm rebuilt without DOM hit-testing
 
 Both items re-reported after the previous round said they were handled.

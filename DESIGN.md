@@ -75,7 +75,8 @@ choices, each rendered via the shared `renderChoiceScreen` (`ui/
 screenKit.js`): subject → question type → answer type (→ *how* to answer,
 if that attribute has more than one `answerKinds` entry → *how many
 options*, if multiple choice was picked, or *region vs. capital*, if
-"Drop a pin" was — see "Pin drop" below) → region (→ a sub-region screen
+"Drop a pin" was **and** the subject deals in capitals at all — see "Pin
+drop" below) → region (→ a sub-region screen
 if the region has children, e.g. Africa → North/Southern Africa) →
 sovereignty → the game itself. Back-navigation is continuation-passing,
 not a history stack: every step function takes a `goBack` closure, and
@@ -107,25 +108,36 @@ above) — a subject without geographic data would skip both and go
 straight from subject to the game.
 
 `goToRegionOrSkip` — reached right after answer type (and, for multiple
-choice, option count) is settled — is where `loadDataset` actually gets
-called, *not* the wizard's last step: every region and sovereignty option
-shows the player how many items it'd actually leave them with (`"All
-(236)"`, `"Europe (54)"`, …), and that needs the real loaded item list,
-not just the dataset's static `datasetMeta` flags. `regionCount()`
-computes a leaf region's count as `loadedItems.filter(region.match)
-.length`, a branch's as the union of its children's own matches, and
-returns `null` (no count shown) for an option that switches to a
-*different* dataset entirely rather than filtering the current one (the
-Caribbean region's "US States" sibling) — there's no shared count to show
-against items from a different dataset. The sovereignty step's counts are
-scoped one step further, to `regionItems` (post-region, pre-sovereignty)
-rather than the whole loaded set, so switching *which* sovereignty option
-looks selected never changes what region you're counting within.
-`startGame` (the wizard's actual last step) re-awaits `loadDataset` for
-the final item list — a no-op given the loader's own cache, not a second
-real fetch — and is *still* the only place `loadSettings` (the persisted
-zoom preference) gets read, since that's a display-time concern for the
-game screen, not something any wizard step needs to know about.
+choice, option count) is settled — is where the dataset's *items* get
+loaded (`loadItems`), *not* the wizard's last step: every region and
+sovereignty option shows the player how many items it'd actually leave
+them with (`"All (236)"`, `"Europe (54)"`, …), and that needs the real
+loaded item list, not just the dataset's static `datasetMeta` flags.
+Deliberately items only: `datasets.js` caches and fetches items and
+topology *separately*, because they have very different weights and very
+different consumers — the items file is small (~100KB for countries) and
+these counting steps need it early, while the map topology is the heavy
+part (~750KB for the 50m world, 88% of the total payload) and nothing
+renders a map until the game screen itself. So the wizard never requests
+the big file at all; it starts downloading on `startGame`'s own Loading
+screen, right before gameplay. `regionCount()` computes a leaf region's
+count as `loadedItems.filter(region.match).length`, a branch's as the
+union of its children's own matches, and returns `null` (no count shown)
+for an option that switches to a *different* dataset entirely rather than
+filtering the current one (the Caribbean region's "US States" sibling) —
+there's no shared count to show against items from a different dataset.
+The sovereignty step's counts are scoped one step further, to
+`regionItems` (post-region, pre-sovereignty) rather than the whole loaded
+set, so switching *which* sovereignty option looks selected never changes
+what region you're counting within. `startGame` (the wizard's actual last
+step) awaits the full `loadDataset` — the items half comes straight from
+cache, so this costs exactly the one topology fetch — and is *still* the
+only place `loadSettings` (the persisted zoom preference) gets read,
+since that's a display-time concern for the game screen, not something
+any wizard step needs to know about. (Both caches hold promises, so
+concurrent callers share one in-flight fetch, and a failed fetch is
+evicted so backing out and retrying re-attempts instead of replaying the
+cached rejection.)
 
 A subject without any region/sovereignty filtering at all (US states)
 skips this load entirely and goes straight from answer type to the game,
@@ -405,20 +417,31 @@ that region's own bbox renders to, tiling seamlessly next to itself — it
 doesn't reconstruct a real geographic globe, just guarantees panning never
 hits a wall in any mode. `this.wrapEnabled` gates three side-by-side
 copies of the map's content instead of one: a "home" copy (the only one
-with click listeners on its
-own real `<path>` elements, and the only one with the tiny-country
-hit-area assist system below) flanked by a ghost copy one world-width to
-either side. Ghosts are built from SVG `<use href="#...">` references to
-the home copy's own paths/border-lines/pin-marker, not real duplicate
-elements — a `<use>` re-renders whatever its target currently looks like,
-*live*, including dynamically toggled classes (`markResult`'s
-`.country--correct`, for instance), so ghosts stay visually in sync with
-the home copy automatically. Each ghost country `<use>` also gets its own
-click listener reporting the same id its home path would (`.country-ghost`
-in `style.css` re-enables `pointer-events` for exactly these, scoped to
-non-pin-mode — border-line/pin-marker ghosts stay `pointer-events: none`,
-purely decorative), so every *visible* instance of a country is clickable,
-not just whichever one is technically "home" at the moment.
+with click listeners on its own real `<path>` elements, and the only one
+with the tiny-country hit-area assist system below) flanked by a ghost
+copy one world-width to either side. All home content lives in an inner,
+untransformed `contentGroup` (the `homeGroup` wrapper above it carries the
+zoom/pan transform), and each ghost copy is exactly **one** `<use>` of
+that group's id. A `<use>` re-renders whatever its target currently looks
+like, *live* — dynamically toggled classes (`markResult`'s
+`.country--correct`), attribute changes, and any element added to the
+content group later — so ghosts stay in sync by construction, and the
+whole "forgot to clone the new element into the ghosts" bug class (which
+bit twice: the pin-confirm hit-area, the capital marker) is gone. It's
+also the map's biggest paint optimization: the previous per-element ghost
+clones were ~480 extra DOM nodes on the world map, the bulk of what the
+compositor had to rasterize at every gesture start.
+
+Ghosts are fully inert (`pointer-events: none`, one CSS rule). A click
+over ghost content falls through to the `<svg>` itself, and the whole-map
+click listener resolves it *geometrically*: fold the click's x back into
+the home period, `projection.invert`, then point-in-polygon
+(`_findContainingId`) — the exact mechanism pin mode has always used,
+now shared by map-click mode for any click whose target is the svg (home
+paths and hit-areas are more specific targets and still handle their own
+clicks first; ocean and terrain resolve to no id and are no-ops). So
+every visible instance of a country remains clickable without the ghosts
+carrying listeners at all.
 
 `translateExtent`'s x bound is set to `[-Infinity, Infinity]` when
 wrapping is on (still `[0, width]` for y — panning off the top/bottom
@@ -469,6 +492,94 @@ before the trick was removed outright rather than scoped further.
 `will-change: transform` on each copy group remains — a compositor hint
 telling the browser ahead of time which layers move every frame, unrelated
 to antialiasing.
+
+The performance work that *did* stick attacks the actual per-tick costs
+instead of rendering quality:
+
+- **Frozen zoom: zoom ticks are compositor-only.** The moment a live
+  gesture changes `k`, the map stops touching the SVG entirely: the inner
+  groups keep the gesture-start transform (`_frozenBase`), and every
+  further tick is expressed as a CSS transform on the `<svg>` *element*
+  (delta `D` chosen so `D ∘ base = t`, meaning screen positions still
+  match `currentTransform` exactly — clicks work mid-gesture). This
+  exists because per-tick transform updates on inner SVG `<g>`s repaint
+  the whole ~240-path scene: browsers — Chromium in particular — don't
+  reliably compositor-promote inner SVG elements even under `will-change`
+  (an earlier round put `will-change` on the copy groups and the zoom lag
+  survived it, which is how this was found). The `<svg>` element itself
+  is an ordinary compositable box in every engine, so scaling it is pure
+  compositor work at any tick rate. Costs, all deliberate: the scaled
+  gesture raster is blurry until settle, and (see the overscan margin
+  below for how far this is pushed back) a fast-enough zoom-out can still
+  run past what's pre-rendered, showing plain ocean beyond it until the
+  settle repaint — the untransformed `.world-viewport` wrapper clips and
+  paints ocean so any such gap never shows page background. Wrap-snapping
+  is deferred to the bake (a mid-gesture snap would move
+  the frozen raster by a visible world-width; d3's internal transform is
+  re-synced, hook-suppressed, if the snap moved x). The settle
+  (`GESTURE_SETTLE_MS`, 200ms — longer than d3's ~150ms wheel-idle
+  window, so a multi-notch wheel zoom bakes once, not per notch) runs
+  `_bakeFrozenZoom`: one full vector repaint at the final transform,
+  which is also exactly what makes the zoomed view sharp. The zoom
+  listeners live on the wrapper, not the svg — d3 derives pointer
+  coordinates from the listener element's own rect, which must not move
+  while the svg is CSS-transformed. Pure pans (k unchanged) stay on the
+  live path: they repaint, which was measured as acceptable, and in
+  exchange never show edge gaps.
+- **Zoom-out overscan margin, so the shrinking raster keeps showing real
+  geography.** The frozen raster (above) is a picture of exactly what was
+  on screen at gesture start — CSS-scaling it *down* for a zoom-out
+  shrinks that picture toward its own top-left corner, and without more
+  pre-rendered content around the edges, the area it stops covering has
+  nothing behind it. Reported as looking "weird": even with the wrapper's
+  ocean color matching the svg's own (so it was never a literal color
+  seam), a map that visibly shrinks into a smaller floating picture reads
+  as broken in a way "zooming out reveals more ocean" doesn't. The fix
+  (`ZOOM_OVERSCAN_RATIO` = 0.75, in `_reflow`) makes the svg's own
+  rendered box — and its viewBox — bigger than the wrapper's visible
+  window by 75% on every side, positioned (`left`/`top` = `-margin`) so
+  its content still lines up with the wrapper exactly at rest. This is
+  real map content, not anything new drawn for the purpose: the full
+  dataset (and, horizontally, the ghost copies) was always there in the
+  DOM at every zoom level — overscan is purely a matter of how much of
+  that existing scene the svg's own box reveals, so a zoom-out gesture
+  now keeps showing genuine geography, degrading to plain (matching-color)
+  ocean only past a real burst — tolerance is `scale ≥ 1/(1+2×0.75) = 0.4`,
+  i.e. any single gesture that doesn't shrink k by more than 2.5× (a
+  wheel/pinch burst shrinking to 40% of its starting zoom within one
+  ~200ms gesture window is already an aggressive input). Introducing the
+  margin makes the frozen-branch CSS transform delta need a correction
+  term neither pure algebra shortcut nor approximation — worked out by
+  expanding `screen = boxPosition + D(pixelInBox)` against the desired
+  `screen = t.x + t.k·worldX` (full derivation in `ZOOM_OVERSCAN_RATIO`'s
+  own comment) — of `-margin·(scale−1)` per axis, exact at any scale.
+  Skipping it isn't a smaller version of the same bug: at typical zoom
+  factors the map would visibly drift by hundreds of px, zoom-in
+  included — this is why the term applies unconditionally, not only when
+  zooming out. Everything in the "zoom" handler
+  beyond the transform updates exists only to counter-scale against `k`
+  (pin/capital marker radii) — so when `k` didn't change (a drag, by far
+  the most common gesture), all of it is skipped via a one-line
+  `k === _lastCounterScaleK` check. Assist-hull re-padding — the
+  expensive counter-scale, rebuilding `points` strings for ~80 polygons —
+  doesn't run on live ticks *at all* any more: it happens once per
+  gesture, in `_onGestureSettle`. Mid-gesture the hulls carry the
+  previous gesture's padding, which is unobservable — they're invisible
+  hit-assists, and nobody clicks a microstate mid-pinch.
+- **Off-screen ghost copies don't get painted.** `_applyTransform` culls a
+  ghost (via `visibility: hidden` — skips paint and hit-testing without
+  the layout/compositor-layer teardown `display: none` would cause) when
+  its entire world-width lies outside the viewport, which is almost always
+  once zoomed in even slightly, since a ghost sits a full world-width from
+  the home copy. That's up to two-thirds of the scene (~480 of ~720
+  country elements) the browser no longer has to consider per frame,
+  precisely in the zoomed-in state where panning jank was felt. A hidden
+  ghost's transform also stops being updated until it's back. At k=1 with
+  the seam on screen, ghosts overlap the viewport and stay visible exactly
+  as before — this only ever skips paint the player couldn't see. (The
+  culling is per-ghost and independent of the home copy, which matters:
+  Asia's default framing shows its content *via* the left ghost — that one
+  stays visible while the right one culls.)
 
 The map's own colors (`--map-ocean`/`--map-land`/`--map-land-muted`/
 `--map-border` in `style.css`) are deliberately separate variables from
@@ -954,26 +1065,61 @@ on every `_reflow` as long as it's showing, exactly like the pin marker
 itself), so the km figure in the feedback text has a visual counterpart
 rather than being just a number. The nearest-point search (`featureNearestBorderPoint`)
 checks every segment of every ring of every part of the target's real
-outline (a local tangent-plane flattening around the pin's own latitude,
-`lonLatToLocalKm`/`localKmToLonLat`, turns each segment's closest-point
-check into plain 2D geometry and back — accurate enough for a "how far
-off" readout given border segments are short relative to the earth's
-curvature, without pulling in a full geodesic library). This intentionally
-measures against the country's actual *shape*, not its centroid (the
-original version of this feature used a `haversineKm`-to-`item.latlng`
-calculation instead): a pin landing deep inside a large or oddly-shaped
-country would otherwise report "hundreds of km away" from a guess that
-was, in fact, correct.
+outline, and is **round-world aware** throughout:
+
+- Each segment's endpoints are first shifted onto the pin's own longitude
+  branch (±360° via `Math.round((lon − lonN) / 360)`), so the shortest
+  path from a pin in Chile to Australia's border correctly crosses the
+  Pacific/antimeridian rather than measuring ~220° of map interior the
+  long way. Per-endpoint normalization can't tear a segment — a border
+  segment's two endpoints are a fraction of a degree apart, so both
+  always round to the same branch.
+- A local tangent-plane flattening (`lonLatToLocalKm`) only *picks* the
+  candidate point on each segment — a job it's fine at, since any error
+  is bounded by the segment's own few-km length — but the distance to
+  that candidate is measured with a true great circle (`haversineKm`).
+  The flat approximation's error grows with range and was off by
+  thousands of km at cross-Pacific distances.
+- The chosen nearest point keeps its shifted (possibly out-of-±180)
+  longitude, and `_projectWithWrap` turns each full 360° of shift into
+  ± one world-width of projected x — i.e. the reveal line is drawn
+  toward the neighbouring *ghost copy*, visibly taking the short way
+  across the seam. `revealCapitalDistance` shifts the capital's
+  longitude onto the pin's branch the same way for its line/marker; the
+  capital *distance* needed no fix at all, since haversine is periodic
+  in longitude and always returns the short way by construction.
+
+This intentionally measures against the country's actual *shape*, not its
+centroid (the original version of this feature used a
+`haversineKm`-to-`item.latlng` calculation instead): a pin landing deep
+inside a large or oddly-shaped country would otherwise report "hundreds
+of km away" from a guess that was, in fact, correct. (Finding the
+Chile→Australia case also surfaced that `_geometryById` — the raw-ring
+lookup all reveals/distances go through — kept only the *last* feature
+per id, so Australia's shared "036" resolved to Ashmore and Cartier Is.
+instead of the mainland; same topology quirk the hit-area pass already
+guards against. Same-id features are now merged into one MultiPolygon
+there, so containment, nearest-border, and the reveal outline all cover
+the id's full territory.)
 
 Everything above describes **"Region"** pin-target scoring, the original
-behavior and still the default. A follow-up wizard step, shown only after
-"Drop a pin" is picked (`gameWizard.js`'s `showPinTargetStep`, parallel to
-multiple-choice's "how many options" step), offers **"Capital"** instead —
+behavior and still the default — the borderless map where the player is
+simply correct if the pin lands inside the country being asked about. It's
+what the **Countries** subject uses: name shown, no borders drawn, drop a
+pin on where you think it is.
+
+A follow-up wizard step (`gameWizard.js`'s `showPinTargetStep`, parallel to
+multiple-choice's "how many options" step) offers **"Capital"** instead —
 scoring the same pin drop against the target's exact capital point
-(`capitalLatLng`, see "Data" below) rather than its shape. This is
-independent of which subject/question is active: whether the round asked
-for a country's name or its capital's name, the pinned target item is the
-same either way, just scored differently. Correctness itself changes, not
+(`capitalLatLng`, see "Data" below) rather than its shape. That step only
+appears when the subject deals in capitals at all (`offersCapitalPinTarget`
+checks the same `attributeKeys` scoping every other step uses, rather than
+special-casing subject keys, so a future subject gets the right behaviour
+for free). For **Capitals** both targets are meaningful — locate the
+country whose capital this is, or pin the capital itself — so the choice is
+offered. For **Countries** it isn't: the prompt is a country's *name*, and
+"drop a pin on its capital" is a different game than the one the player
+picked, so the step is skipped and `"region"` is used. Correctness itself changes, not
 just the feedback: a pin can land inside the *right country* and still be
 wrong under "Capital" scoring if it's too far from the capital
 (`CAPITAL_CORRECT_RADIUS_KM`, 50km — roughly a large metro area's own
@@ -1293,7 +1439,7 @@ us-states.json` + `us-states-topology.json`.
   `npm run archive -- <short-label>` (or `scripts/archive.sh
   <short-label>`). This tars the whole project (excluding `node_modules`,
   `dist`, `archive`) into `archive/<timestamp>_<label>.tar.gz` and prunes
-  down to the 4 most recent snapshots automatically.
+  down to the 10 most recent snapshots automatically.
 
 ## Deployment
 

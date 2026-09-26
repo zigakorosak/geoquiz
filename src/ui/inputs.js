@@ -25,7 +25,11 @@ const EARTH_RADIUS_KM = 6371;
 // the post-confirm feedback's own distance/reveal goes through WorldMap.js's
 // revealCapitalDistance instead, which needs the map's own lon/lat
 // conventions and draws the reveal, not just a number).
-function haversineKm([lat1, lon1], [lat2, lon2]) {
+// NOTE the [lat, lon] argument order — the opposite of WorldMap.js's own
+// (module-private) haversine, which takes [lon, lat] to match d3's
+// convention. The name spells the order out so the two can never be
+// confused at a call site.
+function haversineKmLatLon([lat1, lon1], [lat2, lon2]) {
   const toRad = (d) => (d * Math.PI) / 180;
   const dLat = toRad(lat2 - lat1);
   const dLon = toRad(lon2 - lon1);
@@ -255,16 +259,17 @@ const renderers = {
       true,
       (lon, lat, containingId) => {
         if (target === "capital" && item.capitalLatLng) {
-          const distanceKm = haversineKm([lat, lon], item.capitalLatLng);
+          const distanceKm = haversineKmLatLon([lat, lon], item.capitalLatLng);
           const withinRadius = distanceKm <= CAPITAL_CORRECT_RADIUS_KM;
           onSelect(withinRadius ? item.id : containingId === item.id ? TOO_FAR_FROM_CAPITAL : containingId);
         } else {
           onSelect(containingId);
         }
       },
-      // Clicking the just-dropped pin itself (its own padded hit-area, not
-      // just anywhere on the map) confirms immediately — the pin-mode
-      // equivalent of map-click/multiple-choice's reclick-to-confirm.
+      // Clicking close enough to the just-dropped pin confirms immediately
+      // (WorldMap's whole-map listener does the distance check — there is
+      // no clickable overlay element) — the pin-mode equivalent of
+      // map-click/multiple-choice's reclick-to-confirm.
       onConfirm
     );
 

@@ -171,7 +171,7 @@ button:disabled {
 }
 
 .explore-area {
-  min-height: 400px;
+  min-height: 720px;
 }
 
 /* ---------- Game screen ---------- */
@@ -180,9 +180,17 @@ button:disabled {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 1rem 1.5rem 2rem;
-  gap: 1rem;
-  max-width: 960px;
+  /* Trimmed from 1rem/2rem and the gap from 1rem: this chrome (header,
+     prompt, feedback line, button) is what .answer-area's flex:1 has left
+     over after — every px shaved here is a px the map gets instead, on
+     every viewport, not just short ones. */
+  padding: 0.75rem 1.5rem 1.25rem;
+  gap: 0.6rem;
+  /* Was 960px — capped the map well below what most screens can actually
+     show, regardless of how wide the window was. 1600px is a generous
+     ceiling for very wide monitors; width:100% (plus this container's own
+     padding) still shrinks it correctly on anything narrower. */
+  max-width: 1600px;
   margin: 0 auto;
   width: 100%;
 }
@@ -206,7 +214,7 @@ button:disabled {
 }
 
 .prompt-area {
-  min-height: 3.5rem;
+  min-height: 3rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,7 +228,13 @@ button:disabled {
 
 .answer-area {
   flex: 1;
-  min-height: 320px;
+  /* This is a floor, not the normal size — flex:1 already claims all
+     vertical space .game-screen has left after its header/prompt/
+     feedback/button chrome, which on most viewports is well past this.
+     The floor is what guarantees "big" on a short/constrained viewport
+     too, at the cost of the page needing to scroll there rather than
+     silently shrinking the map back down to fit. */
+  min-height: 640px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -274,41 +288,56 @@ button:disabled {
 
 /* ---------- World map ---------- */
 
+/* width/height/left/top are set inline, per reflow, in WorldMap.js — the
+   svg's own rendered box is deliberately BIGGER than the wrapper's window
+   (the zoom-out overscan margin, see ZOOM_OVERSCAN_RATIO) and offset so
+   its content still lines up with the wrapper exactly at rest. Absolute
+   positioning is what makes that offset meaningful — it must be relative
+   to `.world-viewport`, hence `position: relative` there. */
 .world-map {
-  width: 100%;
-  height: 100%;
-  min-height: 320px;
+  position: absolute;
   display: block;
   background: var(--map-ocean);
 }
 
-/* Hints the compositor to put each copy on its own GPU layer ahead of
-   time, rather than discovering mid-drag that this group's transform
-   changes every frame — see WorldMap.js's _applyTransform. */
-.world-copy {
+/* The untransformed wrapper WorldMap.js inserts around its <svg>. Its
+   jobs (see the frozen-zoom notes in WorldMap.js's "zoom" handler): it
+   hosts the zoom listeners (so d3's pointer math has a stable rect while
+   the svg itself is CSS-transformed mid-gesture), it clips the oversized
+   svg box down to the actual visible window, and it paints the ocean
+   color so any sliver the overscan margin doesn't reach (an extreme,
+   fast zoom-out — see ZOOM_OVERSCAN_RATIO) reads as more ocean rather
+   than page background until the settle repaint. */
+.world-viewport {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 640px;
+  overflow: hidden;
+  background: var(--map-ocean);
+}
+
+/* During a zoom gesture the svg element carries the per-tick CSS
+   transform — promote it for the duration. The <svg> element is an
+   ordinary compositable box in every engine (unlike inner SVG <g>s,
+   which Chromium in particular does not reliably promote — the reason
+   the previous inner-group will-change approach still repainted every
+   zoom tick). Scoped to the gesture so the settle repaint drops the
+   layer and the view sharpens, same lifecycle as before. */
+.world-viewport--zooming > .world-map {
   will-change: transform;
 }
 
-/* Ghost copies (WorldMap.js's infinite-scroll wrap) are decorative by
-   default — border-line and pin-marker <use> clones never need clicks —
-   but a country ghost gets pointer-events re-enabled (and its own click
-   listener, in JS) so every *visible* instance of a country is clickable,
-   not only whichever copy is currently "home". Not in pin-drop mode: a
-   single whole-map click handler already covers every copy there (the
-   coordinate math itself accounts for ghosts — see the "click" listener
-   in WorldMap.js's constructor), so re-enabling pointer-events on the
-   ghosts too would just let them steal clicks from that handler's
-   intended target on their own layer for no benefit. */
+/* Ghost copies (WorldMap.js's infinite-scroll wrap) are a single inert
+   <use> of the home content group each — fully non-interactive by design.
+   Clicks over ghost content fall through to the <svg> itself and are
+   resolved geometrically by WorldMap's own click listener (fold the x
+   coordinate back into the home period, then point-in-polygon), the same
+   mechanism pin mode has always used — so every visible instance of a
+   country is still clickable without the ghosts carrying ~480 per-country
+   clone elements and listeners of their own. */
 .world-copy--ghost {
   pointer-events: none;
-}
-
-.world-map:not(.world-map--pin-mode) .world-copy--ghost .country-ghost {
-  pointer-events: auto;
-}
-
-.world-map--clickable:not(.world-map--pin-mode) .world-copy--ghost .country-ghost {
-  cursor: pointer;
 }
 
 /* No shape-rendering: optimizeSpeed trick during panning (there used to be

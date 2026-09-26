@@ -71,7 +71,7 @@ npm run archive -- <short-label>
 ```
 
 Tars the project (excluding `node_modules`, `dist`, `archive`) into
-`archive/<timestamp>_<label>.tar.gz`, keeping the 4 most recent snapshots.
+`archive/<timestamp>_<label>.tar.gz`, keeping the 10 most recent snapshots.
 
 ## Deployment
 

@@ -19,7 +19,7 @@
 
 import { resolveAttributes } from "../core/attributes.js";
 import { subjects } from "../core/subjects.js";
-import { datasetMeta, loadDataset } from "../core/datasets.js";
+import { datasetMeta, loadDataset, loadItems } from "../core/datasets.js";
 import { regions, getRegion } from "../core/regions.js";
 import { sovereigntyOptions } from "../core/sovereignty.js";
 import { loadSettings } from "../core/settings.js";
@@ -47,9 +47,9 @@ function answerAttributesFor(config, excludeKey) {
 // or answer attribute isn't a fair round to include. Applied to the final
 // playable item set (see startGame) and to the region/sovereignty step
 // counts so the number shown there matches what the player actually gets
-// — never to `regionItems` itself (used for the map's hard crop in
-// game.js), so an excluded item still renders muted rather than leaving a
-// hole, the same as a sovereignty-excluded one does.
+// — never to `regionItems` itself (used for the map's initial framing in
+// game.js), so an excluded item still renders muted and still counts
+// toward where the view opens, the same as a sovereignty-excluded one.
 function isAskable(item, questionAttr, answerAttr) {
   return questionAttr.getValue(item) != null && answerAttr.getValue(item) != null;
 }
@@ -134,8 +134,12 @@ function showAnswerKindStep(container, config, goBack, onExit) {
       const stepBack = () => showAnswerKindStep(container, config, goBack, onExit);
       if (k === "multiple-choice") {
         showOptionCountStep(container, { ...config, answerKind: k }, stepBack, onExit);
-      } else if (k === "map-pin") {
+      } else if (k === "map-pin" && offersCapitalPinTarget(config)) {
         showPinTargetStep(container, { ...config, answerKind: k }, stepBack, onExit);
+      } else if (k === "map-pin") {
+        // Only one sensible target, so don't ask — same rule as
+        // goToAnswerKindOrSkip applies to answer kinds themselves.
+        goToRegionOrSkip(container, { ...config, answerKind: k, pinTarget: "region" }, stepBack, onExit);
       } else {
         goToRegionOrSkip(container, { ...config, answerKind: k }, stepBack, onExit);
       }
@@ -160,19 +164,32 @@ function showOptionCountStep(container, config, goBack, onExit) {
 // Follow-up step specific to "map-pin" (parallel to showOptionCountStep for
 // multiple-choice): what counts as a correct pin drop, and what the
 // post-confirm distance figure/reveal measures against. "region" (the
-// original, default behavior) scores against the target's own shape — 0km
-// if the pin landed anywhere inside it, otherwise distance to its nearest
-// border. "capital" scores against the target's exact capital point
-// instead — correct only within CAPITAL_CORRECT_RADIUS_KM of it (see
+// default) scores against the target's own shape — correct if the pin
+// landed anywhere inside it, otherwise the distance reported is to its
+// nearest border. "capital" scores against the target's exact capital
+// point instead — correct only within CAPITAL_CORRECT_RADIUS_KM of it (see
 // inputs.js), with the distance/reveal measured to that point rather than
-// the border. Independent of subject: whether the round's question was the
-// country's name or its capital's name, the pinned target is the same
-// item either way, just scored differently.
+// the border.
 const PIN_TARGETS = ["region", "capital"];
 const pinTargetLabels = {
   region: "Region",
   capital: "Capital",
 };
+
+// Whether "capital" is even a coherent thing to score a pin against for
+// this subject — i.e. whether the subject deals in capitals at all
+// (`attributeKeys`, see core/subjects.js). It does for Capitals; it
+// doesn't for Countries, where the prompt is a country's *name* and "drop
+// a pin on its capital" is a different game than the one the player
+// picked. Rather than special-case subject keys, this reads the same
+// attribute scoping every other step already uses, so a future subject
+// gets the right behaviour for free. When it's false the pin-target step
+// is skipped entirely and "region" is used — the borderless map where you
+// simply drop a pin inside the country.
+function offersCapitalPinTarget(config) {
+  const keys = config.subject?.attributeKeys ?? config.meta?.attributeKeys ?? [];
+  return keys.includes("capital");
+}
 
 function showPinTargetStep(container, config, goBack, onExit) {
   renderChoiceScreen(container, {
@@ -225,20 +242,22 @@ async function goToRegionOrSkip(container, config, goBack, onExit) {
     goToSovereigntyOrSkip(container, { ...config, region: getRegion("world") }, goBack, onExit);
     return;
   }
-  // Loaded here rather than at the very end (startGame) specifically so
-  // the region/sovereignty steps below can show each option's actual
-  // item count ("All (236)") — both need the real item list, not just
-  // the dataset's static meta.
+  // Only the lightweight *items* file is loaded here — the region/
+  // sovereignty steps below need it for their option counts ("All (236)").
+  // The heavyweight map topology (~750KB for countries) deliberately is
+  // NOT requested yet: nothing renders a map until the game screen itself,
+  // so it starts downloading on startGame's own Loading screen instead of
+  // stalling the wizard before a map was even chosen.
   container.innerHTML = '<div class="menu-screen wizard-screen"><h1>Loading…</h1></div>';
-  let loaded;
+  let loadedItems;
   try {
-    loaded = await loadDataset(config.subject.datasetKey);
+    loadedItems = await loadItems(config.subject.datasetKey);
   } catch (err) {
     console.error(err);
     showLoadError(container, onExit);
     return;
   }
-  const nextConfig = { ...config, loadedItems: loaded.items };
+  const nextConfig = { ...config, loadedItems };
   if (config.meta.supportsRegionFilter) {
     showRegionStep(container, nextConfig, goBack, onExit);
   } else {
@@ -251,6 +270,12 @@ function showRegionStep(container, config, goBack, onExit) {
     title: "Choose a map",
     options: regions,
     labelFn: (r) => withCount(r.label, regionCount(config, r)),
+    // A zero-count option would start a game with an empty round pool
+    // (QuizSession's currentItem undefined -> the round screen throws).
+    // No option is actually zero with today's data, but the count is
+    // already computed for the label, so refusing it is free insurance
+    // against a future data/filter combination that does hit zero.
+    disabledFn: (r) => regionCount(config, r) === 0,
     onPick: (r) => {
       const stepBack = () => showRegionStep(container, config, goBack, onExit);
       if (r.children) {
@@ -268,6 +293,9 @@ function showSubRegionStep(container, config, goBack, onExit) {
     title: `Choose a ${config.regionParent.label} region`,
     options: config.regionParent.children,
     labelFn: (r) => withCount(r.label, regionCount(config, r)),
+    // Same zero-count guard as showRegionStep. A dataset-switch entry
+    // (US States) has a null count, and null !== 0, so it stays enabled.
+    disabledFn: (r) => regionCount(config, r) === 0,
     onPick: (r) => {
       const stepBack = () => showSubRegionStep(container, config, goBack, onExit);
       if (r.datasetKey) {
@@ -314,14 +342,15 @@ function goToSovereigntyOrSkip(container, config, goBack, onExit) {
 }
 
 function showSovereigntyStep(container, config, goBack, onExit) {
+  const countFor = (s) =>
+    config.regionItems.filter(s.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr)).length;
   renderChoiceScreen(container, {
     title: "All countries, or sovereign states only?",
     options: sovereigntyOptions,
-    labelFn: (s) =>
-      withCount(
-        s.label,
-        config.regionItems.filter(s.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr)).length
-      ),
+    labelFn: (s) => withCount(s.label, countFor(s)),
+    // Same zero-count guard as the region steps — an empty pool would
+    // crash the round screen.
+    disabledFn: (s) => countFor(s) === 0,
     onPick: (s) => startGame(container, { ...config, sovereignty: s }, onExit),
     onBack: goBack,
   });
@@ -330,11 +359,10 @@ function showSovereigntyStep(container, config, goBack, onExit) {
 async function startGame(container, config, onExit) {
   container.innerHTML = '<div class="menu-screen wizard-screen"><h1>Loading…</h1></div>';
   try {
-    // Already loaded once (in goToRegionOrSkip) for every dataset that has
-    // a region/sovereignty step to show counts on; loadDataset's own
-    // cache makes re-awaiting it here cheap and correct for every dataset
-    // regardless (including one, like US states, that skipped straight
-    // here without ever loading).
+    // This is where the map topology actually downloads (the wizard only
+    // ever fetched the small items file — see goToRegionOrSkip); the items
+    // half is already cached, so loadDataset here costs one topology
+    // fetch, covered by the Loading screen above.
     const loaded = await loadDataset(config.subject.datasetKey);
     const regionItems = config.regionItems ?? loaded.items.filter(config.region.match);
     // regionItems itself stays unfiltered by askability (see isAskable) —

@@ -205,6 +205,21 @@ group?).
 
 ## Environment gotchas (recurring time sinks)
 
+### Inner-SVG elements don't reliably composite (Chromium)
+Two rounds of zoom-perf work put `will-change: transform` on inner SVG
+`<g>` groups and trimmed per-tick JS — and the lag survived, because the
+actual cost was the browser repainting the whole path scene per tick:
+Chromium largely ignores `will-change` layerization for *inner* SVG
+elements. The fix that worked composites at the boundary the engine
+respects — a CSS transform on the `<svg>` element itself (or an HTML
+wrapper) during the gesture, baked into inner transforms once at settle.
+
+**Rule:** for per-frame SVG pan/zoom, never expect inner `<g>` transforms
+to be cheap. Freeze the SVG and apply the gesture delta as a CSS
+transform on the svg/HTML container, then bake on settle. And keep zoom
+listeners on an *untransformed* ancestor — d3's pointer math reads the
+listener element's rect.
+
 ### jsdom harness boilerplate
 ```js
 const dom = new JSDOM("<!doctype html><div id=c></div>");
