@@ -3,6 +3,809 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-26 — the "triangle" was mine after all; pin confirm rebuilt without DOM hit-testing
+
+Both items re-reported after the previous round said they were handled.
+Both were genuinely still broken, and the first one I had actively
+misdiagnosed.
+
+**The India/Pakistan/China triangle — a regression I introduced, not
+"working as designed".** Last round I looked this up, found Siachen Glacier
+at exactly that trijunction, confirmed it's one of two id-less topology
+shapes deliberately excluded from `countries.json`, and reported it as
+intended behaviour. That was wrong, and the giveaway was in my own earlier
+work: it only *looks* like a stray grey triangle because the two-layer
+pin-mode landmass refactor (same day) started painting it muted. The
+overlay filter was `f?.id && playableIds.has(f.id)` — id-less features fail
+the first clause, so the muted base showed through them while every
+neighbour was normal land. Pre-refactor, pin mode merged everything into a
+single uniformly-coloured landmass and nothing stood out.
+
+Root issue: "not in play" was being used for two different things. A
+*country that's out of play* should be muted (that's the whole point of
+`--unplayable`); *terrain that isn't a country at all* should just look
+like ground. Split into a third state: id-less features now get
+`.country--terrain` (ordinary land fill, no pointer events) in map-click
+mode, and are included in pin mode's playable-overlay merge. Both stop
+them reading as artifacts.
+
+Worth noting for next time: the report said "still visible", and I'd
+previously answered it with an explanation rather than a fix. The
+explanation was even *correct* about what the shape is — and still
+useless, because the actual complaint was about how it was painted.
+
+**Pin confirm — the ghost-clone fix didn't work; replaced the whole
+approach.** Last round's diagnosis (the pin is often rendered by a wrap
+ghost copy, which had no clickable hit-area) was right, but the fix wasn't:
+cloning `pinConfirmHitArea` into each ghost group can't work, because ghost
+groups are `pointer-events: none` wholesale and the clone carried no class
+to re-enable it. I'd added the listener and not verified the element could
+actually receive events — exactly the "asserting instead of computing"
+pattern `MISTAKES.md` was written about, two rounds after writing it.
+
+Rather than keep chasing `<use>` shadow-tree hit-testing semantics, dropped
+DOM hit-testing entirely. The whole-map click listener already folds every
+click back into the home copy's coordinate space to support wrapping, so it
+now just measures the distance from there to the current pin and treats
+anything within `PIN_RADIUS_PX + PIN_CONFIRM_PADDING_PX` (screen px, scaled
+by the live `transform.k`) as a confirm. One check, automatically correct
+for the home copy and all ghosts, no hit-testing involved.
+
+That deleted more than it added: `pinConfirmHitArea`, its ghost clone, its
+per-zoom-tick radius counter-scaling, its two CSS rules, and the
+`_pinConfirmClickInFlight` flag (which only existed to stop the confirm
+click from also re-dropping the pin — the handler now just returns early).
+
+Verified via jsdom: map-click renders exactly 2 `.country--terrain` paths
+(Siachen + Indian Ocean Ter.) and 0 `--unplayable` in a World game;
+Siachen's own coordinates test *inside* Asia's playable-overlay merge, so
+nothing mutes it; and the confirm flow — drop, re-click same spot →
+confirm, click ~8px off → still confirm, click far away → re-drop — behaves
+correctly. Critically, repeated the confirm test with the view shifted a
+full world-width so the pin is rendered by a *ghost* copy: still confirms,
+still doesn't re-drop. That's the exact case the previous approach failed.
+`npm run build` clean.
+
+## 2026-09-26 — pin confirm didn't fire: the visible pin can be a ghost, which had no click listener
+
+Reported: clicking the just-dropped pin (or the same spot again) didn't
+confirm. First check — a full click-flow test driving the real `WorldMap`
++ `game.js` — passed cleanly, which turned out to be a false negative:
+`jsdom` doesn't do real geometry-based hit-testing, so dispatching a click
+"at" a screen coordinate by calling `.dispatchEvent()` directly on an
+element always hits that exact element regardless of whether its actual
+rendered position matches the coordinate. That masks precisely the class
+of bug where the *visually correct* element to click isn't the one a real
+browser's hit-test would find.
+
+Root cause, found by checking structurally which elements get cloned into
+wrap ghost copies: `pinMarker` gets a `<use>` clone in each ghost group (so
+it's *visible* there), but `pinConfirmHitArea` — the actual click target
+behind it — never did, and had no click listener anywhere but the home
+copy. Wrap is now enabled for every region, not just World (an earlier
+round), so the pin the player *sees* on screen can easily be a ghost's
+rendering rather than the home copy's own. Clicking that visible-but-
+ghosted pin had nothing behind it to catch the click, so it fell through
+to the whole-map listener and re-dropped the pin instead of confirming.
+
+This isn't only a drift-after-panning case, either — checked directly with
+zero user interaction: Asia's own *default* framing already renders via
+its left ghost copy, not home (its region centroid sits far enough from
+the projection's own lon=0 reference that `_wrapTransform`'s drift check —
+which only guarantees *some* copy covers at least half the viewport, not
+that home specifically does — leaves home's own span entirely outside
+`[0, viewport width]` from construction). Europe's default framing happens
+to still be home-covered; Asia's isn't, unprompted.
+
+Fixed by cloning `pinConfirmHitArea` into each ghost group too, with the
+*same* click-handler function (extracted to `_handlePinConfirmClick` so
+home and every ghost share one implementation rather than risking two
+copies drifting apart) attached to each clone — mirroring exactly how
+country-ghost click listeners already work outside pin mode.
+
+Verified via jsdom (deleted after, per usual, this time including the
+false-negative test that prompted digging further): confirmed Asia's home
+copy span doesn't overlap the viewport at its own default zoom (zero
+panning); confirmed both ghost groups now carry a `pinConfirmHitArea`
+clone; dispatching a click directly on a *ghost's* clone (not home's own
+element) now correctly invokes the confirm callback, and a second
+dispatch confirms the bubbled click still gets consumed by
+`_pinConfirmClickInFlight` rather than also re-dropping the pin. `npm run
+build` clean.
+
+## 2026-09-26 — Asia's zoom, the India/Pakistan/China "triangle", and a real hit-area bug
+
+Three reports at once.
+
+**Asia zoom.** Same problem as Europe's own framing round, same fix:
+Russia counts toward Asia (`ASIA_BONUS`, core/regions.js) and its topology
+shape spans the antimeridian (the map's full width), which dominates any
+fit that includes it. Measured (jsdom): excluding it from `fitExclude`
+takes the fit scale from 1.25x world scale to 2.91x, and the resulting
+frame's own anchors (Kazakhstan/Indonesia/Japan/Türkiye) needed nothing
+further, unlike Europe's six-member list. `core/regions.js`'s Asia entry
+gained `fitExclude: new Set(["Russia"])`; Russia stays fully in the region
+and fully playable.
+
+**The "triangle" between India, Pakistan, and China.** Not a bug — it's
+Siachen Glacier (lon 76.77–77.80, lat 35.11–35.66, exactly the Kashmir/
+Karakoram trijunction), one of two topology shapes with no ISO id
+(`scripts/generate-data.mjs`'s own documented exclusions, alongside Indian
+Ocean Ter.) that render permanently muted and never playable, by design —
+a real, disputed, literal glacier/military zone that's deliberately not
+folded into any country's territory. Confirmed by direct lookup, not
+memory: it's the only unmatched shape anywhere near that location. Left
+as-is; flagged to the user as what it actually is rather than assumed to
+need fixing.
+
+**Selected-country border, actually a real bug.** Reported as inconsistent
+borders on selection — "not all light blue and thicker, some oddly
+missing." Root cause found by rendering the *real* SVG (a new technique:
+serialize `WorldMap`'s actual output with the real style.css inlined —
+CSS custom properties substituted with their literal values first, since
+`rsvg-convert` doesn't resolve `var()` — and rasterize with `rsvg-convert`,
+which is available locally) rather than reasoning about the DOM in the
+abstract. San Marino/Monaco/Vatican-style assisted countries showed a
+correctly-colored but wildly *oversized* hexagon at high zoom, big enough
+to visually swallow the real border entirely — not missing, buried.
+
+Cause: `HULL_PADDING` (the tiny-country hit-area's 3px assist margin,
+`_computeHull`) was baked into the hull's static `<polygon>` geometry once
+per `_reflow`, in the same pre-zoom coordinate space every country path's
+`d` lives in. The whole home/ghost group is then visually magnified by
+the interactive zoom transform, so that fixed 3px scales right along with
+everything else — fine at the default view, but at `MAX_ZOOM` (50x) the
+same 3px reads as ~150px on screen. Split hull computation into two
+steps — `_computeHull` (unpadded, cached per-country as `_hullBaseById`)
+and a new `_padHull` (the padding-application step, now cheap to redo) —
+and re-run `_padHull` with `HULL_PADDING / transform.k` on every zoom
+tick, the same counter-scaling technique the pin marker's own radius
+already used. The hull's *shape* still scales naturally with zoom, like
+any country path; only the constant assist margin around it doesn't.
+
+Verified: rendered San Marino's selection highlight at k=12 before and
+after — before, a hexagon viewer-scale enough to overlap Croatia; after,
+a compact, properly-proportioned shape. Measured the hit-area's actual
+on-screen extent across k=1→50 directly: grows only ~3x over that range
+now (driven by San Marino's own real, tiny shape naturally growing with
+zoom, which is correct) instead of the ~50x proportional growth the fixed
+padding caused before. `npm run build` clean.
+
+## 2026-09-26 — capital-target reveal marker didn't counter-scale with zoom
+
+Reported: on confirm in "Capital" pin-target mode, the revealed capital
+marker was much too large — it should behave like the pin marker itself,
+staying a constant on-screen size regardless of zoom.
+
+It simply never had that logic. `pinMarker`'s "zoom" handler counter-scales
+its `r` on every tick (`PIN_RADIUS_PX / transform.k`) so it lives in the
+same zoomed/panned `<g>` as every country path without visually growing or
+shrinking; `capitalMarker`, added in a later round for `revealCapitalDistance`,
+only ever got `r` set once at construction and was never added to that
+same handler — an omission, not a deliberate difference. Fixed by adding
+the identical counter-scaling line for `capitalMarker` alongside
+`pinMarker`'s own.
+
+Verified via jsdom: `capitalMarker`'s radius now matches `pinMarker`'s
+exactly at every zoom level tested (4 at k=1, 0.5 at k=8, back to 4 at
+k=1). `npm run build` clean.
+
+## 2026-09-26 — one map for every region: regions become framing + muting, not crops
+
+Requested: make every map really be the same map, with regions expressed
+as disabled countries and different default zooms rather than separate
+maps — motivated by the World map refusing to zoom in past a certain
+point.
+
+That symptom had a structural cause worth stating plainly. A region used
+to be a **hard crop**: non-members were dropped from the geojson entirely
+and the projection was re-fit to whatever remained. `scaleExtent`'s `k=1`
+means "whatever `fitSize` produced", so k meant something different in
+every region — Europe's own fit is ~5.7x tighter than the world's, so a
+nominal 10x ceiling was ~57x of world scale in a Europe game but only 10x
+in a World game. The World map wasn't bugged; it was measuring zoom
+against a much wider baseline.
+
+Now: **one region-independent projection** (always `fitSize` against the
+whole dataset), and a region expresses itself as two much smaller things —
+`playableIds` (which features are in play, already existing machinery) and
+the new `focusIds` (what the initial view frames itself on).
+`_defaultTransform` turns the focus set's projected bounds into a plain
+zoom/pan transform, which is what a fresh map opens at and what a genuine
+resize resets to. `scaleExtent` becomes an absolute `[MIN_ZOOM, MAX_ZOOM]`
+= `[1, 50]`, identical everywhere: k=1 is always the whole dataset, and 50
+comfortably exceeds the tightest view any old per-region maximum allowed
+(Europe's ~46x world-scale), so nothing that used to be reachable stopped
+being reachable while the World map gained real zoom-in range.
+
+Deleted along the way, all of it now unnecessary: `filterIds` and the
+cropping it drove; `fitIds`/`_fitGeojson`; the second throwaway `fitSize`
+call and the derived `scaleExtentMin` that existed only to let players
+zoom back out past a narrowed default framing; and the `translateExtent`
+widening that propped that up. `game.js`'s `mapFeatureIds` +
+`fitFeatureIds` collapse into one `focusIds`.
+
+Two consequences that needed handling rather than just falling out:
+
+- **Pin mode had no way to show "disabled".** It draws merged landmass
+  paths, not per-country ones, so out-of-region land would have looked
+  identical to in-region land. Now it renders two merged layers:
+  `pinLandmass` (whole dataset, muted) with `pinPlayableLandmass` (the
+  playable subset, normal land color) on top. The muted layer is
+  deliberately the *whole* world rather than the remainder, so the layers
+  overlap along the region boundary instead of abutting — no sub-pixel gap
+  can let ocean through as a seam, the failure mode this file has several
+  entries about.
+- **The tiny-country hit-area assist was calibrated against the wrong
+  count.** Its reference area is `viewport / feature count`, and it used
+  the *playable* count — fine when playable and rendered were the same
+  set, badly wrong now: a 54-country Europe measured against the viewport
+  the full ~240 countries are drawn into inflated the "typical country"
+  reference ~4x and would have flagged ordinary countries as needing a
+  microstate assist. Switched to the rendered count, which is also exactly
+  what the ratio constants were originally calibrated against.
+
+Verified via jsdom: all three of World/Europe/Oceania now share one
+identical projection scale (148.03) and render all 241 features, differing
+only in playable count (238/54/23) and starting transform (k=1.00 / k=5.73
+/ k=1.00), with `scaleExtent` a uniform `[1, 50]`; out-of-region countries
+are present but absent from `featuresById` (rendered, not clickable), and
+a pin dropped on Japan in a Europe game correctly resolves to `null` while
+one on France resolves to France; pin mode's two merged layers come out
+with the playable overlay a proper subset of the muted base in Europe and
+effectively equal to it in World; hit-area assist counts land at 81 for
+World (matching the figure from the earlier hitbox-audit round, i.e.
+unchanged) and 13 for Europe, all genuine microstates/archipelagos; US
+states (identity projection) still has wrap off and its own framing. Full
+end-to-end gameplay re-run for World and Europe × map-click and pin-drop:
+3 clicks per round in every combination, correct scoring, and a pin on the
+target's capital reporting "0 km". `npm run build` clean.
+
+## 2026-09-26 — pin-drop rounds cost four clicks instead of three
+
+Reported: a pin-drop round needed four clicks, with two clicks on land
+required after confirming, instead of the intended drop → confirm →
+advance.
+
+Cause was the `stopPropagation()` added when click-the-pin-to-confirm was
+built. `game.js`'s `attemptConfirm` arms a one-shot
+`suppressNextRootAdvance` flag on every confirm, because a confirm
+triggered by clicking something *other* than the action button is itself a
+click that will go on to bubble to the root "click anywhere advances"
+listener — without the flag, that single click would both confirm and
+immediately advance, and the result would never be visible. The flag is
+designed to be consumed by that very click. Stopping propagation meant it
+never arrived, the flag stayed armed, and it then ate the player's *next*
+click — the intended advance — so advancing took two clicks. (Pre-existing
+reclick-to-confirm paths, map-click and multiple-choice, never had this:
+they let the click bubble normally.)
+
+Removed the `stopPropagation()`. The one thing it was legitimately
+preventing — the same click also reaching the whole-map listener and
+re-dropping the pin where it already is — is now handled by a one-shot
+`_pinConfirmClickInFlight` flag that the map's own click listener checks
+and clears. Deliberately explicit rather than leaning on `clickEnabled`
+being flipped false by `showResult` part-way through the same event's
+propagation: that happens to be true today, but it's exactly the kind of
+implicit ordering that breaks quietly later.
+
+Verified by driving the real `renderGame` + `WorldMap` with dispatched
+`MouseEvent`s and counting: a pin-drop round is now 3 clicks via the
+re-click-the-pin path (drop → Confirm enabled; confirm → button becomes
+"Next"; advance → Round 2) and 3 via the Confirm-button path, with the
+advance click working on open sea as well as land. Map-click mode
+regression-checked the same way (select → re-click to confirm → advance)
+and is also still 3. One incidental finding, left alone as correct: a pin
+dropped in open ocean reports no selection and so can't be confirmed,
+which is why the first version of the test appeared to stall — clicking
+actual land behaves as intended. `npm run build` clean.
+
+## 2026-09-26 — pin mode borders, round 5: stop hiding country paths, stop creating them
+
+Fifth report of borders in pin mode when zoomed. Four previous attempts
+had each fixed a real, measurable thing and still not resolved it, so this
+round started by building actual visual ground truth instead of reasoning
+about the DOM: `rsvg-convert` is available locally, so a script now
+serializes the **real** SVG `WorldMap` produces (ghost copies and all,
+with the real `style.css` inlined) and rasterizes it, plus a flood-fill
+analyzer that fills "ocean" inward from the image border so that genuinely
+enclosed interior gaps can be told apart from real bays and straits (a
+naive scanline detector flagged every antialiased coastline pixel and was
+useless).
+
+That said clearly: **the rendered geometry is already perfectly clean.**
+Zero enclosed artifacts at k=8–10, at multiple pan positions, and a direct
+check confirmed `merge()` is doing its job — every probe across contiguous
+Afro-Eurasia (Paris, Berlin, Warsaw, Madrid, Rome, Moscow, Beijing, Delhi,
+Cairo, Lagos, Nairobi) lands in the *same single merged polygon*, index 0.
+There are no internal country borders in the landmass geometry to render.
+
+So the landmass was never the problem — which pointed at the ~241
+per-country `<path>` elements that pin mode was still creating and merely
+*hiding* with `fill: none; stroke: none`. Checking the cascade properly
+(something I had asserted but never verified) showed why that was fragile:
+`.world-map--clickable .country:not(.country--unplayable):hover` has
+specificity (0,4,0) and **outranks** the pin-mode rule's (0,2,0). Those
+paths staying invisible rested entirely on a subtle argument about
+unpainted shapes not receiving pointer events — the kind of browser
+hit-testing detail I'd already been wrong about repeatedly, and exactly
+the sort of thing that behaves differently under a zoom transform.
+
+Rather than keep chasing it: pin mode now **doesn't create per-country
+paths at all**, nor their ghost `<use>` clones — 241 paths + 482 clones →
+0 on the world map. `pinLandmass` is the whole map, plus one shared
+`revealPath` that `markResult` draws the post-confirm target into. No
+element exists that could paint a country border, so no stylesheet rule
+can bring one back, whatever the cascade or the hit-testing does. Two
+supporting changes: `_playableIds` (a plain `Set`) now carries the
+playable gate `featuresById`'s keys used to double as, and
+`_mark`/`_forEachMarked`/`clearMarks`/`_reflow` branch on `pinMode` to
+drive `revealPath`. Sizeable DOM/perf win too, incidentally.
+
+Verified: pin mode renders exactly 1 `path.country` (the reveal, with no
+`d` until marked) and 0 `country-ghost` clones, while a non-pin map still
+builds all 241 paths, 482 ghost clones, its hit areas, and still marks
+both correct *and* wrong countries on `markResult`; pin-drop resolution
+still finds the right country through the new `_playableIds` gate; the
+reveal draws, survives a reflow, and fully clears (geometry as well as
+classes, so an unclassed `revealPath` can't paint via the base `.country`
+rule); rasterized the refactored pin mode at k=9 panned right and
+confirmed zero enclosed artifacts and a visually solid, seam-free
+landmass. `npm run build` clean.
+
+Note the two prior rounds' fixes are both still in place and still
+correct — the `merge()` hairline-sliver filter and the merged-path
+approach itself. This round removed a *different* cause that had been
+masked behind them.
+
+## 2026-09-26 — pin mode "borders", round 4: they were never borders — merge() emits map-spanning hairline artifacts
+
+Reported still visible at "a combination of enough zoom and being enough
+to the right." The previous round's merge-into-one-path change did
+genuinely fix the original bug (two independently-antialiased adjacent
+paths disagreeing on a shared edge), so this had to be something else —
+and measuring properly instead of theorizing again turned up a completely
+different cause, and one that had been mischaracterized twice:
+
+**These were never seams *between* countries at all.** `topojson.merge()`'s
+own output contains two **degenerate hairline polygons** — artifacts of
+dissolving shared arcs that don't perfectly cancel. At an 800×500 fit, one
+spans **799.6px, the entire map width, at 0.29px thick** (10 points, aspect
+ratio ~2799:1); the other spans 604.0px at 1.67px thick (43 points, aspect
+~361:1). They're *extra land* drawn across open ocean, not gaps — thin
+bright streaks. Sub-pixel and so invisible at the default zoom, but their
+size is fixed in the path's own coordinate space, so they scale with the
+zoom transform: several px thick at the far end of `scaleExtent`, reading
+exactly like a stray border line. A streak running the full width of the
+map also explains why it looked position-dependent — panning horizontally
+moves along it, so whether one is in view (and how thick it looks) depends
+on both zoom and pan.
+
+**The previous round's mitigation was actively making it worse.** That
+round added an 8px matching-color `stroke` to `pinLandmass`, reasoning
+that a wide self-stroke "can only ever add coverage." True for a *gap* —
+but exactly backwards for a hairline *artifact*: an 8px stroke turns a
+0.29px streak into an ~8px band. The mitigation was amplifying the very
+thing being reported, which is why the seam appeared to survive a fix that
+should have buried it.
+
+Fixed properly by removing the artifacts from the geometry, where the
+problem actually lives: `_withoutMergeSlivers` drops whole polygons whose
+outer ring is both extremely elongated *and* spans a large fraction of the
+map (`MERGE_SLIVER_MIN_ASPECT` 50 / `MERGE_SLIVER_MIN_SPAN_FRACTION` 0.1).
+Both conditions are required, and neither would be safe alone: Antarctica
+is legitimately wide-and-short (aspect 11.2), so a pure aspect test would
+delete it; real tiny islands are extremely thin without spanning anything
+(longest ~6px), so a pure thinness test would delete those. `pinLandmass`'s
+stroke went back down to 1px — still useful for its original, narrow
+sub-pixel-gap job, no longer pretending to handle artifacts.
+
+Two measurement lessons worth keeping, both of which changed the
+implementation:
+
+- **Aspect ratio, not absolute px thickness.** The first version of the
+  filter used a `< 2px` thickness cutoff, which worked at 800×500 and
+  silently let *one of the two artifacts through* at 1920×1080 and
+  2560×1440 (the 1.67px one exceeds 2px once `fitSize` scales up) — caught
+  only because the test ran across several viewport sizes. Aspect ratio is
+  scale-invariant, so one measurement characterizes every viewport.
+- **An area filter would have been unsafe**, checked concretely rather
+  than assumed: Vatican City's own true spherical area (`d3.geoArea`) is
+  *smaller* than several sliver rings, so an area threshold catching every
+  artifact would risk deleting real tiny countries. Elongation separates
+  them cleanly where area can't.
+
+Verified via jsdom + direct geometric measurement (deleted after, per
+usual): across every polygon spanning >10% of the map, the two artifacts
+measure aspect 2799 and 361 while the widest real feature (Antarctica)
+sits at 11.2 and nothing else exceeds 2.4 — the chosen cutoff of 50 lands
+in that empty gap with 7x/4.5x margins on either side. Confirmed exactly 2
+polygons dropped at all four viewport sizes tested (800×500, 1920×1080,
+2560×1440, 500×800) and no remaining hairline longer than ~19px anywhere;
+confirmed via point-in-polygon that Vatican City, Malta, San Marino,
+Antarctica, mainland France, far-east Russia, and New Zealand all remain
+inside the filtered landmass. Re-ran the prior rounds' checks too: Europe
+crop still merges and keeps its widened `scaleExtent`, landmass stays the
+bottom paint layer in the home group, non-pin-mode maps still never create
+it at all, and capital-target scoring still resolves correct/too-far/wrong
+as before. `npm run build` clean.
+
+## 2026-09-26 — pin mode border seam: stop faking "one shape," actually merge into one
+
+User reported the seam was back under a specific combination: panning
+right and zooming in slightly. Two earlier attempts (matching-color
+stroke, then a wider matching-color stroke) were both mitigations for the
+same root cause without fixing it: rendering N independent per-country
+`<path>`s that merely share a fill color is never actually "one shape" —
+it's N shapes that *usually* look like one, and any sub-pixel antialiasing
+mismatch between two adjacent ones (which varies by exact pan/zoom state,
+device pixel ratio, and possibly which of home/ghost copy is rendering
+it) can still show through as a hairline seam. No amount of stroke-width
+tuning rules that out for every possible alignment — the previous round's
+"bump the width" fix could only ever reduce how often it was visible, not
+guarantee it never was.
+
+Replaced the whole approach: `WorldMap.js` now builds one single merged
+`<path>` (`pinLandmass`) via `topojson.merge()` over every currently-
+rendered feature, instead of relying on individual per-country paths to
+visually blend. `merge()` works at the arc level — topojson's whole
+storage model is built around exactly this (a shared border between two
+features is stored once, referenced by both), so it can identify which
+arcs are internal (shared between two merged features, and therefore
+dissolved) vs. external (part of the true outer boundary, kept) in a way
+that's no longer possible once geometry has already been converted to
+plain projected GeoJSON coordinates (`feature()`, what every other code
+path uses). The result has no internal edges between originally-adjacent
+countries left to seam at, in *any* pan/zoom/ghost-copy state — not a
+mitigation, a structural fix. Added `_rawGeometriesForMerge`: the same
+`filterIds` crop already applied to build the regular (GeoJSON) `geojson`
+property, applied in parallel to the *raw* topology geometry objects
+`merge()` actually needs, using an extracted `keepIndex` predicate so both
+stay in sync by construction rather than by coincidence.
+
+Individual per-country `<path>`s still exist (still needed for the
+post-confirm target reveal, `markResult`'s `.country--correct`), but now
+contribute nothing at rest: `.world-map--pin-mode .country`/
+`.country--unplayable` dropped to `fill: none; stroke: none` (down from a
+fill+matching-stroke). Turned out to also retire the entire hover-
+highlight bug class for free: an unpainted shape (`fill`/`stroke` both
+`none`) doesn't receive pointer events at all in SVG, so it can no longer
+register a `:hover` in the first place — the CSS's dedicated hover-reset
+rule and cursor-inherit rule from that earlier fix are gone too, since
+there's nothing left for either to apply to. `pinLandmass` is inserted
+first in the home group and cloned (via the same `<use>` ghost mechanism
+every other pin-mode element already uses) first in each wrap ghost copy
+too, so it's always the bottom layer, everything else — the invisible-
+until-revealed country paths, the pin marker, the border/capital-distance
+reveal lines — draws on top of it.
+
+Verified via jsdom (deleted after, per usual): `pinLandmass` gets a real,
+non-trivial `d` attribute for both an unrestricted world map and a
+region-cropped one (Europe); it's the first child of the home group and
+of both ghost groups (bottom of paint order); a ghost `<use>` clone
+referencing it exists in both wrap directions; `markResult`'s target
+reveal still correctly marks the specific country's own path
+`.country--correct`; a non-pin-mode `WorldMap` never creates or appends
+`pinLandmass` at all (`_rawGeometriesForMerge` stays `null`). Also re-ran
+the pin-radius, click-to-confirm, and capital-target-scoring checks from
+the last two rounds to confirm none of them regressed from this
+insertion-order/reflow change. `npm run build` clean.
+
+## 2026-09-26 — pin-drop scoring: choose Region or Capital as the target
+
+Follow-up to the same day's border-seam/click-to-confirm round below — a
+reported seam sighting in Capitals-subject pin mode turned out to be the
+same mechanism already fixed there (not subject-specific), so no separate
+fix needed. The substantive addition this round: a new pin-drop scoring
+choice.
+
+**Region vs. Capital pin-target.** Asked whether landing in the right
+country but far from its capital should still count as correct under a
+new "Capital" scoring option — confirmed it should require actual
+proximity to the capital, not just the country. This meant a real
+correctness change, not just a feedback-text one, so it touched the whole
+pin-drop path:
+
+- *Data*: `capitalLatLng` didn't exist anywhere upstream — world-countries'
+  own `latlng` is a rough centroid (Australia's sits in central Australia,
+  nowhere near Canberra), and no already-used package has real capital
+  coordinates. Added `cities.json` (GeoNames-derived, CC-BY-4.0) as a new
+  devDependency and joined it against each country's own `capital` name
+  (ISO alpha-2 + normalized-name match); resolved all 238 countries with a
+  capital automatically or via a small, explicit override table for the
+  handful cities.json spells differently (Myanmar, Western Sahara,
+  Kiribati, South Georgia, British Indian Ocean Territory, United States)
+  — see DESIGN.md's "Data" section for the full list and reasoning.
+  Spot-checked several resolved coordinates directly against known
+  real-world values (Paris, Moscow, Canberra, Washington D.C., Tokyo) —
+  all correct to five decimal places, i.e. genuinely the join's own city-
+  level precision, not a coincidence.
+- *Wizard*: a new step, `gameWizard.js`'s `showPinTargetStep`, shown only
+  after "Drop a pin" is picked (parallel to multiple-choice's "how many
+  options" follow-up) — "Region" (existing, still default) or "Capital".
+  Threaded through as `pinTarget` the same way `answerOptionCount` already
+  was; cleared alongside the existing "map-pin → map-click" downgrade when
+  switching to US States (identity-projection, no pin mode there anyway).
+- *Correctness*: rather than teaching `QuizSession`/`attributes.js`'s
+  engine a second, distance-based notion of correctness, `inputs.js`'s
+  map-pin `onClick` handler pre-computes it and reports a guess value that
+  the *existing*, unchanged `guessId === item.id` check already interprets
+  correctly: `item.id` itself when within `CAPITAL_CORRECT_RADIUS_KM`
+  (50km) of the capital, the actual (wrong) `containingId` if it's a
+  different country, or — this took a moment to get right — a dedicated
+  sentinel (`TOO_FAR_FROM_CAPITAL`), *never* `null`, when it's the right
+  country but too far from the capital: `null` specifically means "no
+  selection yet" to `game.js` and disables the Confirm button, which would
+  have made a deliberately-far-but-definite wrong guess unconfirmable.
+- *Reveal*: `WorldMap.js` gained `revealCapitalDistance`, alongside the
+  existing `revealBorderDistance` (both now share a `_revealLineTo` helper
+  for the line-drawing/re-projection plumbing) — draws a small
+  `.capital-marker` at the capital's own exact point plus a line to it,
+  using a real `haversineKm` great-circle distance rather than the border
+  case's local-plane approximation (a capital can be genuinely far from
+  the pin, where flattening the earth locally would start introducing
+  real error). Shown regardless of correct/wrong, unlike the border-case
+  line, since the precise distance is worth seeing either way.
+
+Verified via jsdom throughout (deleted after, per usual): the full
+capital-target decision tree (within radius → correct; right country, far
+from capital → sentinel, confirmable, wrong; wrong country → its own id,
+wrong; "Region" mode unaffected) exercised directly against France;
+`revealCapitalDistance` against a real Marseille→Paris pin drop returns
+~660km (matching the real great-circle distance) and positions the
+capital marker/line correctly; the full wizard click-path (Countries →
+Name → Location → Drop a pin) confirmed the new "Region"/"Capital" step
+actually appears; `npm run generate-data` confirms every country with a
+capital now resolves a `capitalLatLng`; `npm run build` clean.
+
+## 2026-09-26 — pin mode: fully cover the border seam, click-the-pin-to-confirm
+
+Two requests, both pin-drop mode (noticed while playing the Capitals
+subject specifically, though the underlying mechanism is shared with
+Countries — nothing about either fix is subject-specific).
+
+**Border seam, still faintly visible.** The matching-color stroke fix
+(pin mode's base country rule gets `stroke: var(--map-land)`, same as its
+`fill`, to paint over the antialiasing gap between adjacent same-color
+shapes) used a 0.75px `non-scaling-stroke` width — thin enough that a
+sub-pixel rounding mismatch between two independently-antialiased
+adjacent edges could still leave a faint sliver of the seam showing
+through at some zoom levels/device pixel ratios. Bumped to 2.5px: still
+invisible (identical color to the fill either way), just wide enough to
+guarantee full coverage regardless of rounding.
+
+**Click the pin to confirm.** Added a `pinConfirmHitArea` — an invisible
+circle in `WorldMap.js`, always `PIN_CONFIRM_PADDING_PX` (10px) larger
+than the pin marker's own current radius and kept in sync with its
+position everywhere the marker itself is updated (`_dropPinAt`, the
+`_reflow` re-projection block, the "zoom" handler's radius sync) — as a
+separate, generously-padded click target layered on top of the
+deliberately-tiny visible marker (4px radius, too small to reliably
+re-click directly). Its own click handler calls `stopPropagation()`
+before invoking a new third `setClickable` argument (`onPinConfirm`),
+which `inputs.js`'s map-pin renderer wires straight to `ctx.onConfirm` —
+`stopPropagation` matters because without it, the same click would also
+bubble up to the whole-map listener and immediately re-drop the pin at
+that same spot right after confirming. Clicking anywhere else on the map
+still just repositions the pin, exactly as before — this is additive,
+not a replacement for that.
+
+Verified via jsdom (deleted after, per usual): dropping a pin then
+dispatching a click event directly on `pinConfirmHitArea` fires the
+confirm callback exactly once and the regular click callback zero times
+(confirming `stopPropagation` worked); hit-area radius reads `14` (`4 +
+10`) at the default zoom level, matching the constants. `npm run build`
+clean.
+
+## 2026-09-26 — let Europe's tighter default zoom still be zoomed *out* of
+
+Confirmed the previous round's Europe framing was correct as a *default*,
+but flagged a regression it introduced: zooming out was capped at that
+same tight default, with no way back to the full crop (Russia, the
+overseas territories, etc.) at all — the zoom behavior's `scaleExtent` was
+a flat `[1, 10]`, and `k=1` means "whatever `fitSize` just produced," so
+tightening the default framing tightened the zoom-out floor by exactly
+the same amount, with nothing to zoom back out *to*.
+
+Fixed in `WorldMap.js`'s `_reflow`: compute `scaleExtentMin`, the ratio
+between what fitting the *full* crop would have scaled to vs. what the
+narrower `fitIds`-based fit actually produced (a second, throwaway
+`fitSize` call against the full geojson, reading `.scale()`, immediately
+overwritten by the real fit against the narrowed one), and set
+`scaleExtent` to `[scaleExtentMin, 10]` instead of `[1, 10]`. Also widened
+`translateExtent` to the full crop's own `pathGen.bounds` rather than the
+plain `[0,width]×[0,height]` box — otherwise the wider zoom level
+`scaleExtentMin` now permits would exist in principle but the pan clamp
+would still refuse to scroll to any of it. Both are exact no-ops (ratio
+`1`, bounds already ~= the viewport box) for every dataset without a
+`fitIds` narrowing — verified World's own `scaleExtent`/`translateExtent`
+are bit-for-bit unchanged. The *default* zoom itself (what a fresh round
+starts at, and what "keep zoom" resets to) is untouched — still the tight
+`k=1` fit; only the floor below it moved.
+
+Verified via jsdom (deleted after, per usual): Europe's `scaleExtent()`
+now reads `[0.217, 10]` (matches the previously-measured 184/848 ratio);
+simulating a zoom to that minimum and reading back `currentTransform`
+confirms it applies cleanly; Russia remains in `featuresById` throughout
+(nothing about crop membership changed, only how far you can zoom to see
+it); World's `scaleExtent`/`translateExtent` confirmed identical to
+before. `npm run build` clean.
+
+## 2026-09-26 — remove the panning speed trick entirely, tighten Europe's framing to its real anchors, rename "Click the map"
+
+Three follow-ups to the same day's earlier round, after the first attempt
+at each didn't go far enough.
+
+**Panning border artifact, actually fixed this time.** The previous
+round's fix for pin mode's border seam (giving `.world-map--pin-mode
+.country` a `stroke` matching its own `fill`, so antialiasing blends over
+the seam instead of leaving a hairline gap) introduced a new, opposite-
+looking artifact while actively dragging: adjacent same-color edges
+flickered against each other, reading like two coplanar surfaces
+"z-fighting". Cause: panning already applied `shape-rendering:
+optimizeSpeed` for perf (an even earlier round), which turns antialiasing
+*off* — with it off, the matching-color stroke fix has nothing to blend
+into, and adjacent paths' crisp edges shift by sub-pixel amounts
+differently frame to frame. The first attempt at a fix only scoped
+`optimizeSpeed` away from pin mode specifically, but the report came back
+that map-click mode (real, always-visible borders — no seam-hiding trick
+at all) showed the same flicker on its own thin borders while panning.
+Root cause was the speed trick itself, not something pin-mode-specific,
+so removed it outright — no more `.world-map--panning` class, no more
+`shape-rendering: optimizeSpeed` rule, no more `start`/`end` zoom-gesture
+listeners in `WorldMap.js`. The anticipated perf benefit ("a phone GPU can
+fall behind repainting ~240 paths") was never concretely measured to
+begin with, and a visual bug reported twice outweighs a hypothetical one.
+
+**Europe framing, actually tight this time.** The previous round's
+exclusion set (`{"Russia", "France", "Norway", "Spain"}`, scale 476) still
+wasn't the real answer — asked to re-anchor specifically on Cyprus
+(south), Georgia (east, tolerating some cutoff), Iceland (west, same),
+and definitely not Svalbard (north), measuring where those four actually
+landed turned up two further, bigger outliers than any found so far: the
+Netherlands' single topology shape bundles Aruba/Curaçao/Sint Maarten in
+the Caribbean (~56° of longitude and ~20° of latitude from the mainland —
+the single biggest offender of any Europe member), and Portugal's bundles
+Madeira and the Azores (~600km further west than the Portuguese
+mainland's own westernmost point, and further south too). Excluding both
+on top of the existing four brings the fit scale to 734, then 848 (vs.
+184 with nothing excluded) — and with all six excluded, the *remaining*
+members' own natural extremes land almost exactly on the requested frame
+with no further hand-picked bounding box needed: Cyprus anchors the
+south, Georgia the east, Iceland the west, Finland the north (nowhere
+near Svalbard, which projects far above the viewport entirely). `core/
+regions.js`'s `EUROPE_FIT_EXCLUDE` is now `{"Russia", "France", "Norway",
+"Spain", "Netherlands", "Portugal"}`.
+
+**Rename.** The wizard's `"map-click"` answer-type label — "Click the
+map" — is now "Select region" (`gameWizard.js`'s `answerKindLabels`), per
+direct request; "Drop a pin" is unchanged.
+
+Verified via jsdom (deleted after, per usual): each exclusion's
+incremental effect on `projection.scale()` measured directly (184 → 291 →
+442 → 476 → 476 → 734 → 848, one country added at a time); Cyprus/
+Georgia/Iceland/Finland all project at or just inside the final 800×500
+viewport's edges, Svalbard well outside it, and all six excluded
+countries' own mainland capitals (Madrid, Lisbon, Amsterdam, ...) still
+comfortably in view. `npm run build` clean.
+
+## 2026-09-26 — fix static-map border seam, hide the wrong-guess country, constant-size pin, standard Europe framing, wrap everywhere
+
+Five requests in one round: a real bug (borders reappearing at rest but
+not while panning), two pin-mode reveal/size refinements, Europe's
+starting zoom, and generalizing infinite scroll to every region.
+
+**The border seam bug.** Root cause wasn't the previous round's hover-fill
+fix being wrong — it was a second, unrelated rendering artifact: two
+adjacent `<path>`s of the identical fill color still anti-alias their
+shared edge independently, leaving a hairline seam of ocean color showing
+through exactly along real country borders, but *only* when the renderer
+is doing full antialiasing — panning/zooming already switches to `shape-
+rendering: optimizeSpeed` for smoothness (an earlier round), which
+happens to turn antialiasing off and hides the seam, which is exactly why
+it looked like borders vanished while moving and reappeared at rest.
+Fixed by giving pin mode's base country rule a `stroke` equal to its own
+`fill` (small `non-scaling-stroke` width) — paints over the seam instead
+of leaving it to antialiasing, with zero visual change since the color
+matches exactly.
+
+**Don't reveal the wrong country.** `inputs.js`'s map-pin `showResult` now
+always calls `map.markResult(null, correctId)` regardless of the actual
+guess — pin mode never shows the shape of the country the pin actually
+landed in, only ever the target's, matching "only show country outline
+when confirmed (and only that country)" from two rounds ago more
+strictly than the previous round's fill-only compromise did. The now-
+unreachable `.world-map--pin-mode .country--wrong` CSS rule was removed.
+
+**Constant-size pin.** The marker's radius was scaling with the map's own
+zoom transform (it lives in the same `<g>` every country path does) —
+`vector-effect: non-scaling-stroke` fixes this for strokes but not a
+circle's radius, so `WorldMap`'s zoom handler now sets `r` directly on
+every tick to `PIN_RADIUS_PX / transform.k`, cancelling the group's own
+scale back out. Baseline went to 4px (up from 2px, per "slightly larger
+when zoomed out, but constant regardless of zoom" — not scaling was the
+main ask, the baseline bump is secondary). Removed the stylesheet's own
+`r` declaration, since CSS `r` (a real geometry property since SVG2)
+would otherwise outrank the JS-set attribute and freeze the size.
+
+**Standard Europe framing.** Fitting the map to Europe's whole bbox
+zoomed out far enough to include Russia's full eastern extent (Russia
+counts as Europe here, an existing override) — nothing like a normal map
+of Europe. Added `WorldMap`'s `fitIds`, a narrower id set used *only* for
+the initial `fitSize` call, independent of `filterIds` (the actual
+crop/render/click set, unchanged) — `core/regions.js`'s new `fitExclude`
+(currently just `{"Russia"}` on Europe's leaf) and `game.js`'s derived
+`fitFeatureIds` thread this through. Russia is still fully in the region,
+still clickable, just not part of what decides the starting zoom/pan —
+reachable by panning right, same as always. Verified the scale actually
+changes (jsdom: ~184 with Russia counted in the fit vs. ~290 without, a
+meaningfully tighter frame) and that Russia's own `<path>` is still
+present either way.
+
+**Wrap everywhere.** `wrapEnabled` no longer requires an uncropped world
+view (`!filterIds`) — it's now just "not the pre-projected US-states
+topology," so every region (Europe, Asia, a single continent, ...) tiles
+infinitely left/right the same way an unrestricted World view already
+did. A cropped region's "world-width" is just whatever that region's own
+bbox renders to, tiling next to itself — it doesn't reconstruct a real
+globe, just guarantees no wall to hit while panning, in any mode, per the
+explicit "in general" ask.
+
+Verified via jsdom throughout (deleted after, per usual): Europe's
+`projection.scale()` differs as above; `wrapEnabled`/3-copy structure now
+true for a Europe-cropped map (previously only true for World); pin
+marker `r` reads `4` at `k=1` and `1` at a simulated `k=4` zoom-in;
+`markResult(null, correctId)` leaves the actually-wrong country
+unmarked while still marking the correct one. `npm run build` clean.
+
+## 2026-09-26 — pin mode: kill the hover-highlight "border leak", draw a pin-to-border line, shrink the pin further
+
+User reported borders were still visible in pin mode after the previous
+round's fix. Root cause wasn't the border stroke itself (already `none`)
+— it was `.world-map--clickable .country:not(.country--unplayable):hover`,
+a rule that predates pin mode and wasn't scoped to exclude it: hovering
+any individual country path still changed its fill on its own, and since
+neighboring countries don't light up together, the fill boundary between
+a hovered country and its neighbor reads exactly like a border, even with
+zero `stroke` anywhere. Added a same-specificity override,
+`.world-map--pin-mode .country:not(.country--unplayable):hover { fill:
+var(--map-land) }` (plus a matching `cursor: inherit` so the crosshair
+cursor set on the map root isn't fought by each path's own `cursor:
+pointer`), placed later in the file so it wins the tie. Pin mode now
+genuinely renders as one undifferentiated landmass while answering — no
+stroke, and no fill change either, on hover or otherwise.
+
+Also restored (having gone too far removing it entirely last round) the
+post-confirm reveal: `.world-map--pin-mode .country--correct` gets its
+`stroke` back — only the *target* country's outline draws, exactly per
+the original ask two rounds ago ("only show them after answering by
+showing only the target country's border"); `.country--wrong` stays
+fill-only, no stroke, so a miss never reads as two countries both getting
+"confirmed" outlines.
+
+New: a literal line from the dropped pin to the nearest point on the
+target's border, drawn only for a wrong guess (never for a correct one,
+which is always already inside). `WorldMap.distanceToBorderKm` — added
+last round, returned only a number — became `revealBorderDistance(id)`:
+same nearest-point search (`featureNearestBorderPoint`, extended from the
+distance-only version to also return the winning point, converting the
+local tangent-plane closest-point back to real lon/lat via a new
+`localKmToLonLat`), but now also projects and draws a `<line
+class="pin-border-line">` between the pin and that point, re-projected on
+every `_reflow` alongside the pin marker itself so it tracks
+resize/zoom correctly. `inputs.js`'s `map-pin` renderer no longer tracks
+its own `lastLon`/`lastLat` — `revealBorderDistance` reads the map's own
+already-tracked `pinLonLat` directly, one less thing to keep in sync.
+
+Pin marker radius went 3px → 2px (stroke-width 1 → 0.75) — still "much
+smaller" than the original 5px per this and the prior round combined.
+
+Verified via a throwaway jsdom script (deleted after, per usual): dropping
+a pin in Madrid and revealing against France returns ~351 km and sets the
+line's `x1/y1/x2/y2` to real projected coordinates with `display` cleared;
+dropping a pin in Paris and revealing against France returns exactly `0`
+with the line's `display` left at `none`. `npm run build` clean.
+
 ## 2026-09-25 — smaller pin marker, single-outline reveal, border-distance feedback
 
 Three pin-drop-mode requests: shrink the dropped-pin marker, only reveal

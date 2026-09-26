@@ -12,6 +12,10 @@
       33,
       65
     ],
+    "capitalLatLng": [
+      34.52813,
+      69.17233
+    ],
     "flagEmoji": "🇦🇫",
     "independent": true,
     "area": 652230,
@@ -29,6 +33,10 @@
     "latlng": [
       60.116667,
       19.9
+    ],
+    "capitalLatLng": [
+      60.09726,
+      19.93481
     ],
     "flagEmoji": "🇦🇽",
     "independent": false,
@@ -48,6 +56,10 @@
       41,
       20
     ],
+    "capitalLatLng": [
+      41.32744,
+      19.81866
+    ],
     "flagEmoji": "🇦🇱",
     "independent": true,
     "area": 28748,
@@ -65,6 +77,10 @@
     "latlng": [
       28,
       3
+    ],
+    "capitalLatLng": [
+      36.73225,
+      3.08746
     ],
     "flagEmoji": "🇩🇿",
     "independent": true,
@@ -84,6 +100,10 @@
       -14.33333333,
       -170
     ],
+    "capitalLatLng": [
+      -14.27806,
+      -170.7025
+    ],
     "flagEmoji": "🇦🇸",
     "independent": false,
     "area": 199,
@@ -101,6 +121,10 @@
     "latlng": [
       42.5,
       1.5
+    ],
+    "capitalLatLng": [
+      42.50779,
+      1.52109
     ],
     "flagEmoji": "🇦🇩",
     "independent": true,
@@ -120,6 +144,10 @@
       -12.5,
       18.5
     ],
+    "capitalLatLng": [
+      -8.83682,
+      13.23432
+    ],
     "flagEmoji": "🇦🇴",
     "independent": true,
     "area": 1246700,
@@ -137,6 +165,10 @@
     "latlng": [
       18.25,
       -63.16666666
+    ],
+    "capitalLatLng": [
+      18.21704,
+      -63.05783
     ],
     "flagEmoji": "🇦🇮",
     "independent": false,
@@ -156,6 +188,7 @@
       -90,
       0
     ],
+    "capitalLatLng": null,
     "flagEmoji": "🇦🇶",
     "independent": false,
     "area": 14000000,
@@ -173,6 +206,10 @@
     "latlng": [
       17.05,
       -61.8
+    ],
+    "capitalLatLng": [
+      17.12096,
+      -61.84329
     ],
     "flagEmoji": "🇦🇬",
     "independent": true,
@@ -192,6 +229,10 @@
       -34,
       -64
     ],
+    "capitalLatLng": [
+      -34.61315,
+      -58.37723
+    ],
     "flagEmoji": "🇦🇷",
     "independent": true,
     "area": 2780400,
@@ -209,6 +250,10 @@
     "latlng": [
       40,
       45
+    ],
+    "capitalLatLng": [
+      40.17765,
+      44.5126
     ],
     "flagEmoji": "🇦🇲",
     "independent": true,
@@ -228,6 +273,10 @@
       12.5,
       -69.96666666
     ],
+    "capitalLatLng": [
+      12.52398,
+      -70.02703
+    ],
     "flagEmoji": "🇦🇼",
     "independent": false,
     "area": 180,
@@ -245,6 +294,10 @@
     "latlng": [
       -27,
       133
+    ],
+    "capitalLatLng": [
+      -35.28346,
+      149.12807
     ],
     "flagEmoji": "🇦🇺",
     "independent": true,
@@ -264,6 +317,10 @@
       47.33333333,
       13.33333333
     ],
+    "capitalLatLng": [
+      48.20849,
+      16.37208
+    ],
     "flagEmoji": "🇦🇹",
     "independent": true,
     "area": 83871,
@@ -281,6 +338,10 @@
     "latlng": [
       40.5,
       47.5
+    ],
+    "capitalLatLng": [
+      40.37767,
+      49.89201
     ],
     "flagEmoji": "🇦🇿",
     "independent": true,
@@ -300,6 +361,10 @@
       24.25,
       -76
     ],
+    "capitalLatLng": [
+      25.05823,
+      -77.34306
+    ],
     "flagEmoji": "🇧🇸",
     "independent": true,
     "area": 13943,
@@ -317,6 +382,10 @@
     "latlng": [
       26,
       50.55
+    ],
+    "capitalLatLng": [
+      26.22787,
+      50.58565
     ],
     "flagEmoji": "🇧🇭",
     "independent": true,
@@ -336,6 +405,10 @@
       24,
       90
     ],
+    "capitalLatLng": [
+      23.7104,
+      90.40744
+    ],
     "flagEmoji": "🇧🇩",
     "independent": true,
     "area": 147570,
@@ -353,6 +426,10 @@
     "latlng": [
       13.16666666,
       -59.53333333
+    ],
+    "capitalLatLng": [
+      13.10732,
+      -59.62021
     ],
     "flagEmoji": "🇧🇧",
     "independent": true,
@@ -372,6 +449,10 @@
       53,
       28
     ],
+    "capitalLatLng": [
+      53.90019,
+      27.56653
+    ],
     "flagEmoji": "🇧🇾",
     "independent": true,
     "area": 207600,
@@ -389,6 +470,10 @@
     "latlng": [
       50.83333333,
       4
+    ],
+    "capitalLatLng": [
+      50.85045,
+      4.34878
     ],
     "flagEmoji": "🇧🇪",
     "independent": true,
@@ -408,6 +493,10 @@
       17.25,
       -88.75
     ],
+    "capitalLatLng": [
+      17.25376,
+      -88.76401
+    ],
     "flagEmoji": "🇧🇿",
     "independent": true,
     "area": 22966,
@@ -425,6 +514,10 @@
     "latlng": [
       9.5,
       2.25
+    ],
+    "capitalLatLng": [
+      6.49646,
+      2.60359
     ],
     "flagEmoji": "🇧🇯",
     "independent": true,
@@ -444,6 +537,10 @@
       32.33333333,
       -64.75
     ],
+    "capitalLatLng": [
+      32.2949,
+      -64.78303
+    ],
     "flagEmoji": "🇧🇲",
     "independent": false,
     "area": 54,
@@ -461,6 +558,10 @@
     "latlng": [
       27.5,
       90.5
+    ],
+    "capitalLatLng": [
+      27.46609,
+      89.64191
     ],
     "flagEmoji": "🇧🇹",
     "independent": true,
@@ -480,6 +581,10 @@
       -17,
       -65
     ],
+    "capitalLatLng": [
+      -19.03332,
+      -65.26274
+    ],
     "flagEmoji": "🇧🇴",
     "independent": true,
     "area": 1098581,
@@ -497,6 +602,10 @@
     "latlng": [
       44,
       18
+    ],
+    "capitalLatLng": [
+      43.84864,
+      18.35644
     ],
     "flagEmoji": "🇧🇦",
     "independent": true,
@@ -516,6 +625,10 @@
       -22,
       24
     ],
+    "capitalLatLng": [
+      -24.65451,
+      25.90859
+    ],
     "flagEmoji": "🇧🇼",
     "independent": true,
     "area": 582000,
@@ -533,6 +646,10 @@
     "latlng": [
       -10,
       -55
+    ],
+    "capitalLatLng": [
+      -15.77972,
+      -47.92972
     ],
     "flagEmoji": "🇧🇷",
     "independent": true,
@@ -552,6 +669,10 @@
       -6,
       71.5
     ],
+    "capitalLatLng": [
+      -7.3195,
+      72.4229
+    ],
     "flagEmoji": "🇮🇴",
     "independent": false,
     "area": 60,
@@ -569,6 +690,10 @@
     "latlng": [
       18.431383,
       -64.62305
+    ],
+    "capitalLatLng": [
+      18.42693,
+      -64.62079
     ],
     "flagEmoji": "🇻🇬",
     "independent": false,
@@ -588,6 +713,10 @@
       4.5,
       114.66666666
     ],
+    "capitalLatLng": [
+      4.89035,
+      114.94006
+    ],
     "flagEmoji": "🇧🇳",
     "independent": true,
     "area": 5765,
@@ -605,6 +734,10 @@
     "latlng": [
       43,
       25
+    ],
+    "capitalLatLng": [
+      42.69751,
+      23.32415
     ],
     "flagEmoji": "🇧🇬",
     "independent": true,
@@ -624,6 +757,10 @@
       13,
       -2
     ],
+    "capitalLatLng": [
+      12.36566,
+      -1.53388
+    ],
     "flagEmoji": "🇧🇫",
     "independent": true,
     "area": 272967,
@@ -641,6 +778,10 @@
     "latlng": [
       -3.5,
       30
+    ],
+    "capitalLatLng": [
+      -3.42708,
+      29.92463
     ],
     "flagEmoji": "🇧🇮",
     "independent": true,
@@ -660,6 +801,10 @@
       13,
       105
     ],
+    "capitalLatLng": [
+      11.56245,
+      104.91601
+    ],
     "flagEmoji": "🇰🇭",
     "independent": true,
     "area": 181035,
@@ -677,6 +822,10 @@
     "latlng": [
       6,
       12
+    ],
+    "capitalLatLng": [
+      3.86667,
+      11.51667
     ],
     "flagEmoji": "🇨🇲",
     "independent": true,
@@ -696,6 +845,10 @@
       60,
       -95
     ],
+    "capitalLatLng": [
+      45.41117,
+      -75.69812
+    ],
     "flagEmoji": "🇨🇦",
     "independent": true,
     "area": 9984670,
@@ -713,6 +866,10 @@
     "latlng": [
       16,
       -24
+    ],
+    "capitalLatLng": [
+      14.93152,
+      -23.51254
     ],
     "flagEmoji": "🇨🇻",
     "independent": true,
@@ -732,6 +889,10 @@
       19.5,
       -80.5
     ],
+    "capitalLatLng": [
+      19.2866,
+      -81.37436
+    ],
     "flagEmoji": "🇰🇾",
     "independent": false,
     "area": 264,
@@ -749,6 +910,10 @@
     "latlng": [
       7,
       21
+    ],
+    "capitalLatLng": [
+      4.36122,
+      18.55496
     ],
     "flagEmoji": "🇨🇫",
     "independent": true,
@@ -768,6 +933,10 @@
       15,
       19
     ],
+    "capitalLatLng": [
+      12.10672,
+      15.0444
+    ],
     "flagEmoji": "🇹🇩",
     "independent": true,
     "area": 1284000,
@@ -785,6 +954,10 @@
     "latlng": [
       -30,
       -71
+    ],
+    "capitalLatLng": [
+      -33.45694,
+      -70.64827
     ],
     "flagEmoji": "🇨🇱",
     "independent": true,
@@ -804,6 +977,10 @@
       35,
       105
     ],
+    "capitalLatLng": [
+      39.9075,
+      116.39723
+    ],
     "flagEmoji": "🇨🇳",
     "independent": true,
     "area": 9706961,
@@ -821,6 +998,10 @@
     "latlng": [
       4,
       -72
+    ],
+    "capitalLatLng": [
+      4.60971,
+      -74.08175
     ],
     "flagEmoji": "🇨🇴",
     "independent": true,
@@ -840,6 +1021,10 @@
       -12.16666666,
       44.25
     ],
+    "capitalLatLng": [
+      -11.70216,
+      43.25506
+    ],
     "flagEmoji": "🇰🇲",
     "independent": true,
     "area": 1862,
@@ -857,6 +1042,10 @@
     "latlng": [
       -21.23333333,
       -159.76666666
+    ],
+    "capitalLatLng": [
+      -21.2075,
+      -159.77546
     ],
     "flagEmoji": "🇨🇰",
     "independent": false,
@@ -876,6 +1065,10 @@
       10,
       -84
     ],
+    "capitalLatLng": [
+      10.95192,
+      -85.13572
+    ],
     "flagEmoji": "🇨🇷",
     "independent": true,
     "area": 51100,
@@ -893,6 +1086,10 @@
     "latlng": [
       45.16666666,
       15.5
+    ],
+    "capitalLatLng": [
+      45.81444,
+      15.97798
     ],
     "flagEmoji": "🇭🇷",
     "independent": true,
@@ -912,6 +1109,10 @@
       21.5,
       -80
     ],
+    "capitalLatLng": [
+      23.13302,
+      -82.38304
+    ],
     "flagEmoji": "🇨🇺",
     "independent": true,
     "area": 109884,
@@ -929,6 +1130,10 @@
     "latlng": [
       12.116667,
       -68.933333
+    ],
+    "capitalLatLng": [
+      12.12246,
+      -68.88641
     ],
     "flagEmoji": "🇨🇼",
     "independent": false,
@@ -948,6 +1153,10 @@
       35,
       33
     ],
+    "capitalLatLng": [
+      35.17284,
+      33.35397
+    ],
     "flagEmoji": "🇨🇾",
     "independent": true,
     "area": 9251,
@@ -965,6 +1174,10 @@
     "latlng": [
       49.75,
       15.5
+    ],
+    "capitalLatLng": [
+      50.08804,
+      14.42076
     ],
     "flagEmoji": "🇨🇿",
     "independent": true,
@@ -984,6 +1197,10 @@
       56,
       10
     ],
+    "capitalLatLng": [
+      55.67594,
+      12.56553
+    ],
     "flagEmoji": "🇩🇰",
     "independent": true,
     "area": 43094,
@@ -1001,6 +1218,10 @@
     "latlng": [
       11.5,
       43
+    ],
+    "capitalLatLng": [
+      11.58901,
+      43.14503
     ],
     "flagEmoji": "🇩🇯",
     "independent": true,
@@ -1020,6 +1241,10 @@
       15.41666666,
       -61.33333333
     ],
+    "capitalLatLng": [
+      15.30174,
+      -61.38808
+    ],
     "flagEmoji": "🇩🇲",
     "independent": true,
     "area": 751,
@@ -1037,6 +1262,10 @@
     "latlng": [
       19,
       -70.66666666
+    ],
+    "capitalLatLng": [
+      18.47186,
+      -69.89232
     ],
     "flagEmoji": "🇩🇴",
     "independent": true,
@@ -1056,6 +1285,10 @@
       0,
       25
     ],
+    "capitalLatLng": [
+      -4.32758,
+      15.31357
+    ],
     "flagEmoji": "🇨🇩",
     "independent": true,
     "area": 2344858,
@@ -1073,6 +1306,10 @@
     "latlng": [
       -2,
       -77.5
+    ],
+    "capitalLatLng": [
+      -0.22985,
+      -78.52495
     ],
     "flagEmoji": "🇪🇨",
     "independent": true,
@@ -1092,6 +1329,10 @@
       27,
       30
     ],
+    "capitalLatLng": [
+      30.06263,
+      31.24967
+    ],
     "flagEmoji": "🇪🇬",
     "independent": true,
     "area": 1002450,
@@ -1109,6 +1350,10 @@
     "latlng": [
       13.83333333,
       -88.91666666
+    ],
+    "capitalLatLng": [
+      13.68935,
+      -89.18718
     ],
     "flagEmoji": "🇸🇻",
     "independent": true,
@@ -1128,6 +1373,10 @@
       2,
       10
     ],
+    "capitalLatLng": [
+      3.75578,
+      8.78166
+    ],
     "flagEmoji": "🇬🇶",
     "independent": true,
     "area": 28051,
@@ -1145,6 +1394,10 @@
     "latlng": [
       15,
       39
+    ],
+    "capitalLatLng": [
+      15.33805,
+      38.93184
     ],
     "flagEmoji": "🇪🇷",
     "independent": true,
@@ -1164,6 +1417,10 @@
       59,
       26
     ],
+    "capitalLatLng": [
+      59.43696,
+      24.75353
+    ],
     "flagEmoji": "🇪🇪",
     "independent": true,
     "area": 45227,
@@ -1181,6 +1438,10 @@
     "latlng": [
       -26.5,
       31.5
+    ],
+    "capitalLatLng": [
+      -26.46667,
+      31.2
     ],
     "flagEmoji": "🇸🇿",
     "independent": true,
@@ -1200,6 +1461,10 @@
       8,
       38
     ],
+    "capitalLatLng": [
+      9.02497,
+      38.74689
+    ],
     "flagEmoji": "🇪🇹",
     "independent": true,
     "area": 1104300,
@@ -1217,6 +1482,10 @@
     "latlng": [
       -51.75,
       -59
+    ],
+    "capitalLatLng": [
+      -51.69382,
+      -57.85701
     ],
     "flagEmoji": "🇫🇰",
     "independent": false,
@@ -1236,6 +1505,10 @@
       62,
       -7
     ],
+    "capitalLatLng": [
+      62.00973,
+      -6.77164
+    ],
     "flagEmoji": "🇫🇴",
     "independent": false,
     "area": 1393,
@@ -1253,6 +1526,10 @@
     "latlng": [
       -18,
       175
+    ],
+    "capitalLatLng": [
+      -18.13683,
+      178.42531
     ],
     "flagEmoji": "🇫🇯",
     "independent": true,
@@ -1272,6 +1549,10 @@
       64,
       26
     ],
+    "capitalLatLng": [
+      60.16952,
+      24.93545
+    ],
     "flagEmoji": "🇫🇮",
     "independent": true,
     "area": 338424,
@@ -1289,6 +1570,10 @@
     "latlng": [
       46,
       2
+    ],
+    "capitalLatLng": [
+      48.85341,
+      2.3488
     ],
     "flagEmoji": "🇫🇷",
     "independent": true,
@@ -1308,6 +1593,10 @@
       -15,
       -140
     ],
+    "capitalLatLng": [
+      -17.5347,
+      -149.56843
+    ],
     "flagEmoji": "🇵🇫",
     "independent": false,
     "area": 4167,
@@ -1325,6 +1614,10 @@
     "latlng": [
       -49.25,
       69.167
+    ],
+    "capitalLatLng": [
+      -49.34916,
+      70.21937
     ],
     "flagEmoji": "🇹🇫",
     "independent": false,
@@ -1344,6 +1637,10 @@
       -1,
       11.75
     ],
+    "capitalLatLng": [
+      0.39241,
+      9.45356
+    ],
     "flagEmoji": "🇬🇦",
     "independent": true,
     "area": 267668,
@@ -1361,6 +1658,10 @@
     "latlng": [
       13.46666666,
       -16.56666666
+    ],
+    "capitalLatLng": [
+      13.45274,
+      -16.57803
     ],
     "flagEmoji": "🇬🇲",
     "independent": true,
@@ -1380,6 +1681,10 @@
       42,
       43.5
     ],
+    "capitalLatLng": [
+      41.69143,
+      44.83412
+    ],
     "flagEmoji": "🇬🇪",
     "independent": true,
     "area": 69700,
@@ -1397,6 +1702,10 @@
     "latlng": [
       51,
       9
+    ],
+    "capitalLatLng": [
+      52.52437,
+      13.41053
     ],
     "flagEmoji": "🇩🇪",
     "independent": true,
@@ -1416,6 +1725,10 @@
       8,
       -2
     ],
+    "capitalLatLng": [
+      5.55602,
+      -0.1969
+    ],
     "flagEmoji": "🇬🇭",
     "independent": true,
     "area": 238533,
@@ -1433,6 +1746,10 @@
     "latlng": [
       39,
       22
+    ],
+    "capitalLatLng": [
+      37.98376,
+      23.72784
     ],
     "flagEmoji": "🇬🇷",
     "independent": true,
@@ -1452,6 +1769,10 @@
       72,
       -40
     ],
+    "capitalLatLng": [
+      64.18347,
+      -51.72157
+    ],
     "flagEmoji": "🇬🇱",
     "independent": false,
     "area": 2166086,
@@ -1469,6 +1790,10 @@
     "latlng": [
       12.11666666,
       -61.66666666
+    ],
+    "capitalLatLng": [
+      12.05288,
+      -61.75226
     ],
     "flagEmoji": "🇬🇩",
     "independent": true,
@@ -1488,6 +1813,10 @@
       13.46666666,
       144.78333333
     ],
+    "capitalLatLng": [
+      13.47567,
+      144.74886
+    ],
     "flagEmoji": "🇬🇺",
     "independent": false,
     "area": 549,
@@ -1505,6 +1834,10 @@
     "latlng": [
       15.5,
       -90.25
+    ],
+    "capitalLatLng": [
+      14.64072,
+      -90.51327
     ],
     "flagEmoji": "🇬🇹",
     "independent": true,
@@ -1524,6 +1857,10 @@
       49.46666666,
       -2.58333333
     ],
+    "capitalLatLng": [
+      49.45981,
+      -2.53527
+    ],
     "flagEmoji": "🇬🇬",
     "independent": false,
     "area": 78,
@@ -1541,6 +1878,10 @@
     "latlng": [
       11,
       -10
+    ],
+    "capitalLatLng": [
+      9.53795,
+      -13.67729
     ],
     "flagEmoji": "🇬🇳",
     "independent": true,
@@ -1560,6 +1901,10 @@
       12,
       -15
     ],
+    "capitalLatLng": [
+      11.86357,
+      -15.59767
+    ],
     "flagEmoji": "🇬🇼",
     "independent": true,
     "area": 36125,
@@ -1577,6 +1922,10 @@
     "latlng": [
       5,
       -59
+    ],
+    "capitalLatLng": [
+      6.80448,
+      -58.15527
     ],
     "flagEmoji": "🇬🇾",
     "independent": true,
@@ -1596,6 +1945,10 @@
       19,
       -72.41666666
     ],
+    "capitalLatLng": [
+      18.54349,
+      -72.33881
+    ],
     "flagEmoji": "🇭🇹",
     "independent": true,
     "area": 27750,
@@ -1614,6 +1967,7 @@
       -53.1,
       72.51666666
     ],
+    "capitalLatLng": null,
     "flagEmoji": "🇭🇲",
     "independent": false,
     "area": 412,
@@ -1631,6 +1985,10 @@
     "latlng": [
       15,
       -86.5
+    ],
+    "capitalLatLng": [
+      14.0818,
+      -87.20681
     ],
     "flagEmoji": "🇭🇳",
     "independent": true,
@@ -1650,6 +2008,10 @@
       22.267,
       114.188
     ],
+    "capitalLatLng": [
+      22.2875,
+      114.14417
+    ],
     "flagEmoji": "🇭🇰",
     "independent": false,
     "area": 1104,
@@ -1667,6 +2029,10 @@
     "latlng": [
       47,
       20
+    ],
+    "capitalLatLng": [
+      47.49835,
+      19.04045
     ],
     "flagEmoji": "🇭🇺",
     "independent": true,
@@ -1686,6 +2052,10 @@
       65,
       -18
     ],
+    "capitalLatLng": [
+      64.13548,
+      -21.89541
+    ],
     "flagEmoji": "🇮🇸",
     "independent": true,
     "area": 103000,
@@ -1703,6 +2073,10 @@
     "latlng": [
       20,
       77
+    ],
+    "capitalLatLng": [
+      28.62137,
+      77.2148
     ],
     "flagEmoji": "🇮🇳",
     "independent": true,
@@ -1722,6 +2096,10 @@
       -5,
       120
     ],
+    "capitalLatLng": [
+      -6.21462,
+      106.84513
+    ],
     "flagEmoji": "🇮🇩",
     "independent": true,
     "area": 1904569,
@@ -1739,6 +2117,10 @@
     "latlng": [
       32,
       53
+    ],
+    "capitalLatLng": [
+      35.69439,
+      51.42151
     ],
     "flagEmoji": "🇮🇷",
     "independent": true,
@@ -1758,6 +2140,10 @@
       33,
       44
     ],
+    "capitalLatLng": [
+      33.34058,
+      44.40088
+    ],
     "flagEmoji": "🇮🇶",
     "independent": true,
     "area": 438317,
@@ -1775,6 +2161,10 @@
     "latlng": [
       53,
       -8
+    ],
+    "capitalLatLng": [
+      53.33306,
+      -6.24889
     ],
     "flagEmoji": "🇮🇪",
     "independent": true,
@@ -1794,6 +2184,10 @@
       54.25,
       -4.5
     ],
+    "capitalLatLng": [
+      54.15,
+      -4.48333
+    ],
     "flagEmoji": "🇮🇲",
     "independent": false,
     "area": 572,
@@ -1811,6 +2205,10 @@
     "latlng": [
       31.47,
       35.13
+    ],
+    "capitalLatLng": [
+      31.76904,
+      35.21633
     ],
     "flagEmoji": "🇮🇱",
     "independent": true,
@@ -1830,6 +2228,10 @@
       42.83333333,
       12.83333333
     ],
+    "capitalLatLng": [
+      41.89193,
+      12.51133
+    ],
     "flagEmoji": "🇮🇹",
     "independent": true,
     "area": 301336,
@@ -1847,6 +2249,10 @@
     "latlng": [
       8,
       -5
+    ],
+    "capitalLatLng": [
+      6.82055,
+      -5.27674
     ],
     "flagEmoji": "🇨🇮",
     "independent": true,
@@ -1866,6 +2272,10 @@
       18.25,
       -77.5
     ],
+    "capitalLatLng": [
+      17.99702,
+      -76.79358
+    ],
     "flagEmoji": "🇯🇲",
     "independent": true,
     "area": 10991,
@@ -1883,6 +2293,10 @@
     "latlng": [
       36,
       138
+    ],
+    "capitalLatLng": [
+      35.6895,
+      139.69171
     ],
     "flagEmoji": "🇯🇵",
     "independent": true,
@@ -1902,6 +2316,10 @@
       49.25,
       -2.16666666
     ],
+    "capitalLatLng": [
+      49.18804,
+      -2.10491
+    ],
     "flagEmoji": "🇯🇪",
     "independent": false,
     "area": 116,
@@ -1919,6 +2337,10 @@
     "latlng": [
       31,
       36
+    ],
+    "capitalLatLng": [
+      31.95522,
+      35.94503
     ],
     "flagEmoji": "🇯🇴",
     "independent": true,
@@ -1938,6 +2360,10 @@
       48,
       68
     ],
+    "capitalLatLng": [
+      51.1801,
+      71.44598
+    ],
     "flagEmoji": "🇰🇿",
     "independent": true,
     "area": 2724900,
@@ -1955,6 +2381,10 @@
     "latlng": [
       1,
       38
+    ],
+    "capitalLatLng": [
+      -1.28333,
+      36.81667
     ],
     "flagEmoji": "🇰🇪",
     "independent": true,
@@ -1974,6 +2404,10 @@
       1.41666666,
       173
     ],
+    "capitalLatLng": [
+      1.3278,
+      172.97696
+    ],
     "flagEmoji": "🇰🇮",
     "independent": true,
     "area": 811,
@@ -1989,6 +2423,10 @@
     "region": "Europe",
     "subregion": "Southeast Europe",
     "latlng": [
+      42.666667,
+      21.166667
+    ],
+    "capitalLatLng": [
       42.666667,
       21.166667
     ],
@@ -2010,6 +2448,10 @@
       29.5,
       45.75
     ],
+    "capitalLatLng": [
+      29.367,
+      47.97429
+    ],
     "flagEmoji": "🇰🇼",
     "independent": true,
     "area": 17818,
@@ -2027,6 +2469,10 @@
     "latlng": [
       41,
       75
+    ],
+    "capitalLatLng": [
+      42.87,
+      74.59
     ],
     "flagEmoji": "🇰🇬",
     "independent": true,
@@ -2046,6 +2492,10 @@
       18,
       105
     ],
+    "capitalLatLng": [
+      17.96667,
+      102.6
+    ],
     "flagEmoji": "🇱🇦",
     "independent": true,
     "area": 236800,
@@ -2063,6 +2513,10 @@
     "latlng": [
       57,
       25
+    ],
+    "capitalLatLng": [
+      56.946,
+      24.10589
     ],
     "flagEmoji": "🇱🇻",
     "independent": true,
@@ -2082,6 +2536,10 @@
       33.83333333,
       35.83333333
     ],
+    "capitalLatLng": [
+      33.89332,
+      35.50157
+    ],
     "flagEmoji": "🇱🇧",
     "independent": true,
     "area": 10452,
@@ -2099,6 +2557,10 @@
     "latlng": [
       -29.5,
       28.5
+    ],
+    "capitalLatLng": [
+      -29.31667,
+      27.48333
     ],
     "flagEmoji": "🇱🇸",
     "independent": true,
@@ -2118,6 +2580,10 @@
       6.5,
       -9.5
     ],
+    "capitalLatLng": [
+      6.30054,
+      -10.7969
+    ],
     "flagEmoji": "🇱🇷",
     "independent": true,
     "area": 111369,
@@ -2135,6 +2601,10 @@
     "latlng": [
       25,
       17
+    ],
+    "capitalLatLng": [
+      32.88743,
+      13.18733
     ],
     "flagEmoji": "🇱🇾",
     "independent": true,
@@ -2154,6 +2624,10 @@
       47.26666666,
       9.53333333
     ],
+    "capitalLatLng": [
+      47.14151,
+      9.52154
+    ],
     "flagEmoji": "🇱🇮",
     "independent": true,
     "area": 160,
@@ -2171,6 +2645,10 @@
     "latlng": [
       56,
       24
+    ],
+    "capitalLatLng": [
+      54.68916,
+      25.2798
     ],
     "flagEmoji": "🇱🇹",
     "independent": true,
@@ -2190,6 +2668,10 @@
       49.75,
       6.16666666
     ],
+    "capitalLatLng": [
+      49.60982,
+      6.13268
+    ],
     "flagEmoji": "🇱🇺",
     "independent": true,
     "area": 2586,
@@ -2208,6 +2690,7 @@
       22.16666666,
       113.55
     ],
+    "capitalLatLng": null,
     "flagEmoji": "🇲🇴",
     "independent": false,
     "area": 30,
@@ -2225,6 +2708,10 @@
     "latlng": [
       -20,
       47
+    ],
+    "capitalLatLng": [
+      -18.91368,
+      47.53613
     ],
     "flagEmoji": "🇲🇬",
     "independent": true,
@@ -2244,6 +2731,10 @@
       -13.5,
       34
     ],
+    "capitalLatLng": [
+      -13.96692,
+      33.78725
+    ],
     "flagEmoji": "🇲🇼",
     "independent": true,
     "area": 118484,
@@ -2261,6 +2752,10 @@
     "latlng": [
       2.5,
       112.5
+    ],
+    "capitalLatLng": [
+      3.1412,
+      101.68653
     ],
     "flagEmoji": "🇲🇾",
     "independent": true,
@@ -2280,6 +2775,10 @@
       3.25,
       73
     ],
+    "capitalLatLng": [
+      4.17521,
+      73.50916
+    ],
     "flagEmoji": "🇲🇻",
     "independent": true,
     "area": 300,
@@ -2297,6 +2796,10 @@
     "latlng": [
       17,
       -4
+    ],
+    "capitalLatLng": [
+      12.60915,
+      -7.97522
     ],
     "flagEmoji": "🇲🇱",
     "independent": true,
@@ -2316,6 +2819,10 @@
       35.83333333,
       14.58333333
     ],
+    "capitalLatLng": [
+      35.89968,
+      14.5148
+    ],
     "flagEmoji": "🇲🇹",
     "independent": true,
     "area": 316,
@@ -2333,6 +2840,10 @@
     "latlng": [
       9,
       168
+    ],
+    "capitalLatLng": [
+      7.08971,
+      171.38027
     ],
     "flagEmoji": "🇲🇭",
     "independent": true,
@@ -2352,6 +2863,10 @@
       20,
       -12
     ],
+    "capitalLatLng": [
+      18.08581,
+      -15.9785
+    ],
     "flagEmoji": "🇲🇷",
     "independent": true,
     "area": 1030700,
@@ -2369,6 +2884,10 @@
     "latlng": [
       -20.28333333,
       57.55
+    ],
+    "capitalLatLng": [
+      -20.16194,
+      57.49889
     ],
     "flagEmoji": "🇲🇺",
     "independent": true,
@@ -2388,6 +2907,10 @@
       23,
       -102
     ],
+    "capitalLatLng": [
+      19.42847,
+      -99.12766
+    ],
     "flagEmoji": "🇲🇽",
     "independent": true,
     "area": 1964375,
@@ -2405,6 +2928,10 @@
     "latlng": [
       6.91666666,
       158.25
+    ],
+    "capitalLatLng": [
+      6.92477,
+      158.16109
     ],
     "flagEmoji": "🇫🇲",
     "independent": true,
@@ -2424,6 +2951,10 @@
       47,
       29
     ],
+    "capitalLatLng": [
+      47.00902,
+      28.85938
+    ],
     "flagEmoji": "🇲🇩",
     "independent": true,
     "area": 33846,
@@ -2441,6 +2972,10 @@
     "latlng": [
       43.73333333,
       7.4
+    ],
+    "capitalLatLng": [
+      43.73718,
+      7.42145
     ],
     "flagEmoji": "🇲🇨",
     "independent": true,
@@ -2460,6 +2995,10 @@
       46,
       105
     ],
+    "capitalLatLng": [
+      47.90771,
+      106.88324
+    ],
     "flagEmoji": "🇲🇳",
     "independent": true,
     "area": 1564110,
@@ -2477,6 +3016,10 @@
     "latlng": [
       42.5,
       19.3
+    ],
+    "capitalLatLng": [
+      42.44124,
+      19.26309
     ],
     "flagEmoji": "🇲🇪",
     "independent": true,
@@ -2496,6 +3039,10 @@
       16.75,
       -62.2
     ],
+    "capitalLatLng": [
+      16.70555,
+      -62.21292
+    ],
     "flagEmoji": "🇲🇸",
     "independent": false,
     "area": 102,
@@ -2513,6 +3060,10 @@
     "latlng": [
       32,
       -5
+    ],
+    "capitalLatLng": [
+      34.01325,
+      -6.83255
     ],
     "flagEmoji": "🇲🇦",
     "independent": true,
@@ -2532,6 +3083,10 @@
       -18.25,
       35
     ],
+    "capitalLatLng": [
+      -25.96553,
+      32.58322
+    ],
     "flagEmoji": "🇲🇿",
     "independent": true,
     "area": 801590,
@@ -2549,6 +3104,10 @@
     "latlng": [
       22,
       98
+    ],
+    "capitalLatLng": [
+      19.745,
+      96.12972
     ],
     "flagEmoji": "🇲🇲",
     "independent": true,
@@ -2568,6 +3127,10 @@
       -22,
       17
     ],
+    "capitalLatLng": [
+      -22.55941,
+      17.08323
+    ],
     "flagEmoji": "🇳🇦",
     "independent": true,
     "area": 825615,
@@ -2585,6 +3148,10 @@
     "latlng": [
       -0.53333333,
       166.91666666
+    ],
+    "capitalLatLng": [
+      -0.55085,
+      166.9252
     ],
     "flagEmoji": "🇳🇷",
     "independent": true,
@@ -2604,6 +3171,10 @@
       28,
       84
     ],
+    "capitalLatLng": [
+      27.70169,
+      85.3206
+    ],
     "flagEmoji": "🇳🇵",
     "independent": true,
     "area": 147181,
@@ -2621,6 +3192,10 @@
     "latlng": [
       52.5,
       5.75
+    ],
+    "capitalLatLng": [
+      52.37403,
+      4.88969
     ],
     "flagEmoji": "🇳🇱",
     "independent": true,
@@ -2640,6 +3215,10 @@
       -21.5,
       165.5
     ],
+    "capitalLatLng": [
+      -22.27407,
+      166.44884
+    ],
     "flagEmoji": "🇳🇨",
     "independent": false,
     "area": 18575,
@@ -2657,6 +3236,10 @@
     "latlng": [
       -41,
       174
+    ],
+    "capitalLatLng": [
+      -41.28664,
+      174.77557
     ],
     "flagEmoji": "🇳🇿",
     "independent": true,
@@ -2676,6 +3259,10 @@
       13,
       -85
     ],
+    "capitalLatLng": [
+      12.13282,
+      -86.2504
+    ],
     "flagEmoji": "🇳🇮",
     "independent": true,
     "area": 130373,
@@ -2693,6 +3280,10 @@
     "latlng": [
       16,
       8
+    ],
+    "capitalLatLng": [
+      13.51366,
+      2.1098
     ],
     "flagEmoji": "🇳🇪",
     "independent": true,
@@ -2712,6 +3303,10 @@
       10,
       8
     ],
+    "capitalLatLng": [
+      9.05785,
+      7.49508
+    ],
     "flagEmoji": "🇳🇬",
     "independent": true,
     "area": 923768,
@@ -2729,6 +3324,10 @@
     "latlng": [
       -19.03333333,
       -169.86666666
+    ],
+    "capitalLatLng": [
+      -19.05294,
+      -169.91957
     ],
     "flagEmoji": "🇳🇺",
     "independent": false,
@@ -2748,6 +3347,10 @@
       -29.03333333,
       167.95
     ],
+    "capitalLatLng": [
+      -29.05459,
+      167.96628
+    ],
     "flagEmoji": "🇳🇫",
     "independent": false,
     "area": 36,
@@ -2765,6 +3368,10 @@
     "latlng": [
       40,
       127
+    ],
+    "capitalLatLng": [
+      39.03385,
+      125.75432
     ],
     "flagEmoji": "🇰🇵",
     "independent": true,
@@ -2784,6 +3391,10 @@
       41.83333333,
       22
     ],
+    "capitalLatLng": [
+      41.99646,
+      21.43141
+    ],
     "flagEmoji": "🇲🇰",
     "independent": true,
     "area": 25713,
@@ -2799,6 +3410,10 @@
     "region": "Europe",
     "subregion": "Southern Europe",
     "latlng": [
+      35.1856,
+      33.3823
+    ],
+    "capitalLatLng": [
       35.1856,
       33.3823
     ],
@@ -2820,6 +3435,10 @@
       15.2,
       145.75
     ],
+    "capitalLatLng": [
+      15.21233,
+      145.7545
+    ],
     "flagEmoji": "🇲🇵",
     "independent": false,
     "area": 464,
@@ -2837,6 +3456,10 @@
     "latlng": [
       62,
       10
+    ],
+    "capitalLatLng": [
+      59.91273,
+      10.74609
     ],
     "flagEmoji": "🇳🇴",
     "independent": true,
@@ -2856,6 +3479,10 @@
       21,
       57
     ],
+    "capitalLatLng": [
+      23.58413,
+      58.40778
+    ],
     "flagEmoji": "🇴🇲",
     "independent": true,
     "area": 309500,
@@ -2873,6 +3500,10 @@
     "latlng": [
       30,
       70
+    ],
+    "capitalLatLng": [
+      33.72148,
+      73.04329
     ],
     "flagEmoji": "🇵🇰",
     "independent": true,
@@ -2892,6 +3523,10 @@
       7.5,
       134.5
     ],
+    "capitalLatLng": [
+      7.50077,
+      134.6238
+    ],
     "flagEmoji": "🇵🇼",
     "independent": true,
     "area": 459,
@@ -2909,6 +3544,10 @@
     "latlng": [
       31.9,
       35.2
+    ],
+    "capitalLatLng": [
+      31.89964,
+      35.20422
     ],
     "flagEmoji": "🇵🇸",
     "independent": false,
@@ -2928,6 +3567,10 @@
       9,
       -80
     ],
+    "capitalLatLng": [
+      8.9936,
+      -79.51973
+    ],
     "flagEmoji": "🇵🇦",
     "independent": true,
     "area": 75417,
@@ -2945,6 +3588,10 @@
     "latlng": [
       -6,
       147
+    ],
+    "capitalLatLng": [
+      -9.47723,
+      147.15089
     ],
     "flagEmoji": "🇵🇬",
     "independent": true,
@@ -2964,6 +3611,10 @@
       -23,
       -58
     ],
+    "capitalLatLng": [
+      -25.28646,
+      -57.647
+    ],
     "flagEmoji": "🇵🇾",
     "independent": true,
     "area": 406752,
@@ -2981,6 +3632,10 @@
     "latlng": [
       -10,
       -76
+    ],
+    "capitalLatLng": [
+      -12.04318,
+      -77.02824
     ],
     "flagEmoji": "🇵🇪",
     "independent": true,
@@ -3000,6 +3655,10 @@
       13,
       122
     ],
+    "capitalLatLng": [
+      14.6042,
+      120.9822
+    ],
     "flagEmoji": "🇵🇭",
     "independent": true,
     "area": 342353,
@@ -3017,6 +3676,10 @@
     "latlng": [
       -25.06666666,
       -130.1
+    ],
+    "capitalLatLng": [
+      -25.06597,
+      -130.10147
     ],
     "flagEmoji": "🇵🇳",
     "independent": false,
@@ -3036,6 +3699,10 @@
       52,
       20
     ],
+    "capitalLatLng": [
+      52.22977,
+      21.01178
+    ],
     "flagEmoji": "🇵🇱",
     "independent": true,
     "area": 312679,
@@ -3053,6 +3720,10 @@
     "latlng": [
       39.5,
       -8
+    ],
+    "capitalLatLng": [
+      38.72509,
+      -9.1498
     ],
     "flagEmoji": "🇵🇹",
     "independent": true,
@@ -3072,6 +3743,10 @@
       18.25,
       -66.5
     ],
+    "capitalLatLng": [
+      18.46633,
+      -66.10572
+    ],
     "flagEmoji": "🇵🇷",
     "independent": false,
     "area": 8870,
@@ -3089,6 +3764,10 @@
     "latlng": [
       25.5,
       51.25
+    ],
+    "capitalLatLng": [
+      25.28545,
+      51.53096
     ],
     "flagEmoji": "🇶🇦",
     "independent": true,
@@ -3108,6 +3787,10 @@
       -1,
       15
     ],
+    "capitalLatLng": [
+      -4.26613,
+      15.28318
+    ],
     "flagEmoji": "🇨🇬",
     "independent": true,
     "area": 342000,
@@ -3125,6 +3808,10 @@
     "latlng": [
       46,
       25
+    ],
+    "capitalLatLng": [
+      44.43225,
+      26.10626
     ],
     "flagEmoji": "🇷🇴",
     "independent": true,
@@ -3144,6 +3831,10 @@
       60,
       100
     ],
+    "capitalLatLng": [
+      55.75204,
+      37.61781
+    ],
     "flagEmoji": "🇷🇺",
     "independent": true,
     "area": 17098242,
@@ -3161,6 +3852,10 @@
     "latlng": [
       -2,
       30
+    ],
+    "capitalLatLng": [
+      -1.94995,
+      30.05885
     ],
     "flagEmoji": "🇷🇼",
     "independent": true,
@@ -3180,6 +3875,10 @@
       18.5,
       -63.41666666
     ],
+    "capitalLatLng": [
+      17.89618,
+      -62.84978
+    ],
     "flagEmoji": "🇧🇱",
     "independent": false,
     "area": 21,
@@ -3197,6 +3896,10 @@
     "latlng": [
       -15.95,
       -5.72
+    ],
+    "capitalLatLng": [
+      -15.92488,
+      -5.71816
     ],
     "flagEmoji": "🇸🇭",
     "independent": false,
@@ -3216,6 +3919,10 @@
       17.33333333,
       -62.75
     ],
+    "capitalLatLng": [
+      17.2955,
+      -62.72499
+    ],
     "flagEmoji": "🇰🇳",
     "independent": true,
     "area": 261,
@@ -3233,6 +3940,10 @@
     "latlng": [
       13.88333333,
       -60.96666666
+    ],
+    "capitalLatLng": [
+      13.9957,
+      -61.00614
     ],
     "flagEmoji": "🇱🇨",
     "independent": true,
@@ -3252,6 +3963,10 @@
       18.08333333,
       -63.95
     ],
+    "capitalLatLng": [
+      18.06819,
+      -63.08302
+    ],
     "flagEmoji": "🇲🇫",
     "independent": false,
     "area": 53,
@@ -3269,6 +3984,10 @@
     "latlng": [
       46.83333333,
       -56.33333333
+    ],
+    "capitalLatLng": [
+      46.77914,
+      -56.1773
     ],
     "flagEmoji": "🇵🇲",
     "independent": false,
@@ -3288,6 +4007,10 @@
       13.25,
       -61.2
     ],
+    "capitalLatLng": [
+      13.15527,
+      -61.22742
+    ],
     "flagEmoji": "🇻🇨",
     "independent": true,
     "area": 389,
@@ -3305,6 +4028,10 @@
     "latlng": [
       -13.58333333,
       -172.33333333
+    ],
+    "capitalLatLng": [
+      -13.83333,
+      -171.76666
     ],
     "flagEmoji": "🇼🇸",
     "independent": true,
@@ -3324,6 +4051,10 @@
       43.76666666,
       12.41666666
     ],
+    "capitalLatLng": [
+      43.93667,
+      12.44639
+    ],
     "flagEmoji": "🇸🇲",
     "independent": true,
     "area": 61,
@@ -3341,6 +4072,10 @@
     "latlng": [
       1,
       7
+    ],
+    "capitalLatLng": [
+      0.33756,
+      6.7299
     ],
     "flagEmoji": "🇸🇹",
     "independent": true,
@@ -3360,6 +4095,10 @@
       25,
       45
     ],
+    "capitalLatLng": [
+      24.68773,
+      46.72185
+    ],
     "flagEmoji": "🇸🇦",
     "independent": true,
     "area": 2149690,
@@ -3377,6 +4116,10 @@
     "latlng": [
       14,
       -14
+    ],
+    "capitalLatLng": [
+      14.6937,
+      -17.44406
     ],
     "flagEmoji": "🇸🇳",
     "independent": true,
@@ -3396,6 +4139,10 @@
       44,
       21
     ],
+    "capitalLatLng": [
+      44.80401,
+      20.46513
+    ],
     "flagEmoji": "🇷🇸",
     "independent": true,
     "area": 88361,
@@ -3413,6 +4160,10 @@
     "latlng": [
       -4.58333333,
       55.66666666
+    ],
+    "capitalLatLng": [
+      -4.62001,
+      55.45501
     ],
     "flagEmoji": "🇸🇨",
     "independent": true,
@@ -3432,6 +4183,10 @@
       8.5,
       -11.5
     ],
+    "capitalLatLng": [
+      8.48714,
+      -13.2356
+    ],
     "flagEmoji": "🇸🇱",
     "independent": true,
     "area": 71740,
@@ -3449,6 +4204,10 @@
     "latlng": [
       1.36666666,
       103.8
+    ],
+    "capitalLatLng": [
+      1.28967,
+      103.85007
     ],
     "flagEmoji": "🇸🇬",
     "independent": true,
@@ -3468,6 +4227,10 @@
       18.033333,
       -63.05
     ],
+    "capitalLatLng": [
+      18.026,
+      -63.04582
+    ],
     "flagEmoji": "🇸🇽",
     "independent": false,
     "area": 34,
@@ -3485,6 +4248,10 @@
     "latlng": [
       48.66666666,
       19.5
+    ],
+    "capitalLatLng": [
+      48.14816,
+      17.10674
     ],
     "flagEmoji": "🇸🇰",
     "independent": true,
@@ -3504,6 +4271,10 @@
       46.11666666,
       14.81666666
     ],
+    "capitalLatLng": [
+      46.05108,
+      14.50513
+    ],
     "flagEmoji": "🇸🇮",
     "independent": true,
     "area": 20273,
@@ -3521,6 +4292,10 @@
     "latlng": [
       -8,
       159
+    ],
+    "capitalLatLng": [
+      -9.43333,
+      159.95
     ],
     "flagEmoji": "🇸🇧",
     "independent": true,
@@ -3540,6 +4315,10 @@
       10,
       49
     ],
+    "capitalLatLng": [
+      2.03711,
+      45.34375
+    ],
     "flagEmoji": "🇸🇴",
     "independent": true,
     "area": 637657,
@@ -3555,6 +4334,10 @@
     "region": "Africa",
     "subregion": "Eastern Africa",
     "latlng": [
+      9.4942,
+      44.0269
+    ],
+    "capitalLatLng": [
       9.4942,
       44.0269
     ],
@@ -3576,6 +4359,10 @@
       -29,
       24
     ],
+    "capitalLatLng": [
+      -25.74486,
+      28.18783
+    ],
     "flagEmoji": "🇿🇦",
     "independent": true,
     "area": 1221037,
@@ -3593,6 +4380,10 @@
     "latlng": [
       -54.5,
       -37
+    ],
+    "capitalLatLng": [
+      -54.28111,
+      -36.5092
     ],
     "flagEmoji": "🇬🇸",
     "independent": false,
@@ -3612,6 +4403,10 @@
       37,
       127.5
     ],
+    "capitalLatLng": [
+      37.566,
+      126.9784
+    ],
     "flagEmoji": "🇰🇷",
     "independent": true,
     "area": 100210,
@@ -3629,6 +4424,10 @@
     "latlng": [
       7,
       30
+    ],
+    "capitalLatLng": [
+      4.85165,
+      31.58247
     ],
     "flagEmoji": "🇸🇸",
     "independent": true,
@@ -3648,6 +4447,10 @@
       40,
       -4
     ],
+    "capitalLatLng": [
+      40.4165,
+      -3.70256
+    ],
     "flagEmoji": "🇪🇸",
     "independent": true,
     "area": 505992,
@@ -3665,6 +4468,10 @@
     "latlng": [
       7,
       81
+    ],
+    "capitalLatLng": [
+      6.93548,
+      79.84868
     ],
     "flagEmoji": "🇱🇰",
     "independent": true,
@@ -3684,6 +4491,10 @@
       15,
       30
     ],
+    "capitalLatLng": [
+      15.55177,
+      32.53241
+    ],
     "flagEmoji": "🇸🇩",
     "independent": true,
     "area": 1886068,
@@ -3701,6 +4512,10 @@
     "latlng": [
       4,
       -56
+    ],
+    "capitalLatLng": [
+      5.86638,
+      -55.16682
     ],
     "flagEmoji": "🇸🇷",
     "independent": true,
@@ -3720,6 +4535,10 @@
       62,
       15
     ],
+    "capitalLatLng": [
+      59.32938,
+      18.06871
+    ],
     "flagEmoji": "🇸🇪",
     "independent": true,
     "area": 450295,
@@ -3737,6 +4556,10 @@
     "latlng": [
       47,
       8
+    ],
+    "capitalLatLng": [
+      46.94809,
+      7.44744
     ],
     "flagEmoji": "🇨🇭",
     "independent": true,
@@ -3756,6 +4579,10 @@
       35,
       38
     ],
+    "capitalLatLng": [
+      33.5102,
+      36.29128
+    ],
     "flagEmoji": "🇸🇾",
     "independent": true,
     "area": 185180,
@@ -3773,6 +4600,10 @@
     "latlng": [
       23.5,
       121
+    ],
+    "capitalLatLng": [
+      25.05306,
+      121.52639
     ],
     "flagEmoji": "🇹🇼",
     "independent": false,
@@ -3792,6 +4623,10 @@
       39,
       71
     ],
+    "capitalLatLng": [
+      38.53575,
+      68.77905
+    ],
     "flagEmoji": "🇹🇯",
     "independent": true,
     "area": 143100,
@@ -3809,6 +4644,10 @@
     "latlng": [
       -6,
       35
+    ],
+    "capitalLatLng": [
+      -6.17221,
+      35.73947
     ],
     "flagEmoji": "🇹🇿",
     "independent": true,
@@ -3828,6 +4667,10 @@
       15,
       100
     ],
+    "capitalLatLng": [
+      13.75398,
+      100.50144
+    ],
     "flagEmoji": "🇹🇭",
     "independent": true,
     "area": 513120,
@@ -3845,6 +4688,10 @@
     "latlng": [
       -8.83333333,
       125.91666666
+    ],
+    "capitalLatLng": [
+      -8.55861,
+      125.57361
     ],
     "flagEmoji": "🇹🇱",
     "independent": true,
@@ -3864,6 +4711,10 @@
       8,
       1.16666666
     ],
+    "capitalLatLng": [
+      6.12874,
+      1.22154
+    ],
     "flagEmoji": "🇹🇬",
     "independent": true,
     "area": 56785,
@@ -3881,6 +4732,10 @@
     "latlng": [
       -20,
       -175
+    ],
+    "capitalLatLng": [
+      -21.13683,
+      -175.20114
     ],
     "flagEmoji": "🇹🇴",
     "independent": true,
@@ -3900,6 +4755,10 @@
       11,
       -61
     ],
+    "capitalLatLng": [
+      10.66668,
+      -61.51889
+    ],
     "flagEmoji": "🇹🇹",
     "independent": true,
     "area": 5130,
@@ -3917,6 +4776,10 @@
     "latlng": [
       34,
       9
+    ],
+    "capitalLatLng": [
+      36.81897,
+      10.16579
     ],
     "flagEmoji": "🇹🇳",
     "independent": true,
@@ -3936,6 +4799,10 @@
       39,
       35
     ],
+    "capitalLatLng": [
+      39.91987,
+      32.85427
+    ],
     "flagEmoji": "🇹🇷",
     "independent": true,
     "area": 783562,
@@ -3953,6 +4820,10 @@
     "latlng": [
       40,
       60
+    ],
+    "capitalLatLng": [
+      37.95,
+      58.38333
     ],
     "flagEmoji": "🇹🇲",
     "independent": true,
@@ -3972,6 +4843,10 @@
       21.75,
       -71.58333333
     ],
+    "capitalLatLng": [
+      21.46122,
+      -71.14188
+    ],
     "flagEmoji": "🇹🇨",
     "independent": false,
     "area": 948,
@@ -3989,6 +4864,10 @@
     "latlng": [
       1,
       32
+    ],
+    "capitalLatLng": [
+      0.31628,
+      32.58219
     ],
     "flagEmoji": "🇺🇬",
     "independent": true,
@@ -4008,6 +4887,10 @@
       49,
       32
     ],
+    "capitalLatLng": [
+      50.45466,
+      30.5238
+    ],
     "flagEmoji": "🇺🇦",
     "independent": true,
     "area": 603500,
@@ -4025,6 +4908,10 @@
     "latlng": [
       24,
       54
+    ],
+    "capitalLatLng": [
+      24.45118,
+      54.39696
     ],
     "flagEmoji": "🇦🇪",
     "independent": true,
@@ -4044,6 +4931,10 @@
       54,
       -2
     ],
+    "capitalLatLng": [
+      51.51279,
+      -0.09184
+    ],
     "flagEmoji": "🇬🇧",
     "independent": true,
     "area": 242900,
@@ -4061,6 +4952,10 @@
     "latlng": [
       38,
       -97
+    ],
+    "capitalLatLng": [
+      38.89511,
+      -77.03637
     ],
     "flagEmoji": "🇺🇸",
     "independent": true,
@@ -4080,6 +4975,10 @@
       18.35,
       -64.933333
     ],
+    "capitalLatLng": [
+      18.3419,
+      -64.9307
+    ],
     "flagEmoji": "🇻🇮",
     "independent": false,
     "area": 347,
@@ -4097,6 +4996,10 @@
     "latlng": [
       -33,
       -56
+    ],
+    "capitalLatLng": [
+      -34.90328,
+      -56.18816
     ],
     "flagEmoji": "🇺🇾",
     "independent": true,
@@ -4116,6 +5019,10 @@
       41,
       64
     ],
+    "capitalLatLng": [
+      41.26465,
+      69.21627
+    ],
     "flagEmoji": "🇺🇿",
     "independent": true,
     "area": 447400,
@@ -4133,6 +5040,10 @@
     "latlng": [
       -16,
       167
+    ],
+    "capitalLatLng": [
+      -17.73648,
+      168.31366
     ],
     "flagEmoji": "🇻🇺",
     "independent": true,
@@ -4152,6 +5063,10 @@
       41.9,
       12.45
     ],
+    "capitalLatLng": [
+      41.90268,
+      12.45414
+    ],
     "flagEmoji": "🇻🇦",
     "independent": true,
     "area": 0.44,
@@ -4169,6 +5084,10 @@
     "latlng": [
       8,
       -66
+    ],
+    "capitalLatLng": [
+      10.48801,
+      -66.87919
     ],
     "flagEmoji": "🇻🇪",
     "independent": true,
@@ -4188,6 +5107,10 @@
       16.16666666,
       107.83333333
     ],
+    "capitalLatLng": [
+      21.0245,
+      105.84117
+    ],
     "flagEmoji": "🇻🇳",
     "independent": true,
     "area": 331212,
@@ -4205,6 +5128,10 @@
     "latlng": [
       -13.3,
       -176.2
+    ],
+    "capitalLatLng": [
+      -13.28163,
+      -176.17453
     ],
     "flagEmoji": "🇼🇫",
     "independent": false,
@@ -4224,6 +5151,10 @@
       24.5,
       -13
     ],
+    "capitalLatLng": [
+      27.1418,
+      -13.18797
+    ],
     "flagEmoji": "🇪🇭",
     "independent": false,
     "area": 266000,
@@ -4241,6 +5172,10 @@
     "latlng": [
       15,
       48
+    ],
+    "capitalLatLng": [
+      15.35452,
+      44.20646
     ],
     "flagEmoji": "🇾🇪",
     "independent": true,
@@ -4260,6 +5195,10 @@
       -15,
       30
     ],
+    "capitalLatLng": [
+      -15.40669,
+      28.28713
+    ],
     "flagEmoji": "🇿🇲",
     "independent": true,
     "area": 752612,
@@ -4277,6 +5216,10 @@
     "latlng": [
       -20,
       30
+    ],
+    "capitalLatLng": [
+      -17.82772,
+      31.05337
     ],
     "flagEmoji": "🇿🇼",
     "independent": true,

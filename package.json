@@ -12,6 +12,7 @@
     "archive": "bash scripts/archive.sh"
   },
   "devDependencies": {
+    "cities.json": "^1.1.64",
     "us-atlas": "^3.0.1",
     "vite": "^8.3.0",
     "world-atlas": "^2.0.2",

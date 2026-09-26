@@ -46,16 +46,66 @@ const EUROPE_ONLY = new Set(["Georgia", "Türkiye"]);
 // in play, without actually being "Asian" for Europe's own count.
 const ASIA_BONUS = new Set(["Georgia", "Türkiye", "Cyprus", "Russia"]);
 
+// Fitting the map's initial view to Europe's own full bbox zooms out far
+// past anything resembling a standard map of Europe. Not just for
+// Russia's eastern extent (Russia counts as Europe here — see EUROPE_ONLY
+// above) — a repeating pattern turned up by measuring each member's own
+// projected bbox directly (not guessed): several countries' single
+// topology shape bundles far-flung overseas territories in with the
+// mainland, each stretching the bbox well past anything a "map of Europe"
+// would normally show — France (French Guiana, Réunion, ... spanning
+// nearly the full range of longitude and dipping into the southern
+// hemisphere), Norway (Svalbard, ~9° further north than its own mainland
+// tip), Spain (the Canary Islands, ~8° south of the mainland), the
+// Netherlands (Aruba/Curaçao/Sint Maarten in the Caribbean — by far the
+// single biggest outlier found, ~56° of longitude and ~20° of latitude
+// away from the mainland), and Portugal (Madeira and the Azores, both
+// south and ~600km further west than the mainland's own westernmost
+// point). `fitExclude` (by name, same pattern as EUROPE_ONLY/
+// SOUTH_AMERICA_OVERRIDES) narrows only the initial fitSize computation
+// game.js does (see its own comment) — every excluded country stays fully
+// in the region's match, still rendered, clickable, and playable, just
+// reachable by panning rather than shown by default; a normal-looking
+// Europe view doesn't need its far corners to be part of what decides the
+// starting zoom. With all five excluded, the remaining members' own
+// extremes land almost exactly on a standard "map of Europe" framing on
+// their own, with no further hand-picked bounding box needed: Cyprus
+// anchors the south, Georgia the east, Iceland the west, Finland the
+// north (nowhere near Svalbard) — verified by projecting each (jsdom,
+// 800×500 viewport) and confirming all four land at or just inside the
+// viewport edges, while every excluded country's own *mainland* capital
+// (Madrid, Lisbon, Amsterdam) still projects comfortably in view. Fit
+// scale (a rough proxy for "how zoomed in"), measured incrementally:
+// baseline (nothing excluded) 184 → + Russia 291 → + France 442 → +
+// Norway 476 → + Spain 476 (no further change — France/Norway/Russia
+// already defined a tighter box than Spain's own outlier alone would, but
+// it was kept since it's a territory a report specifically named, and it
+// costs nothing when it isn't the binding constraint) → + Netherlands 734
+// → + Portugal 848.
+const EUROPE_FIT_EXCLUDE = new Set(["Russia", "France", "Norway", "Spain", "Netherlands", "Portugal"]);
+
 export const regions = [
   {
     key: "europe",
     label: "Europe",
     match: (item) => item.region === "Europe" || EUROPE_ONLY.has(item.name),
+    fitExclude: EUROPE_FIT_EXCLUDE,
   },
   {
     key: "asia",
     label: "Asia",
     match: (item) => (item.region === "Asia" && !EUROPE_ONLY.has(item.name)) || ASIA_BONUS.has(item.name),
+    // Same pattern as Europe's own fitExclude (see EUROPE_FIT_EXCLUDE):
+    // Russia is Asia-bonus-eligible (ASIA_BONUS above) and its topology
+    // shape spans the antimeridian (lon -180 to 179.88 — the whole map's
+    // width), which dominates any fit that includes it. Measured directly
+    // (jsdom, 800×500): fit scale goes from 1.25x world scale to 2.91x
+    // once Russia is excluded from framing — Russia stays fully in the
+    // region's match, rendered and playable, just not part of what decides
+    // the starting zoom. The resulting frame's own natural anchors
+    // (Kazakhstan north, Indonesia south, Japan east, Türkiye west) needed
+    // no further exclusions.
+    fitExclude: new Set(["Russia"]),
   },
   {
     key: "africa",

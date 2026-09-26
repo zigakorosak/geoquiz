@@ -16,6 +16,41 @@
 import { WorldMap } from "../map/WorldMap.js";
 import { shuffle } from "../core/engine.js";
 
+const EARTH_RADIUS_KM = 6371;
+
+// Great-circle distance between two `[lat, lon]` points (world-countries'
+// own field order — see core/datasets.js items, `latlng`/`capitalLatLng`)
+// — used only by "map-pin"'s "capital" pinTarget, to pre-check correctness
+// at click time (a plain point-to-point figure is all that's needed there;
+// the post-confirm feedback's own distance/reveal goes through WorldMap.js's
+// revealCapitalDistance instead, which needs the map's own lon/lat
+// conventions and draws the reveal, not just a number).
+function haversineKm([lat1, lon1], [lat2, lon2]) {
+  const toRad = (d) => (d * Math.PI) / 180;
+  const dLat = toRad(lat2 - lat1);
+  const dLon = toRad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
+// How close (km) a pin has to land to a capital's own exact point to count
+// as correct under "capital" pinTarget scoring — a capital is a single
+// point, not a region with its own natural "am I inside it" test the way a
+// country's shape gives "region" scoring for free, so this has to be some
+// chosen radius. 50km is roughly a large metro area's own extent — tight
+// enough to actually require knowing where the capital is (not just the
+// country), generous enough not to demand pixel-perfect clicking.
+const CAPITAL_CORRECT_RADIUS_KM = 50;
+
+// A guess value guaranteed never to equal any real item id (all of which
+// are ccn3 numeric strings or short hand-picked codes like "UNK"/"SML"/
+// "XNC" — see core/datasets.js) — reported instead of the pin's actual
+// containingId when it's the *right* country but *too far* from the
+// capital under "capital" pinTarget scoring, so QuizSession's plain
+// `guessId === item.id` check correctly reads it as wrong without needing
+// pin-specific logic of its own.
+const TOO_FAR_FROM_CAPITAL = "__too-far-from-capital__";
+
 const renderers = {
   "multiple-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
     const correctValue = attr.getValue(item);
@@ -138,12 +173,12 @@ const renderers = {
 
   "map-click": (
     container,
-    { dataset, attr, mapFeatureIds, playableIds, initialTransform, onSelect, onConfirm, feedbackContainer }
+    { dataset, attr, focusIds, playableIds, initialTransform, onSelect, onConfirm, feedbackContainer }
   ) => {
     const map = new WorldMap(container, {
       topology: dataset.topology,
       objectKey: dataset.topologyObject,
-      filterIds: mapFeatureIds,
+      focusIds,
       playableIds,
       dashedBorders: dataset.dashedBorders,
       projection: dataset.projection,
@@ -184,32 +219,54 @@ const renderers = {
   },
 
   // Borderless map: the player drops a pin anywhere rather than clicking a
-  // discrete country shape. The guess reported via onSelect is still just
-  // a country id, same as "map-click" — whichever playable country's real
-  // (invisible) shape the pin landed inside, or null over open
-  // ocean/unplayable territory — so QuizSession/attributes.js need no
-  // pin-specific logic at all; only the feedback (revealed outline +
-  // distance) is different, handled entirely here.
+  // discrete country shape. `pinTarget` (gameWizard.js's follow-up step,
+  // "region" or "capital" — defaulting to "region" if ever omitted) decides
+  // what the guess is actually scored against:
+  //  - "region": the guess reported via onSelect is a country id, same as
+  //    "map-click" — whichever playable country's real (invisible) shape
+  //    the pin landed inside, or null over open ocean/unplayable territory
+  //    — so QuizSession/attributes.js's plain id-equality checkAnswer needs
+  //    no pin-specific logic at all.
+  //  - "capital": correctness isn't about which country's shape the pin
+  //    fell inside at all, but whether it's within CAPITAL_CORRECT_RADIUS_KM
+  //    of the target's own exact capital point. To reuse that same
+  //    id-equality checkAnswer unchanged, the guess reported is *item.id*
+  //    itself when within radius (forcing a match) or a guaranteed-never-
+  //    equal sentinel otherwise (forcing a mismatch) — never `null` for a
+  //    real, definite miss, since `null` specifically means "no selection
+  //    yet" elsewhere (game.js disables Confirm while `selection == null`),
+  //    and a pin that's simply too far from the capital is still a
+  //    complete, confirmable answer, not a pending one.
   "map-pin": (
     container,
-    { dataset, attr, mapFeatureIds, playableIds, initialTransform, onSelect, feedbackContainer }
+    { item, dataset, attr, focusIds, playableIds, pinTarget, initialTransform, onSelect, onConfirm, feedbackContainer }
   ) => {
+    const target = pinTarget ?? "region";
     const map = new WorldMap(container, {
       topology: dataset.topology,
       objectKey: dataset.topologyObject,
-      filterIds: mapFeatureIds,
+      focusIds,
       playableIds,
       projection: dataset.projection,
       initialTransform,
       pinMode: true,
     });
-    let lastLon = null;
-    let lastLat = null;
-    map.setClickable(true, (lon, lat, containingId) => {
-      lastLon = lon;
-      lastLat = lat;
-      onSelect(containingId);
-    });
+    map.setClickable(
+      true,
+      (lon, lat, containingId) => {
+        if (target === "capital" && item.capitalLatLng) {
+          const distanceKm = haversineKm([lat, lon], item.capitalLatLng);
+          const withinRadius = distanceKm <= CAPITAL_CORRECT_RADIUS_KM;
+          onSelect(withinRadius ? item.id : containingId === item.id ? TOO_FAR_FROM_CAPITAL : containingId);
+        } else {
+          onSelect(containingId);
+        }
+      },
+      // Clicking the just-dropped pin itself (its own padded hit-area, not
+      // just anywhere on the map) confirms immediately — the pin-mode
+      // equivalent of map-click/multiple-choice's reclick-to-confirm.
+      onConfirm
+    );
 
     const feedback = document.createElement("div");
     feedback.className = "answer-feedback";
@@ -221,17 +278,26 @@ const renderers = {
         feedback.remove();
       },
       getTransform: () => map.getTransform(),
-      showResult({ guess, item, correct }) {
+      showResult({ item, correct }) {
         map.setClickable(false, null);
-        map.markResult(guess, attr.getValue(item));
-        // 0 whenever the pin already landed inside the target's own shape
-        // (distanceToBorderKm's own inside check) — a correct guess is
-        // always exactly this case, but a wrong guess can be too, in the
-        // (borderless-map, so invisible at guess time) gap between two
-        // features' hulls never actually landing outside either one.
-        const rawDistance = lastLon != null && lastLat != null ? map.distanceToBorderKm(lastLon, lastLat, attr.getValue(item)) : null;
+        // Always null guessId: unlike map-click, pin mode never reveals
+        // the country the pin actually landed in when wrong — only ever
+        // the target's own shape. Revealing "here's the real country you
+        // were standing in" would give away exactly the kind of shape
+        // information a borderless map exists to withhold.
+        map.markResult(null, attr.getValue(item));
+        // revealBorderDistance/revealCapitalDistance both compute the km
+        // figure below *and* draw the reveal on the map itself —
+        // revealBorderDistance shows 0/no line whenever the pin already
+        // landed inside the target's own shape (always true for a correct
+        // guess under "region" scoring, by definition); revealCapitalDistance
+        // always shows the capital's own point + a line to it, correct or
+        // not, since the precise distance is worth seeing either way.
+        const rawDistance =
+          target === "capital" ? map.revealCapitalDistance(item.capitalLatLng) : map.revealBorderDistance(attr.getValue(item));
         const distance = rawDistance != null ? Math.round(rawDistance) : null;
-        const distanceText = distance != null ? ` You were ${distance} km from its border.` : "";
+        const distanceLabel = target === "capital" ? "the capital" : "its border";
+        const distanceText = distance != null ? ` You were ${distance} km from ${distanceLabel}.` : "";
         feedback.textContent = correct ? `Correct!${distanceText}` : `Correct answer: ${attr.formatAnswer(item)}.${distanceText}`;
       },
     };

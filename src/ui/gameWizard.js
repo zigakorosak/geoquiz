@@ -102,7 +102,7 @@ function showAnswerStep(container, config, goBack, onExit) {
 const answerKindLabels = {
   "text-guess": "Type it",
   "multiple-choice": "Multiple choice",
-  "map-click": "Click the map",
+  "map-click": "Select region",
   "map-pin": "Drop a pin",
 };
 
@@ -134,6 +134,8 @@ function showAnswerKindStep(container, config, goBack, onExit) {
       const stepBack = () => showAnswerKindStep(container, config, goBack, onExit);
       if (k === "multiple-choice") {
         showOptionCountStep(container, { ...config, answerKind: k }, stepBack, onExit);
+      } else if (k === "map-pin") {
+        showPinTargetStep(container, { ...config, answerKind: k }, stepBack, onExit);
       } else {
         goToRegionOrSkip(container, { ...config, answerKind: k }, stepBack, onExit);
       }
@@ -151,6 +153,34 @@ function showOptionCountStep(container, config, goBack, onExit) {
     labelFn: (n) => String(n),
     onPick: (n) =>
       goToRegionOrSkip(container, { ...config, optionCount: n }, () => showOptionCountStep(container, config, goBack, onExit), onExit),
+    onBack: goBack,
+  });
+}
+
+// Follow-up step specific to "map-pin" (parallel to showOptionCountStep for
+// multiple-choice): what counts as a correct pin drop, and what the
+// post-confirm distance figure/reveal measures against. "region" (the
+// original, default behavior) scores against the target's own shape — 0km
+// if the pin landed anywhere inside it, otherwise distance to its nearest
+// border. "capital" scores against the target's exact capital point
+// instead — correct only within CAPITAL_CORRECT_RADIUS_KM of it (see
+// inputs.js), with the distance/reveal measured to that point rather than
+// the border. Independent of subject: whether the round's question was the
+// country's name or its capital's name, the pinned target is the same
+// item either way, just scored differently.
+const PIN_TARGETS = ["region", "capital"];
+const pinTargetLabels = {
+  region: "Region",
+  capital: "Capital",
+};
+
+function showPinTargetStep(container, config, goBack, onExit) {
+  renderChoiceScreen(container, {
+    title: "Score the pin against the region, or the capital?",
+    options: PIN_TARGETS,
+    labelFn: (t) => pinTargetLabels[t],
+    onPick: (t) =>
+      goToRegionOrSkip(container, { ...config, pinTarget: t }, () => showPinTargetStep(container, config, goBack, onExit), onExit),
     onBack: goBack,
   });
 }
@@ -255,9 +285,14 @@ function showSubRegionStep(container, config, goBack, onExit) {
         // — has to be re-validated now rather than carried through as-is.
         const answerKind =
           config.answerKind === "map-pin" && meta.projection === "identity" ? "map-click" : config.answerKind;
+        // pinTarget only means anything alongside "map-pin" — clear it
+        // together with the downgrade above rather than letting a stale
+        // "capital" choice from the previous (pre-switch) dataset silently
+        // ride along into a game that never reads it.
+        const pinTarget = answerKind === "map-pin" ? config.pinTarget : undefined;
         goToRegionOrSkip(
           container,
-          { ...config, subject: { ...config.subject, datasetKey: r.datasetKey }, meta, answerKind },
+          { ...config, subject: { ...config.subject, datasetKey: r.datasetKey }, meta, answerKind, pinTarget },
           stepBack,
           onExit
         );
@@ -323,6 +358,7 @@ async function startGame(container, config, onExit) {
         answerAttr: config.answerAttr,
         answerKind: config.answerKind,
         answerOptionCount: config.optionCount,
+        pinTarget: config.pinTarget,
       },
       onExit
     );

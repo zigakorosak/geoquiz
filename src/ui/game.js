@@ -14,7 +14,7 @@ import { renderAnswerInput } from "./inputs.js";
 
 export function renderGame(
   container,
-  { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount },
+  { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount, pinTarget },
   onExit
 ) {
   const session = new QuizSession({ dataset, questionAttr, answerAttr });
@@ -24,15 +24,29 @@ export function renderGame(
   // attribute's first supported kind if omitted.
   const resolvedAnswerKind = answerKind ?? answerAttr.answerKinds[0];
 
-  // Restrict the map to just the chosen region's shapes (null = whole
-  // world, hard crop — shapes outside the region aren't rendered at all).
-  // Deliberately built from regionItems, not dataset.items: a shape
-  // that's part of this region (e.g. Kosovo, within Europe) must still
-  // render even when the sovereignty setting excludes it from actually
-  // being quizzable — it should go muted, the same as it would in World
-  // mode, not vanish and leave a hole in Serbia. Doesn't change round to
-  // round, so compute it once.
-  const mapFeatureIds = region && region.key !== "world" ? new Set((regionItems ?? dataset.items).map((i) => i.id)) : null;
+  // Where the map starts framed. The map itself always renders the whole
+  // dataset — a region is never a crop — so this only decides the initial
+  // zoom/pan; everything outside it is still there, muted, a pan or a
+  // zoom-out away. Built from regionItems rather than dataset.items so a
+  // shape that belongs to the region but isn't currently quizzable (e.g.
+  // Kosovo within Europe under "All Sovereign") still counts toward the
+  // framing, exactly as it counts toward what the player sees.
+  //
+  // `region.fitExclude` (by name, core/regions.js) drops members that
+  // would wreck that framing without being what the region is "about" —
+  // Europe includes Russia, but fitting to Russia's full eastern extent
+  // gives nothing like a standard map of Europe. Excluded members remain
+  // fully playable and rendered; they're just not what the view centers
+  // on. Null (World, or a dataset with no region concept) means "frame
+  // everything".
+  const focusIds =
+    region && region.key !== "world"
+      ? new Set(
+          (regionItems ?? dataset.items)
+            .filter((i) => !region.fitExclude?.has(i.name))
+            .map((i) => i.id)
+        )
+      : null;
 
   // Soft gate, always active: only items actually in play this game (after
   // region + sovereignty filtering) are clickable/normally styled.
@@ -141,7 +155,7 @@ export function renderGame(
       item,
       attr: questionAttr,
       dataset,
-      mapFeatureIds,
+      focusIds,
       playableIds,
       initialTransform,
     });
@@ -150,9 +164,10 @@ export function renderGame(
       item,
       attr: answerAttr,
       dataset,
-      mapFeatureIds,
+      focusIds,
       playableIds,
       optionCount: answerOptionCount,
+      pinTarget,
       initialTransform,
       feedbackContainer: feedbackArea,
       onSelect: (value) => {

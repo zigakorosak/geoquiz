@@ -17,11 +17,11 @@ const renderers = {
     return { cleanup: () => el.remove() };
   },
 
-  "map-highlight": (container, { item, dataset, mapFeatureIds, playableIds, initialTransform }) => {
+  "map-highlight": (container, { item, dataset, focusIds, playableIds, initialTransform }) => {
     const map = new WorldMap(container, {
       topology: dataset.topology,
       objectKey: dataset.topologyObject,
-      filterIds: mapFeatureIds,
+      focusIds,
       playableIds,
       dashedBorders: dataset.dashedBorders,
       projection: dataset.projection,

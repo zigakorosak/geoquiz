@@ -311,18 +311,17 @@ button:disabled {
   cursor: pointer;
 }
 
-/* Added for the duration of an active pan/zoom gesture (d3-zoom's
-   start/end events, WorldMap.js) and removed the instant it ends. Cheap,
-   well-established trick for perceived smoothness: optimizeSpeed trades
-   antialiased edges for faster per-frame repaints while the player is
-   actively dragging/pinching and looking at the whole shape moving, not
-   any single edge — repainting ~240 country paths (more, counting the
-   infinite-scroll wrap's ghost copies) at full quality on every drag/wheel
-   tick is real work a phone GPU in particular can fall behind on, which
-   is what actually reads as "not smooth". */
-.world-map--panning {
-  shape-rendering: optimizeSpeed;
-}
+/* No shape-rendering: optimizeSpeed trick during panning (there used to be
+   one here). It traded antialiased edges for faster repaints while a
+   pan/zoom gesture was in progress, but antialiasing turns out to be load-
+   bearing, not just cosmetic: pin mode's "no visible border" fill/stroke
+   match (`.world-map--pin-mode .country`, below) needs it to actually blend
+   the seam between adjacent same-color shapes, and ordinary bordered maps
+   (map-click) render their real, always-visible borders more crisply with
+   it too — with it off, both flickered against each other as edges shifted
+   by sub-pixel amounts differently frame to frame while dragging (a classic
+   coplanar-surface "z-fighting" look), in both modes, which is a worse
+   trade than the perf it was hypothetically buying. */
 
 .country {
   fill: var(--map-land);
@@ -336,11 +335,21 @@ button:disabled {
   fill: var(--map-land-muted);
 }
 
-.world-map--clickable .country:not(.country--unplayable):hover {
+/* A shape that isn't a country at all — no id in the topology (Siachen
+   Glacier, Indian Ocean Ter.). Not "a country out of play" (that's
+   --unplayable, muted on purpose): just ground, so it takes the ordinary
+   land fill and blends into its neighbours instead of reading as a stray
+   grey triangle between them. Never interactive either way. */
+.country--terrain {
+  fill: var(--map-land);
+  pointer-events: none;
+}
+
+.world-map--clickable .country:not(.country--unplayable):not(.country--terrain):hover {
   fill: var(--accent-dim);
 }
 
-.world-map--clickable .country:not(.country--unplayable) {
+.world-map--clickable .country:not(.country--unplayable):not(.country--terrain) {
   cursor: pointer;
 }
 
@@ -387,14 +396,24 @@ button:disabled {
   fill-opacity: 0.6;
 }
 
-/* Pin-drop mode: every country renders identically (no borders between
-   them) until confirm reveals the correct one's shape — see WorldMap.js'
-   `pinMode`. Higher specificity than the plain .country / .country--*
-   rules above (two classes vs. one) is deliberate, so these always win
-   regardless of source order. */
-.world-map--pin-mode .country,
-.world-map--pin-mode .country--unplayable {
-  fill: var(--map-land);
+/* Pin-drop mode draws no per-country paths at all — WorldMap.js simply
+   doesn't create them (see its per-feature loop), so `.pin-landmass`
+   below is the entire map, plus one shared `revealPath` for the
+   post-confirm target. Earlier rounds tried to *hide* 240 real country
+   paths with CSS instead; that kept failing in ways that were hard to
+   pin down, and it was always fragile in principle — e.g. the
+   `.world-map--clickable .country:hover` rule above outranks any
+   pin-mode rule on specificity, so keeping those paths invisible
+   depended on a subtle argument about unpainted shapes not receiving
+   pointer events. Not creating the elements removes the whole class of
+   problem: no element exists that *could* paint a country border, so no
+   stylesheet rule can bring one back.
+
+   The rule below therefore only has to cover `revealPath` in its
+   unmarked state (it carries the bare `.country` class, which would
+   otherwise paint via the base rule above between reveals). */
+.world-map--pin-mode .country {
+  fill: none;
   stroke: none;
 }
 
@@ -402,6 +421,43 @@ button:disabled {
   cursor: crosshair;
 }
 
+/* The merged landmass itself — see WorldMap.js's pinLandmass/pinMode.
+   `stroke` matches `fill`, at a deliberately *small* width: the real
+   hairline-streak artifacts merge() produces are now filtered out of the
+   geometry itself (WorldMap.js's _withoutMergeSlivers), which is where
+   that problem actually belonged — an earlier attempt used an 8px stroke
+   here to try to bury them instead, which backfired badly, since a wide
+   stroke makes a hairline artifact *thicker and more visible*, not less.
+   What's left for this stroke to do is only the original, much smaller
+   job: insurance against a sub-pixel antialiasing gap along a shared
+   edge. Unlike the per-country version of this idea (twice abandoned), a
+   path stroking *itself* always aligns exactly with its own fill boundary
+   — same antialiasing pass, not two separately-rendered paths having to
+   agree on where an edge is — so it can only add coverage. */
+.pin-landmass {
+  fill: var(--map-land-muted);
+  stroke: var(--map-land-muted);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* The in-play subset, drawn directly on top of the muted whole-world base
+   above — same relationship as .country vs .country--unplayable outside
+   pin mode, just expressed as two merged layers because pin mode has no
+   per-country paths. The two overlap rather than abut (the base is the
+   *whole* world, not the remainder), so no sub-pixel gap along the region
+   boundary can let the ocean color through. */
+.pin-landmass--playable {
+  fill: var(--map-land);
+  stroke: var(--map-land);
+}
+
+/* Confirm reveals only the target country's own outline — never the pin's
+   actual (possibly wrong) country, which pin mode never shows the shape
+   of at all (inputs.js's map-pin renderer always calls markResult with a
+   null guessId) — so a miss has nothing drawn on the map beyond the
+   pin-to-border line below. */
 .world-map--pin-mode .country--correct {
   fill: var(--correct);
   fill-opacity: 0.6;
@@ -409,20 +465,42 @@ button:disabled {
   stroke-width: 1.5;
 }
 
-/* No stroke here (unlike .country--correct above) — pin mode reveals only
-   the target's own outline after answering, not a wrong guess's, so a
-   miss reads as a plain red patch on the otherwise borderless landmass
-   rather than implying two countries both have "confirmed" outlines. */
-.world-map--pin-mode .country--wrong {
-  fill: var(--wrong);
-  fill-opacity: 0.6;
-}
-
 .pin-marker {
-  r: 3;
   fill: var(--accent);
   stroke: #fff;
+  stroke-width: 0.75;
+  pointer-events: none;
+  /* No `r` here — WorldMap.js sets it directly on every zoom tick,
+     counter-scaling against the current transform so the pin's on-screen
+     size stays constant (bigger at rest, but not growing/shrinking as the
+     player zooms) the same way country borders do via non-scaling-stroke.
+     A CSS `r` here would win over that per SVG2's geometry-property rules
+     and freeze the pin at one size regardless of zoom. */
+}
+
+/* Drawn only after confirm: from the dropped pin either to the nearest
+   point on the target's border ("Region" pin-target mode,
+   revealBorderDistance — shown only for a wrong guess, since a correct one
+   is always already inside, with no "nearest point" worth drawing to) or
+   straight to the capital's own exact point ("Capital" mode,
+   revealCapitalDistance — shown regardless of correct/wrong, since the
+   precise distance is worth seeing either way). A neutral measurement
+   color rather than --wrong/--correct, since it's drawn in both cases. */
+.pin-border-line {
+  stroke: var(--accent);
   stroke-width: 1;
+  stroke-dasharray: 3 2;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+/* The capital's own exact point ("Capital" pin-target mode only) —
+   revealCapitalDistance. --correct (green), same as the target country's
+   own outline in "Region" mode: both mark "this is the actual answer". */
+.capital-marker {
+  fill: var(--correct);
+  stroke: #fff;
+  stroke-width: 0.75;
   pointer-events: none;
 }
 

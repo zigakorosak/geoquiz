@@ -74,7 +74,8 @@ The **games wizard** (`ui/gameWizard.js`) is a sequence of full-screen
 choices, each rendered via the shared `renderChoiceScreen` (`ui/
 screenKit.js`): subject → question type → answer type (→ *how* to answer,
 if that attribute has more than one `answerKinds` entry → *how many
-options*, if multiple choice was picked) → region (→ a sub-region screen
+options*, if multiple choice was picked, or *region vs. capital*, if
+"Drop a pin" was — see "Pin drop" below) → region (→ a sub-region screen
 if the region has children, e.g. Africa → North/Southern Africa) →
 sovereignty → the game itself. Back-navigation is continuation-passing,
 not a history stack: every step function takes a `goBack` closure, and
@@ -230,6 +231,53 @@ America at the traditional Panama/Colombia boundary, so the first three
 are a 3-way split of world-countries' 4 Americas subregions, not 1:1 with
 them). `getRegion(key)` searches both levels and falls back to `"world"`.
 
+A leaf can optionally carry `fitExclude` (a `Set` of item names) — Europe's
+only user so far, currently `{"Russia", "France", "Norway", "Spain",
+"Netherlands", "Portugal"}`. This narrows *only* the map's initial framing
+(`game.js` derives a `focusIds` from it, threaded through to
+`WorldMap`'s `focusIds` — see "Map" below), not the region's own
+`match`/membership: every excluded country is still fully in Europe's
+item count, still rendered, still clickable/playable, exactly as if
+`fitExclude` didn't exist. Without it, fitting the initial view to
+Europe's whole bbox would zoom out to cover whichever member's own
+topology shape reaches furthest — Russia's eastern extent, but also a
+repeating pattern of countries whose single topology shape bundles a
+far-flung overseas territory in with the mainland: France (French Guiana,
+Réunion, ... spanning nearly the full range of longitude and into the
+southern hemisphere), Norway (Svalbard, ~9° further north than its own
+mainland), Spain (the Canary Islands, ~8° south of the mainland), the
+Netherlands (Aruba/Curaçao/Sint Maarten in the Caribbean — by far the
+single biggest outlier of the six, ~56° of longitude and ~20° of latitude
+from the mainland), and Portugal (Madeira and the Azores, ~600km further
+west than the mainland's own westernmost point, and south of it too) —
+nothing like the "standard map of Europe" framing a player expects on
+landing. With all six excluded, the *remaining* members' own natural
+extremes land almost exactly on that standard framing with no further
+hand-picked bounding box needed — verified directly (jsdom, 800×500
+viewport) by projecting Cyprus (anchors the south), Georgia (east),
+Iceland (west), and Finland (north, nowhere near Svalbard) and confirming
+each lands at or just inside the viewport's own edges, while every
+excluded country's own mainland capital (Madrid, Lisbon, Amsterdam, ...)
+still projects comfortably in view. Fit scale (a rough proxy for "how
+zoomed in"), measured incrementally as each was added: 184 (nothing
+excluded) → 291 (+ Russia) → 442 (+ France) → 476 (+ Norway) → 476 (+
+Spain, no further change at that point — France/Norway/Russia alone
+already defined a tighter box, but Spain was kept since it costs nothing
+when it isn't the binding constraint) → 734 (+ Netherlands) → 848 (+
+Portugal). `fitExclude` lets the *starting* zoom/pan look normal while
+leaving what the region actually contains untouched (reachable by
+panning, same as always).
+
+Asia has the same problem for the same reason and the same fix, just with
+one member instead of six: Russia (via `ASIA_BONUS`, above) is native
+`region: "Europe"` in world-countries' own data but spans the antimeridian
+(lon -180 to 179.88 — the topology's full width) regardless of which
+region offers it. `fitExclude: new Set(["Russia"])` is Asia's whole list;
+measured directly, excluding it alone takes the fit scale from 1.25x world
+scale to 2.91x, and the resulting frame's own natural anchors (Kazakhstan
+north, Indonesia south, Japan east, Türkiye west) needed no further
+exclusions the way Europe's did.
+
 America's fourth child, `us-states`, is a different *kind* of entry: it
 has `datasetKey: "us-states"` instead of `match` — it isn't a filter over
 the countries dataset at all, it switches the whole game to a different
@@ -296,14 +344,13 @@ Region and sovereignty are **not** simply chained together into one
 filtered list, and that distinction matters: the wizard computes
 `regionItems` (region match only) separately from the final `dataset.items`
 (region match *and* the sovereignty filter). `game.js` uses `regionItems`
-for the map's hard crop (`filterIds`, below) and `dataset.items` for both
-the quiz pool and the map's soft gate (`playableIds`, below). If both
-filters collapsed into one list, choosing a region with "All Sovereign"
-selected would hard-crop Kosovo/Somaliland/Northern Cyprus out of the map
-entirely whenever they fell inside the chosen region — a hole in Serbia
-instead of a muted shape — which is exactly a bug this split fixed for
-the predecessor "extra territories" toggle (see `LOG.md` for how it was
-caught) and continues to prevent now.
+for the map's initial framing (`focusIds`, below) and `dataset.items` for
+both the quiz pool and the map's playable gate (`playableIds`, below). A
+sovereignty-excluded member of the chosen region (Kosovo/Somaliland/
+Northern Cyprus under "All Sovereign") therefore still counts toward
+where the view opens, exactly as it still renders — just muted and
+unclickable, rather than silently dropping out of the framing it visually
+belongs to.
 
 ### Engine (`core/engine.js`)
 
@@ -348,10 +395,17 @@ Pacific/Caribbean — out of range for what Albers USA's fixed three-conic
 multiplex is built to project, and not what "US States" means here
 anyway). See `scripts/generate-us-states-data.mjs`.
 
-**Infinite horizontal scroll.** An unrestricted world view (no continent
-crop, `"naturalEarth1"` projection — `this.wrapEnabled`, checked once at
-construction) renders three side-by-side copies of the map's content
-instead of one: a "home" copy (the only one with click listeners on its
+**Infinite horizontal scroll.** Any lon/lat-projected view — a continent
+crop and a region-scoped game included, not just an unrestricted World one
+— wraps infinitely left/right (`this.wrapEnabled`, checked once at
+construction, is `false` only for the pre-projected `"identity"`
+projection — US states' fixed Albers multiplex has no periodic lon/lat
+structure to wrap). A cropped region's "world-width" here is just whatever
+that region's own bbox renders to, tiling seamlessly next to itself — it
+doesn't reconstruct a real geographic globe, just guarantees panning never
+hits a wall in any mode. `this.wrapEnabled` gates three side-by-side
+copies of the map's content instead of one: a "home" copy (the only one
+with click listeners on its
 own real `<path>` elements, and the only one with the tiny-country
 hit-area assist system below) flanked by a ghost copy one world-width to
 either side. Ghosts are built from SVG `<use href="#...">` references to
@@ -401,19 +455,20 @@ or more world-widths over. The modulo is a no-op for a home-copy click (or
 whenever wrapping is off), so this doesn't change anything for the
 non-wrapped case — the only one that existed before this feature.
 
-A pan/zoom gesture in progress also toggles a `.world-map--panning` class
-(via `zoomBehavior.on("start"/"end", ...)` — d3-zoom's own dispatched
-gesture-lifecycle events, not native DOM events, so bound on the zoom
-behavior itself rather than the selection) that sets `shape-rendering:
-optimizeSpeed` for the duration — a well-established SVG performance
-technique: drop rendering quality while the player is actively dragging
-and looking at the whole shape moving, not any single edge, in exchange
-for faster per-frame repaints. Repainting ~240 country paths (more,
-counting wrap's ghost copies) at full quality on every drag/wheel tick is
-real work a phone GPU in particular can fall behind on, which is what
-actually reads as "not smooth" — `will-change: transform` on each copy
-group is the complementary compositor hint, telling the browser ahead of
-time which layers move every frame instead of it discovering that mid-drag.
+An earlier version of this also toggled a `.world-map--panning` class
+during an active gesture (via `zoomBehavior.on("start"/"end", ...)`) that
+set `shape-rendering: optimizeSpeed` for the duration — a well-established
+SVG performance technique, dropping rendering quality (no antialiasing)
+for faster per-frame repaints while dragging. Removed: antialiasing turned
+out to be load-bearing, not just cosmetic — with it off, adjacent
+same-color country edges (both pin mode's deliberately-borderless
+countries, see "Pin drop" below, and ordinary bordered countries' own real
+borders) shifted by sub-pixel amounts differently frame to frame and
+flickered against each other, a "z-fighting"-like artifact reported twice
+before the trick was removed outright rather than scoped further.
+`will-change: transform` on each copy group remains — a compositor hint
+telling the browser ahead of time which layers move every frame, unrelated
+to antialiasing.
 
 The map's own colors (`--map-ocean`/`--map-land`/`--map-land-muted`/
 `--map-border` in `style.css`) are deliberately separate variables from
@@ -428,25 +483,65 @@ without touching how buttons/cards look elsewhere (they read fine as-is,
 leaning on their own border + spacing rather than fill-vs-background
 contrast).
 
-Two independent, differently-scoped filters, both optional:
+**One map for every region.** There is no such thing as a regional map
+here: every game renders the *entire* dataset through the *same*
+projection (`fitSize` against the whole `geojson`, never a subset), and a
+region expresses itself as two much smaller things — which features are
+playable, and where the view starts. Picking Europe doesn't build a
+Europe map; it builds the world map, greys out everything that isn't
+Europe, and opens it zoomed to Europe. The rest of the world is a pan or
+a zoom-out away, always.
 
-- `filterIds` — a **hard crop**. Features that don't pass are dropped
-  before the projection is fit, not just hidden, so `fitSize` crops/zooms
-  to just the remaining region. This is how the region step makes the map
-  "only show that region" — `game.js` builds this from `regionItems`
-  (region match only, sovereignty not yet applied) once a specific region
-  is chosen, `null` (no crop, full world) otherwise.
+This replaced an earlier model where a region was a **hard crop**:
+non-members were dropped from the geojson entirely and the projection was
+re-fit to whatever remained. That worked, but it quietly made "zoom" mean
+something different per region, because `scaleExtent`'s `k=1` means
+"whatever `fitSize` produced" — Europe's own fit is ~5.7x tighter than
+the world's, so the same nominal 10x ceiling was ~57x of world scale in a
+Europe game but only 10x in a World game, which is why the World map
+refused to zoom in anywhere near as far. It also needed a second
+projection fit and a derived `scaleExtentMin` purely to let the player
+zoom back out past a narrowed default framing. Both of those disappear
+with a region-independent projection: zoom is now absolute.
+
+- `focusIds` — which features the **initial view frames itself on**, and
+  nothing else. `_defaultTransform` takes their projected bounds and
+  derives a plain zoom/pan transform (`k` = how many times the focus box
+  fits the viewport, clamped into `[MIN_ZOOM, MAX_ZOOM]`, then centred),
+  which is what the map opens at and what a genuine resize resets to.
+  `game.js` builds it from `regionItems` minus `region.fitExclude`
+  (`core/regions.js`) — the six Europe members whose far-flung overseas
+  territories would otherwise wreck the framing. Those six stay fully
+  rendered and fully playable; they're just not what the view centres on.
+  `null` (a World game, or a dataset with no region concept) frames
+  everything, i.e. plain identity.
+- `MIN_ZOOM` / `MAX_ZOOM` — a single absolute zoom range, `[1, 50]`, the
+  same for every region and dataset. `k=1` is always the whole dataset
+  fitted to the viewport; `MAX_ZOOM` is chosen to comfortably exceed the
+  tightest view the old per-region maxima allowed (Europe's ~46x of world
+  scale), so nothing that used to be reachable stopped being reachable —
+  while the World map gained the ability to zoom in properly rather than
+  stopping at 10x a whole-world baseline.
 - `playableIds` — a **soft gate**, always passed by `game.js` (derived
   from whatever `dataset.items` currently is, after all filtering). A
   feature only gets a click listener, normal styling, and a hit-area
-  (below) if it's in this set — *independent of whether the topology
-  itself assigned it an id*. Everything else renders as an inert, muted
-  `.country--unplayable` shape. This is what makes the sovereignty
-  setting work: Kosovo/Somaliland/Northern Cyprus have real, permanent ids
-  in the topology (see "Data"), but only count as playable when "All"
-  (not "All Sovereign") includes them in `dataset.items`. Two shapes
-  (Indian Ocean Ter., Siachen Glacier) never get an id at all and so are
-  never playable regardless of any setting.
+  (below) if it's in this set. A real country that isn't renders as an
+  inert, muted `.country--unplayable` shape — this is what makes the
+  sovereignty setting work: Kosovo/Somaliland/Northern Cyprus have real,
+  permanent ids in the topology (see "Data"), but only count as playable
+  when "All" (not "All Sovereign") includes them in `dataset.items`.
+
+  A feature with **no id at all** is a third case, not a disabled country:
+  two topology shapes (Indian Ocean Ter., Siachen Glacier) are terrain, not
+  governed places, and can never be playable under any setting. They render
+  as `.country--terrain` — the *ordinary* land fill, no pointer events —
+  rather than muted, so they blend into whatever surrounds them. Painting
+  them like a disabled country instead left a stray grey triangle sitting
+  between fully-playable India, Pakistan and China (Siachen Glacier is
+  exactly at that trijunction), which read as a rendering artifact. Pin
+  mode needs the same distinction for the same reason: `_reflow`'s
+  playable-overlay merge includes id-less features (`!f.id ||
+  playableIds.has(f.id)`), so the muted base never shows through at them.
 
 True microstates (Vatican City, Monaco, San Marino, Liechtenstein, Malta,
 ...) and archipelagos/multi-part countries with no single dominant,
@@ -552,17 +647,42 @@ pointer hit-testing even over a larger neighboring country). Built in
   them — still fell through uncaught. See LOG.md for both.)*
 - **Pass 2** builds each qualifying feature's hit-area: every ring point
   of *every part* is projected and passed to `d3-delaunay`'s convex hull
-  (`Delaunay.from(points).hull`), then each hull vertex is pushed outward
-  from the feature's own bbox-center by a fixed `HULL_PADDING` (3px). For
-  a multi-part feature the hull already spans and fills the water between
-  its islands (a straight click between two Maldives atolls, or between
-  Luzon and Mindanao in the Philippines, now lands inside it); the
-  padding on top guarantees even a naturally tiny hull (Maldives' own two
-  atolls sit barely 2.6px apart) ends up comfortably tappable rather than
-  merely "as big as its own coastline already was". For a compact
-  single-blob microstate, the hull is close to the country's own outline,
-  so padding it is effectively the old fixed-size circle, just shaped
-  like the country instead of a perfect circle.
+  (`Delaunay.from(points).hull`, `_computeHull` — unpadded), then each hull
+  vertex is pushed outward from the feature's own bbox-center by
+  `HULL_PADDING` (3px) — `_padHull`, a separate step from computing the
+  hull itself (see below for why). For a multi-part feature the hull
+  already spans and fills the water between its islands (a straight click
+  between two Maldives atolls, or between Luzon and Mindanao in the
+  Philippines, now lands inside it); the padding on top guarantees even a
+  naturally tiny hull (Maldives' own two atolls sit barely 2.6px apart)
+  ends up comfortably tappable rather than merely "as big as its own
+  coastline already was". For a compact single-blob microstate, the hull
+  is close to the country's own outline, so padding it is effectively the
+  old fixed-size circle, just shaped like the country instead of a perfect
+  circle.
+
+  The hull and its padding are split into two steps (`_computeHull`
+  returns the raw hull; `_padHull`, given separately, applies the margin)
+  specifically so the padding can be *re-derived on every zoom tick*
+  (`WorldMap`'s "zoom" handler) rather than baked in once at `_reflow`
+  time. `HULL_PADDING` is a fixed amount in the map's own pre-zoom
+  coordinate space — the same space every country path's `d` is in —
+  which the whole home/ghost group then visually scales by the current
+  zoom transform. Baking a *fixed* padding into the hull's static geometry
+  therefore means its on-screen size scales right along with zoom: at the
+  default view a 3px assist margin is unnoticeable, but zoomed in to
+  `MAX_ZOOM` (50x) that same fixed value reads as ~150px — a hit-area that
+  dwarfs the country's own real border entirely, reported directly as
+  "the borders of any selected country are strange... some are oddly
+  missing" (the border wasn't missing, its highlight was being swallowed
+  by its own hit-area). `_hullBaseById` caches each qualifying country's
+  *unpadded* hull + centroid once per `_reflow`; the "zoom" handler
+  re-applies `_padHull` with `HULL_PADDING / transform.k` on every tick —
+  cheap (a map over already-known vertices), unlike re-running the
+  Delaunay hull itself — so the assist margin stays a genuinely constant
+  few px on screen the same way the pin marker's own radius does (`PIN_RADIUS_PX
+  / transform.k`, above), while the hull's own *shape* still scales
+  naturally with zoom exactly like a country path would.
 
 A hull built this way can, for some qualifying countries, still nominally
 reach toward a real neighbor — Brunei's two enclaves are separated by
@@ -718,29 +838,225 @@ on real-browser layout). The widget reports `containingId` (or `null`,
 over open ocean or unplayable territory) via `onSelect`, exactly like
 map-click's country id — so `QuizSession`/`attributes.js`'s existing
 id-equality `checkAnswer` needs no pin-specific logic at all; only the
-*feedback* differs. Every country renders identically (no border between
-them, `.world-map--pin-mode .country`) until confirm — the reveal only
-ever draws *one* outline, the target's own (`.world-map--pin-mode
-.country--correct` gets `stroke`; `.country--wrong` deliberately doesn't,
-just a red fill with no outline of its own, so a miss never reads as "two
-countries both got confirmed borders"). `showResult` additionally calls
-the new `map.distanceToBorderKm(lon, lat, id)` (`WorldMap.js`) — 0 if the
-pin's own lon/lat already falls inside the target's shape (`pointInFeature`,
-reused from the `containingId` lookup above), otherwise the closest
-distance from that point to any segment of *any* ring of *any* part of the
-target's real outline (a local tangent-plane flattening around the pin's
-own latitude, `lonLatToLocalKm`, turns each segment's closest-point check
-into plain 2D geometry — accurate enough for a "how far off" readout given
-border segments are short relative to the earth's curvature, without
-pulling in a full geodesic library) — and appends that to the feedback
-text ("You were 340 km from its border"). This intentionally measures
-against the country's actual *shape*, not its centroid (the old
-`haversineKm`-to-`item.latlng` approach): a pin landing deep inside a large
-or oddly-shaped country would otherwise report "hundreds of km away" from
-a guess that was, in fact, correct. There's no reclick-to-confirm shortcut
-here (unlike map-click/multiple-choice) — repositioning the pin before
-confirming is just another click anywhere, always reported via `onSelect`
-again, never itself a confirm.
+*feedback* differs.
+
+Every country needs to render as one seamless, undifferentiated landmass
+— no borders, no per-country hover feedback, nothing that gives away a
+shape or edge a click could be scored against. Two earlier attempts tried
+to fake this by giving every individual per-country `<path>` the exact
+same fill (so they'd blend together): the first left a hairline seam of
+ocean color along every real border, since two adjacent paths of
+identical fill still anti-alias their shared edge *independently* — a
+gap that briefly disappeared while panning, purely as a side effect of an
+unrelated `shape-rendering: optimizeSpeed` panning trick that happened to
+turn antialiasing off (since removed outright, see "Smoothness" above);
+the second gave the base country rule a same-color `stroke` wide enough
+to paint over that seam, which worked at rest but was reported to still
+show a seam under some specific pan+zoom states — a wider matching stroke
+only reduces how *often* a sub-pixel antialiasing mismatch is visible, it
+can't rule it out for every possible alignment. Both were fighting the
+same symptom without addressing why it existed: rendering N independent
+`<path>`s that merely happen to share a fill color is never actually "one
+shape," just N shapes that usually look like one.
+
+`pinLandmass` (`WorldMap.js`) sidesteps the whole class of bug instead:
+merged `<path>`s built via `topojson.merge()` (not `feature()` — merge
+works at the arc level, where topojson can actually tell which arcs are
+shared between two merged features and dissolve them, something no longer
+possible once geometry has been converted to projected GeoJSON
+coordinates) over the raw topology geometries (`_rawGeometries`, kept
+index-aligned with `geojson.features`). This eliminates the *previous*
+bug entirely — there are no longer two independently-antialiased adjacent
+paths racing to agree on where a shared edge is, because there's only one
+path.
+
+There are in fact two such paths, layered: `pinLandmass`, the whole
+dataset merged and muted, and `pinPlayableLandmass`, the currently-playable
+subset merged in the normal land color, drawn straight on top. That's how
+pin mode carries the playable/unplayable distinction that per-country
+paths carry everywhere else (a region game's out-of-region land reads as
+muted, and a pin dropped there resolves to nothing — see
+`_findContainingId`'s `_playableIds` gate). The muted layer is
+deliberately the *whole* world rather than only the non-playable
+remainder, so the two layers overlap along the region boundary instead of
+merely abutting — no sub-pixel gap between them can let the ocean color
+through as a seam. In a World game the top layer simply covers the bottom
+one entirely.
+
+It doesn't eliminate everything by itself, though: `merge()`'s own output
+contains two **degenerate hairline polygons** — artifacts of dissolving
+shared arcs that don't perfectly cancel, not real geography. Measured at
+an 800×500 fit: one spans 799.6px (the *entire* map width) at 0.29px
+thick, the other 604.0px at 1.67px. They render as thin bright streaks of
+land across open ocean: invisible at the default zoom, but they scale with
+the zoom transform like everything else, so by the far end of
+`scaleExtent` they're several px thick and read exactly like a stray
+border line — which is how they surfaced ("borders come back if you zoom
+in enough / pan right enough"). `_withoutMergeSlivers` drops them,
+identifying the shape by **extreme elongation that also spans a large
+fraction of the map** (`MERGE_SLIVER_MIN_ASPECT` / `MERGE_SLIVER_MIN_SPAN_FRACTION`
+— both conditions, never either alone; see their own comments for the
+measured separation and why aspect ratio rather than an absolute px
+thickness). Only whole polygons whose *outer* ring is degenerate are
+dropped, and both real artifacts are single-ring polygons, so nothing is
+ever cut out of the interior of a legitimate shape.
+
+A note on what *didn't* work, since it's a tempting wrong turn: an earlier
+attempt tried to bury these artifacts under a very wide (8px) matching-
+color `stroke` on `pinLandmass` rather than removing them from the
+geometry. That backfired — a wide stroke makes a hairline artifact
+*thicker and more visible*, not less, which is the opposite of the intent.
+A small matching stroke remains on `pinLandmass` (see style.css), but only
+for the original, much narrower job of insuring against a sub-pixel
+antialiasing gap; it's not what handles the artifacts. (Filtering by
+*area* was also considered and rejected before settling on elongation:
+Vatican City measures smaller by true spherical area than several sliver
+rings, so an area threshold able to catch every artifact would risk
+deleting real tiny countries.)
+
+Crucially, pin mode builds **no per-country `<path>` elements at all** —
+`WorldMap`'s per-feature loop skips creating them outright, and skips
+their ghost `<use>` clones too (241 paths + 482 clones → 0 on the world
+map, a large DOM reduction as a bonus). Several earlier rounds instead
+created all of them and tried to *hide* them with CSS, which kept failing
+in ways that were hard to localize, and was fragile in principle
+regardless: `.world-map--clickable .country:not(...):hover` outranks any
+pin-mode rule on specificity, so "they stay invisible" rested on a subtle
+argument about unpainted shapes not receiving pointer events. Not creating
+the elements retires that entire class of bug — there is no element that
+*could* paint a country border, so no stylesheet rule can bring one back.
+Two small pieces of bookkeeping follow from it: `_playableIds` (a plain
+`Set`) now carries the playable gate that `featuresById`'s keys used to
+double as, since pin mode populates no such map; and `revealPath`, one
+shared spare `<path>`, is what `markResult` draws the post-confirm target
+into (`_mark`/`_forEachMarked`/`clearMarks` branch on `pinMode` for this,
+and `_reflow` re-projects it while it's showing). Only one feature can be
+marked at a time that way, which is all pin mode ever asks for.
+`pinLandmass` is inserted first in both the home group and each ghost copy
+(bottom of paint order — see "Infinite horizontal scroll" above for what a
+ghost copy even is), so it's always the base layer.
+
+Confirm reveals only the *target's* own outline, in an actually-visible
+`stroke` color (`.country--correct`, same as map-click, drawn into
+`revealPath` on top of `pinLandmass`). Pin mode never
+reveals the country the pin actually landed in when wrong, unlike
+map-click — `inputs.js`'s `showResult` always calls `map.markResult(null,
+correctId)`, so only ever the target gets marked; the CSS has no pin-mode
+`.country--wrong` rule to match, since nothing
+ever applies that class here. `showResult` additionally
+calls the new `map.revealBorderDistance(id)` (`WorldMap.js`), which does
+two things at once: returns the distance (km) from the last-dropped pin to
+the nearest point on the target's own border — 0 if the pin already falls
+inside it (`pointInFeature`, reused from the `containingId` lookup above)
+— and, whenever that distance is nonzero, draws a literal `<line>` on the
+map from the pin to that nearest point (`.pin-border-line`, re-projected
+on every `_reflow` as long as it's showing, exactly like the pin marker
+itself), so the km figure in the feedback text has a visual counterpart
+rather than being just a number. The nearest-point search (`featureNearestBorderPoint`)
+checks every segment of every ring of every part of the target's real
+outline (a local tangent-plane flattening around the pin's own latitude,
+`lonLatToLocalKm`/`localKmToLonLat`, turns each segment's closest-point
+check into plain 2D geometry and back — accurate enough for a "how far
+off" readout given border segments are short relative to the earth's
+curvature, without pulling in a full geodesic library). This intentionally
+measures against the country's actual *shape*, not its centroid (the
+original version of this feature used a `haversineKm`-to-`item.latlng`
+calculation instead): a pin landing deep inside a large or oddly-shaped
+country would otherwise report "hundreds of km away" from a guess that
+was, in fact, correct.
+
+Everything above describes **"Region"** pin-target scoring, the original
+behavior and still the default. A follow-up wizard step, shown only after
+"Drop a pin" is picked (`gameWizard.js`'s `showPinTargetStep`, parallel to
+multiple-choice's "how many options" step), offers **"Capital"** instead —
+scoring the same pin drop against the target's exact capital point
+(`capitalLatLng`, see "Data" below) rather than its shape. This is
+independent of which subject/question is active: whether the round asked
+for a country's name or its capital's name, the pinned target item is the
+same either way, just scored differently. Correctness itself changes, not
+just the feedback: a pin can land inside the *right country* and still be
+wrong under "Capital" scoring if it's too far from the capital
+(`CAPITAL_CORRECT_RADIUS_KM`, 50km — roughly a large metro area's own
+extent, tight enough to require actually knowing where the capital is, not
+just the country, generous enough not to demand pixel-perfect clicking).
+Reusing `QuizSession`/`attributes.js`'s plain `guessId === item.id`
+`checkAnswer` unchanged (rather than teaching the engine a second,
+distance-based notion of correctness) is what keeps this a purely
+`inputs.js`-level concern: `onSelect` is called with `item.id` itself
+when the pin's real distance to `capitalLatLng` is within the radius
+(forcing a match), or — critically, *never* `null`, which specifically
+means "no selection yet" and disables the Confirm button (`game.js`) — a
+dedicated sentinel (`TOO_FAR_FROM_CAPITAL`) otherwise, guaranteed to never
+equal a real item id, when the pin is nonetheless in the right country;
+an actually-wrong country's own `containingId` still gets reported as-is
+in that case, for the same reason (a genuinely wrong-but-definite guess,
+not a pending one). `showResult` calls `map.revealCapitalDistance(item.
+capitalLatLng)` instead of `revealBorderDistance` under this mode — real
+`haversineKm` great-circle distance (not the border case's local tangent-
+plane approximation, since a capital can be genuinely far from the pin,
+where flattening the earth locally would start introducing real error),
+plus a small `.capital-marker` at the capital's own exact point (there's
+no country-outline reveal to imply where it is, the way "Region" mode's
+`.country--correct` does) and a line to it — shown regardless of correct
+or wrong, since the precise distance is worth seeing either way, unlike
+"Region" mode's line (only drawn for a miss, since correct there always
+means the pin was already inside, i.e. 0km).
+
+Clicking the just-dropped pin again confirms immediately, the pin-mode
+equivalent of map-click/multiple-choice's reclick-to-confirm. This is
+decided **geometrically, inside the whole-map click listener itself**:
+that handler already folds the click back into the home copy's own
+coordinate space (step 3 above), so it simply measures the distance from
+there to the current pin's projected position, scales it to screen px by
+the live `transform.k`, and treats anything within `PIN_RADIUS_PX +
+PIN_CONFIRM_PADDING_PX` as a confirm rather than a re-drop. One check,
+before the pin-drop path runs.
+
+It's worth recording why it is *not* an invisible clickable circle sitting
+over the pin, which is the obvious design and was the original one. That
+version put a `pinConfirmHitArea` element on the home copy — and the pin
+the player actually sees is frequently *not* the home copy's. Every region
+wraps now, and Asia's own default framing renders via a ghost copy with no
+panning at all, so clicking the visible pin hit nothing and fell through to
+"drop a new pin here". Cloning the circle into each ghost group didn't fix
+it either: ghost groups are `pointer-events: none` wholesale, and the clone
+had no class to re-enable it. Rather than keep chasing `<use>` shadow-tree
+hit-testing semantics, the geometric test sidesteps hit-testing entirely —
+it is automatically correct for the home copy and every ghost at once,
+because the coordinate folding already normalized them. The element, its
+ghost clone, its per-tick radius counter-scaling, its CSS, and the
+`_pinConfirmClickInFlight` flag that existed to stop the confirm click from
+also re-dropping the pin all went away with it; the handler just returns
+early instead.
+
+The confirming click still deliberately keeps bubbling out to `game.js`'s
+root "click anywhere advances" listener, because `attemptConfirm` arms a
+one-shot `suppressNextRootAdvance` flag expecting precisely that click to
+arrive and consume it (see "Round state machine" below). An earlier version
+called `stopPropagation()` here, which left the flag armed so it swallowed
+the *next* click — the player's actual advance click — making a round cost
+four clicks instead of three.
+
+Clicking anywhere else on the map (not the pin) still just repositions
+it, reported via `onSelect` again, exactly as before.
+
+So a pin-drop round is three clicks: drop the pin, confirm (re-click the
+pin without moving, or the Confirm button), advance (anywhere in the
+round — the map including open sea, or the Next button).
+
+The dropped-pin marker's own radius stays a constant on-screen size
+regardless of zoom level, rather than scaling with the map like the pin's
+raw SVG geometry otherwise would (it lives inside the same zoomed/panned
+`<g>` as every country path). `vector-effect: non-scaling-stroke` — the
+trick country borders use for the same problem — only applies to
+*strokes*, not a circle's own radius, so `WorldMap`'s "zoom" handler
+instead sets the marker's `r` attribute directly on every tick, to
+`PIN_RADIUS_PX / transform.k`: at the default `k=1` this is just
+`PIN_RADIUS_PX`, and at any other `k` the group's own scaling cancels it
+back out to the same rendered size. (Style-sheet `r` is deliberately
+*not* set for `.pin-marker` — SVG2 treats `r` as a CSS geometry property,
+and a stylesheet value would win over the JS-set attribute, freezing the
+marker at one size regardless of zoom.)
 
 Only meaningful for a dataset with real geographic coordinates:
 `gameWizard.js`'s `availableAnswerKinds` prunes `"map-pin"` back out of
@@ -809,16 +1125,53 @@ and per-round breakdown.
 
 ## Data
 
-Generated by `scripts/generate-data.mjs` (`npm run generate-data`) from two
-upstream npm packages (installed as `devDependencies`, not shipped at
-runtime):
+Generated by `scripts/generate-data.mjs` (`npm run generate-data`) from
+three upstream npm packages (installed as `devDependencies`, not shipped
+at runtime):
 
 - **world-countries** (MIT) — name, capital, region, lat/lng, flag emoji,
   ISO codes, keyed by `ccn3` (ISO 3166-1 numeric).
 - **world-atlas** (ISC) — topojson world map at 50m resolution, country
   features keyed by the same `ccn3` numeric id.
+- **cities.json** (CC-BY-4.0, GeoNames-derived — the one non-permissive-
+  license source this project uses; only the lat/lng *values* it
+  contributes end up in the shipped data, not the package itself) —
+  ~171,000 world cities with lat/lng, keyed by ISO 3166-1 alpha-2 country
+  code. Used only to resolve each country's `capitalLatLng` (see below) —
+  world-countries' own `latlng` field is a rough country centroid, not
+  the capital's actual location (Australia's `latlng`, for instance, sits
+  in central Australia, nowhere near Canberra).
 
-The script joins the two on `ccn3` and writes `public/data/countries.json`
+`capitalLatLng` is resolved by joining each country's own `capital` name
+(from world-countries) against cities.json's entries for that same
+country code, after normalizing both (accents/case-folding, a `city of `
+prefix strip for entries like "City of San Marino"/"City of Victoria"
+[Hong Kong], `st.`/`st ` → `saint` for "St. George's"[Grenada]/"St. Peter
+Port"[Guernsey], apostrophe variants stripped for "Sana'a"[Yemen]/
+"Nuku'alofa"[Tonga]). This resolves the vast majority of countries
+automatically; a small `CAPITAL_LATLNG_OVERRIDES` table (keyed by
+`name.common`, checked *before* the join so it always wins over an
+otherwise-ambiguous case) covers the handful cities.json doesn't resolve
+by name — Myanmar (different transliteration, "Nay Pyi Taw"), Western
+Sahara ("Laayoune"), Kiribati ("Tarawa", not "South Tarawa"), South
+Georgia (no separate entry for its capital, King Edward Point — Grytviken,
+the only real settlement, sits right next to it), British Indian Ocean
+Territory (Diego Garcia isn't in cities.json at all — public-knowledge
+coordinates), and the United States (Washington, D.C. specifically, not
+one of the many other US cities also named Washington a plain join would
+ambiguously match). Somaliland/Northern Cyprus/Kosovo (the hand-curated
+extra territories below) reuse their own already-set `latlng` directly as
+`capitalLatLng` rather than joining at all — Somaliland's and Northern
+Cyprus's `latlng` were already, in practice, their capitals' own precise
+coordinates (verified directly against each real-world value, not
+assumed); Kosovo's is world-countries' own centroid, not Pristina's
+coordinates specifically, but close enough given how small Kosovo's whole
+territory is. The generator logs any country with a capital but no
+resolved `capitalLatLng` after both the join and the override table, so a
+future upstream data change that breaks the join surfaces immediately
+rather than silently shipping a `null`.
+
+The script joins world-countries and world-atlas on `ccn3` and writes `public/data/countries.json`
 (235 standard countries with both attribute data *and* a map shape) and
 `public/data/world-50m.json` (the full topology — patched, see below).
 
@@ -868,8 +1221,9 @@ us-states.json` + `us-states-topology.json`.
 - Games flow: subject (only Countries built; Capitals/Flags/Emblems/
   Currencies/Cities listed as "coming soon") → question type → answer
   type (→ how to answer, for name: type it or multiple choice, for
-  location: click the map or drop a pin → how many options, 2–6, if
-  multiple choice) → region (Europe/Asia/Oceania/World directly, or
+  location: select a region or drop a pin → how many options, 2–6, if
+  multiple choice, or region-vs-capital scoring, if drop a pin) → region
+  (Europe/Asia/Oceania/World directly, or
   Africa/America via a sub-region screen: North America/South America/
   Caribbean/**US States**) → sovereignty (All / All Sovereign — skipped
   for US States, which has no such concept) → play. Every region and
@@ -878,16 +1232,18 @@ us-states.json` + `us-states-topology.json`.
   navigation all the way to home.
 - Two datasets: world countries (235 standard + 3 opt-in extra territories
   under "All") and US states (50 states + DC, reached via Region → America
-  → US States rather than the Subject step — see "Regions" above). For
-  countries, the map itself is cropped to the chosen region, not just
-  which countries are asked about.
+  → US States rather than the Subject step — see "Regions" above). Within
+  a dataset every region shares one and the same map: picking a region
+  greys out everything outside it and opens the view zoomed to it, rather
+  than cropping the map down (see "Map" above).
 - Two attributes: name, location. Four answer styles across them: type
-  the name, pick the name from 2–6 multiple-choice options, click the
-  map, or drop a pin on a borderless map (reveals the correct outline and
-  a distance-from-target figure on confirm; not offered for US states,
-  see "Widget registries" above). Two mode pairs: name→location (click
-  the country, or drop a pin) and location→name (typed or multiple
-  choice).
+  the name, pick the name from 2–6 multiple-choice options, select a
+  region, or drop a pin on a borderless map (reveals a distance figure on
+  confirm, scored against either the target's region or its exact capital
+  point — a follow-up choice specific to pin-drop, see "Pin drop" above;
+  not offered for US states, see "Widget registries" above). Two mode
+  pairs: name→location (select the region, or drop a pin) and
+  location→name (typed or multiple choice).
 - Select → confirm → result → next round flow: pick a country, a text
   guess, a multiple-choice option, or a pin location, confirm via the
   button, Enter, or re-clicking the same selection (pin drop has no
@@ -913,12 +1269,9 @@ us-states.json` + `us-states-topology.json`.
 
 ## Possible next steps (not yet built)
 
-- More attributes: capital (data already present in `countries.json`,
-  just needs a registry entry + reused `text-guess` widget), flag (needs
-  an `image` prompt widget) — and the other five subjects already listed
-  (disabled) in the subject step.
-- A pin-drop / lat-lng answer mode as an alternative to click-the-shape,
-  added to `location`'s `answerKinds`.
+- More attributes: flag (needs an `image` prompt widget) — and the other
+  four remaining subjects already listed (disabled) in the subject step
+  (capital is done; Countries and Capitals both play against it).
 - A multiple-choice variant for `location` (show N candidate countries,
   pick which one matches the prompt) — not built; today multiple choice
   only exists for `name`.
@@ -930,9 +1283,12 @@ us-states.json` + `us-states-topology.json`.
 
 ## Project conventions
 
-- **Docs**: exactly two markdown files — this one (design/overview) and
-  `LOG.md` (chronological history of what changed and why). Don't add more
-  `.md` files; extend these instead.
+- **Docs**: four markdown files, each with a distinct job — this one
+  (design/overview), `LOG.md` (chronological history of what changed and
+  why), `MISTAKES.md` (process lessons: what went wrong while getting
+  there, and the verification techniques that worked — read it before a
+  debugging round), and `README.md` (the outward-facing project intro).
+  Don't add further `.md` files; extend these instead.
 - **Archiving**: after a significant change, snapshot the project with
   `npm run archive -- <short-label>` (or `scripts/archive.sh
   <short-label>`). This tars the whole project (excluding `node_modules`,

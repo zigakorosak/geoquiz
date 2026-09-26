@@ -14,6 +14,62 @@ import { writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
 import countries from "world-countries";
+import citiesData from "cities.json" with { type: "json" };
+
+// --- Capital coordinates ---------------------------------------------------
+//
+// world-countries' own `latlng` field is each country's rough centroid, not
+// its capital's location (e.g. Australia's `latlng` sits in central
+// Australia, nowhere near Canberra) — no upstream package used elsewhere in
+// this script carries real capital coordinates. cities.json (GeoNames-
+// derived, CC-BY-4.0 — the one non-permissive-license source this project
+// uses; only its lat/lng values end up in the shipped data, not the package
+// itself) does, joined here by (ISO 3166-1 alpha-2 code, normalized city
+// name) against each country's own `capital` field. Covers the vast
+// majority of countries automatically; the handful cities.json doesn't
+// resolve by name (a different transliteration, or genuinely absent) get an
+// explicit override below, sourced from cities.json itself wherever it has
+// the place under a different name, or public knowledge otherwise.
+function normalizeCityName(name) {
+  return name
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "") // strip accents
+    .replace(/^city of /, "") // "City of San Marino" / "City of Victoria" (Hong Kong)
+    .replace(/\bst\.?\b/g, "saint") // "St. George's" / "St. Peter Port" -> cities.json spells both "Saint ..."
+    .replace(/['’‘]/g, "") // "Sana'a"/"Nuku'alofa" -> "sanaa"/"nukualofa", matching cities.json's own spellings (no inserted space, unlike other punctuation below) — cities.json itself is inconsistent about which of the three it uses for the same kind of name
+    .replace(/[^a-z0-9]+/g, " ")
+    .trim();
+}
+
+const citiesByCountry = new Map();
+for (const city of citiesData) {
+  if (!citiesByCountry.has(city.country)) citiesByCountry.set(city.country, []);
+  citiesByCountry.get(city.country).push(city);
+}
+
+// Keyed by world-countries' own `name.common`, checked before the
+// normalized-name join below (so it always wins, e.g. for the US, where a
+// plain "Washington" join would otherwise ambiguously match one of many
+// same-named US cities rather than specifically Washington, D.C.).
+const CAPITAL_LATLNG_OVERRIDES = {
+  Myanmar: [19.745, 96.12972], // Naypyidaw / "Nay Pyi Taw" in cities.json
+  "Western Sahara": [27.1418, -13.18797], // El Aaiún / "Laayoune" in cities.json
+  "South Georgia": [-54.28111, -36.5092], // King Edward Point has no separate entry in cities.json; Grytviken, the only real settlement on the island, sits right next to it
+  "British Indian Ocean Territory": [-7.3195, 72.4229], // Diego Garcia; not in cities.json at all, public-knowledge coordinates
+  Kiribati: [1.3278, 172.97696], // South Tarawa / "Tarawa" in cities.json
+  "United States": [38.89511, -77.03637], // Washington, D.C.'s own cities.json entry (admin1 "DC"), not the ambiguous plain-name join
+};
+
+function findCapitalLatLng(name, cca2, capital) {
+  if (!capital) return null;
+  if (CAPITAL_LATLNG_OVERRIDES[name]) return CAPITAL_LATLNG_OVERRIDES[name];
+  const candidates = cca2 ? citiesByCountry.get(cca2) : null;
+  if (!candidates) return null;
+  const target = normalizeCityName(capital);
+  const hit = candidates.find((c) => normalizeCityName(c.name) === target);
+  return hit ? [Number(hit.lat), Number(hit.lng)] : null;
+}
 
 const MAP_RESOLUTION = "50m"; // one of: 110m (coarse), 50m (medium), 10m (fine, large)
 
@@ -59,6 +115,11 @@ const EXTRA_TERRITORIES = [
       region: kosovoSource.region,
       subregion: kosovoSource.subregion,
       latlng: kosovoSource.latlng,
+      // world-countries' own centroid, not Pristina's own coordinates
+      // specifically (no cca2 means it can't join against cities.json the
+      // normal way) — close enough given how small Kosovo's whole territory
+      // is (~10,900 km²) for this to still be a reasonable stand-in.
+      capitalLatLng: kosovoSource.latlng,
       flagEmoji: kosovoSource.flag,
       independent: kosovoSource.independent,
       area: kosovoSource.area,
@@ -75,7 +136,8 @@ const EXTRA_TERRITORIES = [
       capital: "Hargeisa",
       region: "Africa",
       subregion: "Eastern Africa",
-      latlng: [9.4942, 44.0269],
+      latlng: [9.4942, 44.0269], // already Hargeisa's own coordinates, not a separate country-wide centroid
+      capitalLatLng: [9.4942, 44.0269],
       flagEmoji: null,
       independent: false,
       area: 176120,
@@ -92,7 +154,8 @@ const EXTRA_TERRITORIES = [
       capital: "North Nicosia",
       region: "Europe",
       subregion: "Southern Europe",
-      latlng: [35.1856, 33.3823],
+      latlng: [35.1856, 33.3823], // already North Nicosia's own coordinates
+      capitalLatLng: [35.1856, 33.3823],
       flagEmoji: null,
       independent: false,
       area: 3355,
@@ -137,6 +200,7 @@ const gameCountries = countries
     region: c.region,
     subregion: c.subregion,
     latlng: c.latlng,
+    capitalLatLng: findCapitalLatLng(c.name.common, c.cca2, c.capital?.[0] ?? null),
     flagEmoji: c.flag,
     independent: c.independent,
     area: c.area,
@@ -160,6 +224,17 @@ console.log(
   `Wrote ${gameCountries.length} countries to public/data/countries.json (${gameCountries.length - extraCount} standard + ${extraCount} extra territories)`
 );
 console.log(`Wrote map topology to public/data/world-${MAP_RESOLUTION}.json`);
+
+const missingCapitalLatLng = gameCountries.filter((c) => c.capital && !c.capitalLatLng);
+if (missingCapitalLatLng.length) {
+  console.log(
+    `\n${missingCapitalLatLng.length} countries have a capital but no capitalLatLng — cities.json's normalized-name join didn't find a match and there's no CAPITAL_LATLNG_OVERRIDES entry either:`
+  );
+  for (const c of missingCapitalLatLng) console.log(`  - ${c.name} (capital: ${c.capital})`);
+} else {
+  console.log(`\nEvery country with a capital has a resolved capitalLatLng.`);
+}
+
 if (stillUnmatched.length) {
   console.log(
     `\n${stillUnmatched.length} map shapes have no matching country record and are not real governed territories, so they stay excluded (rendered muted, never playable):`

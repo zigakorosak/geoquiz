@@ -6,7 +6,7 @@
 // (US states) reuses it with only its `projection` config differing.
 
 import { geoNaturalEarth1, geoIdentity, geoPath } from "d3-geo";
-import { feature, mesh } from "topojson-client";
+import { feature, mesh, merge } from "topojson-client";
 import { zoom, zoomIdentity } from "d3-zoom";
 import { select } from "d3-selection";
 import { Delaunay } from "d3-delaunay";
@@ -112,6 +112,65 @@ const HULL_PADDING = 3;
 // on-screen at all times, not just barely touching it, or the player
 // would be looking at content they can't tap until the next snap.
 const WRAP_WINDOW = 0.5;
+// Zoom bounds, in units of "the whole dataset fitted to the viewport" — so
+// k=1 is always the entire world (or the entire US states map), whatever
+// region is being played. This is only meaningful because the projection
+// itself is now region-independent: every game fits the *same* full
+// topology and expresses its region as a starting zoom/pan transform
+// instead (see _defaultTransform). Previously each region re-fit the
+// projection to its own bounds, which made k=1 mean something different
+// per region and capped World-map zoom-in far short of what a continent
+// game allowed — the same "10x" was 10x a much wider baseline.
+//
+// MAX_ZOOM is set so the tightest reachable view is at least as detailed
+// as the old per-region maximum: Europe used to fit at ~4.6x the world
+// fit's scale and allowed 10x on top of that, so ~46x world-scale was
+// already reachable. 50 clears that with a little headroom.
+const MIN_ZOOM = 1;
+const MAX_ZOOM = 50;
+// The dropped-pin marker's on-screen radius (px), held constant regardless
+// of zoom level — see the "zoom" handler below, which counter-scales the
+// SVG `r` attribute against the current transform's scale so the pin
+// neither grows when zooming in nor shrinks when zooming out, the same
+// way every country border stays a constant width via non-scaling-stroke
+// (a technique that only applies to strokes, not a circle's own radius,
+// hence doing it by hand here instead).
+const PIN_RADIUS_PX = 4;
+// How much bigger (px) the pin's click-to-confirm hit-area is than the
+// marker's own visible radius — generous on purpose, since the visible
+// dot is deliberately small (see above) and re-clicking it precisely
+// would otherwise be an unreasonably fiddly gesture, especially on touch.
+const PIN_CONFIRM_PADDING_PX = 10;
+// Pin mode's merged landmass (`topojson.merge()`, see _reflow) comes out
+// with a couple of degenerate hairline polygons — artifacts of dissolving
+// shared arcs that don't perfectly cancel, not real geography. Measured
+// directly against the world topology at an 800×500 fit: one spans
+// 799.6px (the *entire* map width) at 0.29px tall, another 604.0px at
+// 1.67px tall, with 10 and 43 points respectively. Both render as thin
+// bright streaks of land across open ocean — sub-pixel and so invisible at
+// the default zoom, but they scale with the zoom transform like everything
+// else, so by the far end of `scaleExtent` they're several px thick and
+// read exactly like a stray border line, which is what surfaced them.
+//
+// These two thresholds identify that shape — extreme elongation that
+// *also* spans a large fraction of the map — together, never either alone,
+// because either one alone would catch real geography: Antarctica is
+// legitimately wide-and-short, so a pure aspect test would drop it; and
+// genuinely tiny real islands are extremely thin without spanning
+// anything, so a pure thinness test would drop those.
+//
+// Aspect ratio rather than an absolute px thickness, deliberately: a
+// thickness cutoff has to be re-justified per viewport (the same artifact
+// measures 1.67px thick at an 800×500 fit but over 2px at 1920×1080,
+// which silently let one of the two through when this was first written
+// that way), whereas aspect ratio is scale-invariant — one measurement
+// characterizes every viewport. Measured across every polygon spanning
+// >10% of the map: the two artifacts sit at aspect 2799 and 361, the
+// widest real feature (Antarctica) at 11.2, and nothing else above 2.4.
+// A cutoff of 50 sits in that empty gap with a 7x margin below the
+// nearest artifact and a 4.5x margin above Antarctica.
+const MERGE_SLIVER_MIN_ASPECT = 50;
+const MERGE_SLIVER_MIN_SPAN_FRACTION = 0.1; // of the larger viewport dimension
 
 // Standard even-odd ray-casting point-in-polygon test, run directly on raw
 // lon/lat ring coordinates (pin mode's `_findContainingId` is the only
@@ -147,6 +206,20 @@ function pointInFeature(lon, lat, feature) {
 
 const EARTH_RADIUS_KM = 6371;
 
+// Real great-circle distance (km) between two [lon, lat] points — unlike
+// the local-plane approximation below, used wherever the two points might
+// be genuinely far apart (revealCapitalDistance: a pin dropped anywhere in
+// a large country vs. its capital), where that approximation's flat-earth
+// assumption would start introducing real error.
+function haversineKm([lon1, lat1], [lon2, lat2]) {
+  const rad = Math.PI / 180;
+  const dLat = (lat2 - lat1) * rad;
+  const dLon = (lon2 - lon1) * rad;
+  const a =
+    Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLon / 2) ** 2;
+  return 2 * EARTH_RADIUS_KM * Math.asin(Math.min(1, Math.sqrt(a)));
+}
+
 // Flattens lon/lat to a local tangent-plane xy (km) around a fixed
 // reference latitude, purely so a border segment's closest point can be
 // found with plain planar geometry — good enough for a "how far off was
@@ -157,45 +230,62 @@ function lonLatToLocalKm(lon, lat, refLat) {
   return [lon * rad * Math.cos(refLat * rad) * EARTH_RADIUS_KM, lat * rad * EARTH_RADIUS_KM];
 }
 
-// Distance (km, via the local-plane approximation above) from (lon, lat) to
-// the nearest point on the segment [lon1,lat1]-[lon2,lat2], clamped to the
-// segment itself (not the infinite line through it).
-function pointToSegmentKm(lon, lat, [lon1, lat1], [lon2, lat2]) {
-  const [px, py] = lonLatToLocalKm(lon, lat, lat);
-  const [ax, ay] = lonLatToLocalKm(lon1, lat1, lat);
-  const [bx, by] = lonLatToLocalKm(lon2, lat2, lat);
+// Inverse of the above, at the same reference latitude used to flatten the
+// points being compared — turns a closest-point-on-segment result (found in
+// local xy) back into a real lon/lat the map can actually plot a line to.
+function localKmToLonLat(x, y, refLat) {
+  const rad = Math.PI / 180;
+  return [x / (rad * Math.cos(refLat * rad) * EARTH_RADIUS_KM), y / (rad * EARTH_RADIUS_KM)];
+}
+
+// Nearest point (lon/lat) on the segment [lon1,lat1]-[lon2,lat2] to (lon,
+// lat), clamped to the segment itself (not the infinite line through it),
+// plus the distance (km) to it — both via the local-plane approximation
+// above, using the query point's own latitude as the one fixed reference so
+// both ends of the comparison (the query point and the candidate point)
+// scale consistently.
+function nearestPointOnSegmentKm(lon, lat, [lon1, lat1], [lon2, lat2]) {
+  const refLat = lat;
+  const [px, py] = lonLatToLocalKm(lon, lat, refLat);
+  const [ax, ay] = lonLatToLocalKm(lon1, lat1, refLat);
+  const [bx, by] = lonLatToLocalKm(lon2, lat2, refLat);
   const dx = bx - ax;
   const dy = by - ay;
   const lenSq = dx * dx + dy * dy;
   let t = lenSq === 0 ? 0 : ((px - ax) * dx + (py - ay) * dy) / lenSq;
   t = Math.max(0, Math.min(1, t));
-  return Math.hypot(px - (ax + t * dx), py - (ay + t * dy));
+  const cx = ax + t * dx;
+  const cy = ay + t * dy;
+  return { point: localKmToLonLat(cx, cy, refLat), distanceKm: Math.hypot(px - cx, py - cy) };
 }
 
-function ringMinDistanceKm(lon, lat, ring) {
-  let min = Infinity;
+function ringNearestBorderPoint(lon, lat, ring) {
+  let best = null;
   for (let i = 0; i < ring.length - 1; i++) {
-    const d = pointToSegmentKm(lon, lat, ring[i], ring[i + 1]);
-    if (d < min) min = d;
+    const candidate = nearestPointOnSegmentKm(lon, lat, ring[i], ring[i + 1]);
+    if (!best || candidate.distanceKm < best.distanceKm) best = candidate;
   }
-  return min;
+  return best;
 }
 
-// Nearest-border distance (km) from a point to a feature's own outline —
-// every ring of every part (an archipelago's coastline is still its
-// border, same as a mainland's), not just the outer boundary of its
-// largest part. Returns null only if the feature has no polygon geometry
-// at all.
-function featureBorderDistanceKm(lon, lat, feature) {
+// Nearest point (lon/lat) on a feature's own outline to (lon, lat), plus
+// the distance (km) to it — every ring of every part (an archipelago's
+// coastline is still its border, same as a mainland's), not just the outer
+// boundary of its largest part. Returns null only if the feature has no
+// polygon geometry at all.
+function featureNearestBorderPoint(lon, lat, feature) {
   const geometry = feature.geometry;
   const polygons =
     geometry?.type === "MultiPolygon" ? geometry.coordinates : geometry?.type === "Polygon" ? [geometry.coordinates] : null;
   if (!polygons) return null;
-  let min = Infinity;
+  let best = null;
   for (const polygon of polygons) {
-    for (const ring of polygon) min = Math.min(min, ringMinDistanceKm(lon, lat, ring));
+    for (const ring of polygon) {
+      const candidate = ringNearestBorderPoint(lon, lat, ring);
+      if (candidate && (!best || candidate.distanceKm < best.distanceKm)) best = candidate;
+    }
   }
-  return Number.isFinite(min) ? min : null;
+  return best;
 }
 
 let instanceCounter = 0;
@@ -203,7 +293,7 @@ let instanceCounter = 0;
 export class WorldMap {
   constructor(
     container,
-    { topology, objectKey, filterIds, playableIds, dashedBorders, projection, initialTransform, pinMode }
+    { topology, objectKey, focusIds, playableIds, dashedBorders, projection, initialTransform, pinMode }
   ) {
     this.container = container;
     this.topology = topology;
@@ -219,27 +309,41 @@ export class WorldMap {
     this.pinLonLat = null;
     this._instanceId = `wm${instanceCounter++}`;
 
-    // Infinite horizontal wrap only makes sense for an unrestricted
-    // world-scale view: a continent crop (filterIds set) doesn't tile
-    // into a seamless globe (you'd just see the same regional chunk
-    // repeat), and a pre-projected "identity" topology (US states'
-    // Albers projection) has no periodic lon/lat structure to wrap at
-    // all. See _wrapTransform/_applyTransform for how the wrap itself
-    // works, and the per-feature loop below for how "one copy" of the
-    // map's content is built once and reused for all three.
-    this.wrapEnabled = !filterIds && (projection ?? "naturalEarth1") !== "identity";
+    // Infinite horizontal wrap applies to any lon/lat-projected view. Only
+    // a pre-projected "identity" topology (US states' Albers projection,
+    // with Alaska/Hawaii relocated into fixed insets) has no periodic
+    // lon/lat structure to wrap at all. See _wrapTransform/_applyTransform
+    // for how the wrap itself works, and the per-feature loop below for
+    // how "one copy" of the map's content is built once and reused for
+    // all three.
+    this.wrapEnabled = (projection ?? "naturalEarth1") !== "identity";
     this._wrapPeriod = null; // one world-width, in projected px at the current fitSize scale — set in _reflow
     this._homeLeft = null; // left edge of that same world, in the same units
 
-    const fullGeojson = feature(topology, topology.objects[objectKey]);
-    // When restricted to a continent, drop everything else entirely (not
-    // just visually) so the projection fits to, and only renders, that
-    // region. Features with no stable id (disputed/non-ISO territories)
-    // never pass a filter, since they can never be "in" a continent.
-    const geojson = filterIds
-      ? { type: "FeatureCollection", features: fullGeojson.features.filter((f) => f.id && filterIds.has(f.id)) }
-      : fullGeojson;
-    this.geojson = geojson;
+    const topologyObject = topology.objects[objectKey];
+    // Every map renders the *entire* dataset, always — a region is never a
+    // crop. Picking Europe changes which features are playable
+    // (`playableIds`, below) and where the view starts (`focusIds` ->
+    // _defaultTransform), nothing about what exists. Keeping one
+    // region-independent projection is what makes zoom levels mean the
+    // same thing everywhere (see MIN_ZOOM/MAX_ZOOM) and lets the rest of
+    // the world stay visible-but-muted around whatever's in play.
+    this.geojson = feature(topology, topologyObject);
+    // Pin mode only: the *raw* topology geometry objects (arc-index form,
+    // before `feature()` converts them to projected-ready GeoJSON) —
+    // `topojson.merge()` (see _reflow) needs these specifically, since it
+    // works at the arc level to dissolve exactly the internal borders
+    // shared between merged features, which a post-conversion GeoJSON
+    // polygon has no way to identify any more. `this.geojson.features` and
+    // `topologyObject.geometries` are index-aligned 1:1 (feature()
+    // preserves order for a GeometryCollection), which is what lets the
+    // playable subset below be selected by index.
+    this._rawGeometries = this.pinMode ? topologyObject.geometries : null;
+    // Which feature ids the initial view frames itself on — the chosen
+    // region, minus any member excluded from framing specifically
+    // (core/regions.js's `fitExclude`; see _defaultTransform). Null means
+    // "frame everything", i.e. the whole world.
+    this._focusIds = focusIds ?? null;
 
     this.projection = (PROJECTIONS[projection] ?? PROJECTIONS.naturalEarth1)();
     this.pathGen = geoPath(this.projection);
@@ -285,16 +389,43 @@ export class WorldMap {
     }
     this.homeGroup = this.copyGroups.get(0);
 
+    // Pin mode only: two merged paths standing in for every per-country
+    // fill — see _reflow, where their `d`s are set via topojson.merge().
+    // `pinLandmass` is the whole world, muted; `pinPlayableLandmass` is the
+    // currently-playable subset in the normal land color, drawn directly on
+    // top of it. Between them they carry the same playable/unplayable
+    // distinction per-country paths carry everywhere else, while keeping
+    // pin mode's defining property — no internal country borders — because
+    // a merged shape has no edges between originally-adjacent members left
+    // to seam *at*, unlike independently-antialiased adjacent paths that
+    // merely happen to share a fill color. Inserted first (bottom of paint
+    // order), so everything else layers above them.
+    this.pinLandmass = document.createElementNS(SVG_NS, "path");
+    this.pinLandmass.id = `${this._instanceId}-landmass`;
+    this.pinLandmass.setAttribute("class", "pin-landmass");
+    this.pinPlayableLandmass = document.createElementNS(SVG_NS, "path");
+    this.pinPlayableLandmass.id = `${this._instanceId}-landmass-playable`;
+    this.pinPlayableLandmass.setAttribute("class", "pin-landmass pin-landmass--playable");
+    if (this.pinMode) {
+      this.homeGroup.appendChild(this.pinLandmass);
+      this.homeGroup.appendChild(this.pinPlayableLandmass);
+    }
+
     // Everything below is built once, directly, into the home copy;
     // ghost copies (if any) are populated as <use> clones of it further
     // down.
     this.featuresById = new Map(); // playable id -> home copy's <path>
     this.hitAreasById = new Map();
     this.hitClipsById = new Map();
+    // id -> { points: unpadded hull vertices, cx, cy } for every qualifying
+    // (assisted) country — recomputed only in _reflow's Pass 2 (construction
+    // or a real resize). Padding is deliberately *not* baked into these:
+    // see the "zoom" handler below for why.
+    this._hullBaseById = new Map();
     // id -> raw geojson feature (not just playable ones' <path> elements) —
-    // used by distanceToBorderKm, which needs the actual ring coordinates,
+    // used by revealBorderDistance, which needs the actual ring coordinates,
     // not anything SVG/projection-dependent.
-    this._geometryById = new Map(geojson.features.filter((f) => f.id).map((f) => [f.id, f]));
+    this._geometryById = new Map(this.geojson.features.filter((f) => f.id).map((f) => [f.id, f]));
 
     this.borderGroup = document.createElementNS(SVG_NS, "g");
     this.borderGroup.setAttribute("class", "border-lines");
@@ -303,16 +434,65 @@ export class WorldMap {
     this.hitGroup.setAttribute("class", "hit-areas");
     this.homeGroup.appendChild(this.hitGroup);
 
-    // The dropped-pin marker (pin mode only) — decorative, never itself a
-    // click target (pointer-events: none, see style.css), so every click
-    // on the map — including one that lands on top of the current pin —
-    // reaches the whole-map click listener below and repositions it.
+    // The dropped-pin marker (pin mode only) — decorative itself
+    // (pointer-events: none, see style.css), but paired with a separate,
+    // larger invisible hit-area circle (below) that *is* clickable, so a
+    // click that actually lands on the marker's small visible dot confirms
+    // instead of repositioning it — every other click on the map still
+    // reaches the whole-map listener below and (re)drops the pin there.
     this.pinMarker = document.createElementNS(SVG_NS, "circle");
     this.pinMarker.id = `${this._instanceId}-pin`;
     this.pinMarker.setAttribute("class", "pin-marker");
-    this.pinMarker.setAttribute("r", "3"); // also in style.css; set directly too rather than relying solely on CSS geometry-property support
+    this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX)); // kept in sync with the current zoom scale by the "zoom" handler below
     this.pinMarker.style.display = "none";
     this.homeGroup.appendChild(this.pinMarker);
+
+    // Set via setClickable's third argument; invoked by the whole-map click
+    // listener when a click lands close enough to the pin already down (see
+    // there — the check is geometric, not a clickable overlay element).
+    this._onPinConfirm = null;
+
+    // A line from the dropped pin to the reveal target — either the
+    // nearest point on the target country's border (revealBorderDistance,
+    // "Region" pin-target mode) or the target's exact capital point
+    // (revealCapitalDistance, "Capital" mode) — shown only post-confirm,
+    // and only when that distance is nonzero. The visual counterpart of
+    // the km figure in the feedback text, not just a number.
+    this.pinBorderLine = document.createElementNS(SVG_NS, "line");
+    this.pinBorderLine.id = `${this._instanceId}-pin-border-line`;
+    this.pinBorderLine.setAttribute("class", "pin-border-line");
+    this.pinBorderLine.style.display = "none";
+    this.homeGroup.appendChild(this.pinBorderLine);
+    this._revealedBorderTarget = null; // { pinLonLat, point } — re-projected on every _reflow, see below
+
+    // The capital's own exact point, shown only by revealCapitalDistance —
+    // there's nothing equivalent to reveal for "Region" mode, since the
+    // target country's own outline (`.country--correct`) already shows
+    // where it is.
+    this.capitalMarker = document.createElementNS(SVG_NS, "circle");
+    this.capitalMarker.id = `${this._instanceId}-capital-marker`;
+    this.capitalMarker.setAttribute("class", "capital-marker");
+    this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX)); // kept in sync with the current zoom scale by the "zoom" handler below, same as pinMarker
+    this.capitalMarker.style.display = "none";
+    this.homeGroup.appendChild(this.capitalMarker);
+    this._revealedCapitalPoint = null; // lon/lat — re-projected on every _reflow, see below
+
+    // Pin mode renders NO per-country paths at all (see the per-feature
+    // loop below) — `pinLandmass` is the whole map. This single spare path
+    // is what `markResult` draws the post-confirm target reveal into
+    // instead: its `d` is set to that one feature's projected outline on
+    // demand, and cleared by clearMarks. Doing it this way rather than
+    // hiding 240 real per-country paths with CSS is what makes a stray
+    // country border *structurally* impossible here rather than merely
+    // styled-away — there is simply no element that could paint one, so no
+    // stylesheet rule (a `:hover` rule outranking the pin-mode one, say)
+    // can bring one back. See _mark/_forEachMarked.
+    this.revealPath = document.createElementNS(SVG_NS, "path");
+    this.revealPath.id = `${this._instanceId}-reveal`;
+    this.revealPath.setAttribute("class", "country");
+    this.revealPath.style.pointerEvents = "none";
+    this._revealedFeatureId = null; // kept so _reflow can re-project it
+    if (this.pinMode) this.homeGroup.appendChild(this.revealPath);
 
     // Data-driven, not hardcoded to any specific pair: dashedBorders is a
     // list of [idA, idB] country-id pairs (see core/datasets.js) whose
@@ -329,8 +509,14 @@ export class WorldMap {
     });
 
     this._pathsByIndex = []; // home copy's <path> per geojson.features index (playable or not) — read back in _reflow to set each `d`
+    // Which ids count as playable — the same gate `featuresById` doubles as
+    // outside pin mode, tracked separately because pin mode deliberately
+    // builds no per-country paths to populate that map with, yet still
+    // needs the gate itself (`_findContainingId` won't resolve a pin drop
+    // to an unplayable feature).
+    this._playableIds = new Set();
 
-    for (const [index, f] of geojson.features.entries()) {
+    for (const [index, f] of this.geojson.features.entries()) {
       // "Playable" gates click handling, normal styling, and a hit-circle —
       // independent of whether the topology happens to have assigned this
       // feature an id. This is what lets e.g. Kosovo exist in the topology
@@ -338,51 +524,68 @@ export class WorldMap {
       // setting is on: playableIds is derived from whatever the current
       // game's item list actually is.
       const playable = Boolean(f.id) && (!playableIds || playableIds.has(f.id));
+      if (playable) this._playableIds.add(f.id);
+
+      // Pin mode draws the whole map as one merged `pinLandmass` path and
+      // nothing else (plus `revealPath` on confirm), so per-country paths
+      // aren't just hidden here — they're never created. Index alignment
+      // with `geojson.features` still matters for `_reflow`, hence the
+      // null placeholder.
+      if (this.pinMode) {
+        this._pathsByIndex.push(null);
+        continue;
+      }
 
       const path = document.createElementNS(SVG_NS, "path");
       path.id = `${this._instanceId}-f${index}`;
-      path.setAttribute("class", "country" + (playable ? "" : " country--unplayable"));
+      // Three states, not two — see style.css. A feature with no id isn't a
+      // country at all (Siachen Glacier, Indian Ocean Ter.): it's terrain,
+      // and painting it like a *disabled country* left a stray grey
+      // triangle between fully-playable neighbours. `--unplayable` is
+      // reserved for real countries that are genuinely out of play.
+      const stateClass = !f.id ? " country--terrain" : playable ? "" : " country--unplayable";
+      path.setAttribute("class", "country" + stateClass);
 
+      // Pin mode never reaches here (it `continue`d above), so everything
+      // below is unconditionally non-pin-mode.
       if (playable) {
         path.dataset.id = f.id;
         this.featuresById.set(f.id, path);
 
-        if (!this.pinMode) {
-          path.addEventListener("click", () => {
-            if (this.clickEnabled && this.onClick) this.onClick(f.id);
-          });
+        path.addEventListener("click", () => {
+          if (this.clickEnabled && this.onClick) this.onClick(f.id);
+        });
 
-          // A polygon rather than a circle so it can be shaped as a padded
-          // convex hull around a country's parts (see _computeHull) — this
-          // covers both compact microstates (hull ~= a small rounded blob)
-          // and archipelagos (hull spans and fills the gaps between
-          // islands) with one mechanism. Home copy only (not ghosted) —
-          // this is a click-precision assist, and the home copy is always
-          // the one within reach of the viewport (see WRAP_WINDOW).
-          const hitArea = document.createElementNS(SVG_NS, "polygon");
-          hitArea.setAttribute("class", "country-hitarea");
-          hitArea.style.display = "none"; // shown only if the shape qualifies, in _reflow
-          hitArea.addEventListener("click", () => {
-            if (this.clickEnabled && this.onClick) this.onClick(f.id);
-          });
-          this.hitGroup.appendChild(hitArea);
-          this.hitAreasById.set(f.id, hitArea);
+        // A polygon rather than a circle so it can be shaped as a padded
+        // convex hull around a country's parts (see _computeHull) — this
+        // covers both compact microstates (hull ~= a small rounded blob)
+        // and archipelagos (hull spans and fills the gaps between
+        // islands) with one mechanism. Home copy only (not ghosted) —
+        // this is a click-precision assist, and the home copy is always
+        // the one within reach of the viewport (see WRAP_WINDOW).
+        const hitArea = document.createElementNS(SVG_NS, "polygon");
+        hitArea.setAttribute("class", "country-hitarea");
+        hitArea.style.display = "none"; // shown only if the shape qualifies, in _reflow
+        hitArea.addEventListener("click", () => {
+          if (this.clickEnabled && this.onClick) this.onClick(f.id);
+        });
+        this.hitGroup.appendChild(hitArea);
+        this.hitAreasById.set(f.id, hitArea);
 
-          // Lets two nearby assisted countries' hit-regions be clipped to
-          // the Voronoi cell around each one's center (computed over every
-          // playable country, not just assisted ones — a plain neighbor can
-          // still bound an archipelago's hull-fill, e.g. keeps Brunei's
-          // hull, which naturally spans the gap between its two enclaves,
-          // from bleeding into Malaysia's territory in between) — see
-          // _reflow.
-          const clipId = `${this._instanceId}-hitclip-${f.id}`;
-          const clipPath = document.createElementNS(SVG_NS, "clipPath");
-          clipPath.id = clipId;
-          const polygon = document.createElementNS(SVG_NS, "polygon");
-          clipPath.appendChild(polygon);
-          this.defs.appendChild(clipPath);
-          this.hitClipsById.set(f.id, { clipId, polygon });
-        }
+        // Lets two nearby assisted countries' hit-regions be clipped to
+        // the Voronoi cell around each one's center (computed over every
+        // playable country, not just assisted ones — a plain neighbor can
+        // still bound an archipelago's hull-fill, e.g. keeps Brunei's
+        // hull, which naturally spans the gap between its two enclaves,
+        // from bleeding into Malaysia's territory in between) — see
+        // _reflow.
+        const clipId = `${this._instanceId}-hitclip-${f.id}`;
+        const clipPath = document.createElementNS(SVG_NS, "clipPath");
+        clipPath.id = clipId;
+        const polygon = document.createElementNS(SVG_NS, "polygon");
+        clipPath.appendChild(polygon);
+        this.defs.appendChild(clipPath);
+        this.hitClipsById.set(f.id, { clipId, polygon });
       }
 
       this.homeGroup.insertBefore(path, this.borderGroup);
@@ -401,11 +604,21 @@ export class WorldMap {
     for (const offset of this.copyOffsets) {
       if (offset === 0) continue;
       const group = this.copyGroups.get(offset);
+      // Inserted first, same as in the home group, so they stay the bottom
+      // layers here too. In pin mode these are the *only* country-shaped
+      // things a ghost copy carries — there are no per-country paths to
+      // clone, so the loop below is skipped entirely.
+      if (this.pinMode) {
+        group.appendChild(this._makeUse(this.pinLandmass.id));
+        group.appendChild(this._makeUse(this.pinPlayableLandmass.id));
+        group.appendChild(this._makeUse(this.revealPath.id));
+      }
       for (const path of this._pathsByIndex) {
+        if (!path) continue; // pin mode — no per-country paths exist
         const use = this._makeUse(path.id);
         use.setAttribute("class", "country-ghost");
         const fId = path.dataset.id;
-        if (fId && !this.pinMode) {
+        if (fId) {
           use.addEventListener("click", () => {
             if (this.clickEnabled && this.onClick) this.onClick(fId);
           });
@@ -414,30 +627,52 @@ export class WorldMap {
       }
       for (const { path } of this.borderLines) group.appendChild(this._makeUse(path.id));
       group.appendChild(this._makeUse(this.pinMarker.id));
+      group.appendChild(this._makeUse(this.pinBorderLine.id));
+      group.appendChild(this._makeUse(this.capitalMarker.id));
     }
 
+    // `initialTransform` (the "keep zoom between rounds" setting) wins when
+    // given; otherwise the first _reflow installs this map's own default
+    // framing, which can't be computed until the viewport size is known.
+    this._initialTransform = initialTransform ?? null;
+    this._hasAppliedInitialTransform = false;
     this.currentTransform = initialTransform ?? zoomIdentity;
     this.zoomBehavior = zoom()
+      // Real min/max set per-reflow below, once the actual fit scale is
+      // known — this initial value is just a safe placeholder before the
+      // constructor's own _reflow() call runs.
       .scaleExtent([1, 10])
-      .on("start", () => this.svg.classList.add("world-map--panning"))
       .on("zoom", (event) => {
         this.currentTransform = this._wrapTransform(event.transform);
         this._applyTransform(this.currentTransform);
-      })
-      // A cheap, well-established SVG performance trick: while a pan/zoom
-      // gesture is actively in progress, drop rendering quality (blockier
-      // edges, no antialiasing niceties) in exchange for faster per-frame
-      // repaints, then restore full quality the instant it ends — the
-      // player is looking at the whole shape while moving, not a single
-      // edge, so the drop is barely noticeable, but repainting ~240
-      // country paths (more with wrap's ghost copies) at full quality on
-      // every drag/wheel tick is real work that a phone GPU in particular
-      // can fall behind on, which is what actually reads as "not smooth".
-      // These are d3-zoom's own dispatched "start"/"end" gesture events
-      // (via `zoomBehavior.on`), not native DOM events — unlike
-      // "dblclick.zoom" below, they don't exist to bind via the
-      // selection's own `.on(...)`.
-      .on("end", () => this.svg.classList.remove("world-map--panning"));
+        this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX / this.currentTransform.k));
+        // Same counter-scaling as the pin marker itself, and for the same
+        // reason: this circle lives in the same zoomed/panned `<g>` as
+        // every country path, so without this its radius would grow/shrink
+        // with the map instead of staying a constant on-screen size.
+        this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX / this.currentTransform.k));
+        // Same idea for every tiny/archipelago country's assist hit-area:
+        // its padding (HULL_PADDING) lives in the same pre-zoom coordinate
+        // space as the rest of the map, so without this it would balloon
+        // proportionally with zoom — a 3px assist margin at the default
+        // view becomes a comically oversized blob dwarfing the country's
+        // own real border once zoomed in far enough (reported directly:
+        // "the borders of any selected country are strange... some are
+        // oddly missing" — the real border wasn't missing, it was being
+        // visually swallowed by its own hit-area). Reapplies padding to the
+        // *cached unpadded* hull (`_hullBaseById`, set once in _reflow) —
+        // cheap enough to do on every tick, unlike re-running the Delaunay
+        // hull itself.
+        if (this._hullBaseById.size > 0) {
+          const k = this.currentTransform.k;
+          for (const [id, base] of this._hullBaseById) {
+            const hitArea = this.hitAreasById.get(id);
+            if (!hitArea) continue;
+            const padded = this._padHull(base.points, base.cx, base.cy, HULL_PADDING / k);
+            hitArea.setAttribute("points", padded.map(([x, y]) => `${x},${y}`).join(" "));
+          }
+        }
+      });
     this._selection = select(this.svg);
     this._selection.call(this.zoomBehavior);
     // Double-click-to-zoom is d3-zoom's default, but it fights with
@@ -484,6 +719,37 @@ export class WorldMap {
           const left = this._homeLeft ?? 0;
           x = (((x - left) % this._wrapPeriod) + this._wrapPeriod) % this._wrapPeriod + left;
         }
+
+        // Re-clicking the pin that's already down confirms, instead of
+        // re-dropping it where it already is — the pin-mode equivalent of
+        // map-click's re-click-to-confirm.
+        //
+        // Decided geometrically, right here, rather than by putting a
+        // clickable circle over the pin and letting the browser hit-test
+        // it. That was the original approach and it kept failing: the
+        // element only existed on the home copy, and a map that wraps
+        // (every region now) frequently displays the pin via a ghost copy
+        // instead — Asia's own default framing does, with no panning at
+        // all. Cloning the circle into each ghost didn't fix it either,
+        // because ghost groups are `pointer-events: none` wholesale. Since
+        // `x, y` above is already folded back into the home copy's own
+        // coordinate space, one distance check covers the home copy and
+        // every ghost at once, with no dependence on `<use>` hit-testing
+        // semantics.
+        if (this.pinLonLat && this._onPinConfirm) {
+          const pinPoint = this.projection(this.pinLonLat);
+          if (pinPoint) {
+            // Compare in *screen* px so the tolerance means the same thing
+            // at every zoom level, matching how the pin marker itself is
+            // drawn at a constant on-screen size.
+            const screenDist = Math.hypot(x - pinPoint[0], y - pinPoint[1]) * this.currentTransform.k;
+            if (screenDist <= PIN_RADIUS_PX + PIN_CONFIRM_PADDING_PX) {
+              this._onPinConfirm();
+              return;
+            }
+          }
+        }
+
         const lonlat = this.projection.invert?.([x, y]);
         if (!lonlat || !Number.isFinite(lonlat[0]) || !Number.isFinite(lonlat[1])) return;
         this._dropPinAt(lonlat[0], lonlat[1]);
@@ -524,13 +790,63 @@ export class WorldMap {
     this._lastSize = { width, height };
 
     this.svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    // One projection for every region: always the whole dataset fitted to
+    // the viewport, so k=1 means the same thing in every game and the
+    // region only decides the starting transform (_defaultTransform).
     this.projection.fitSize([width, height], this.geojson);
+    const fullBounds = this.pathGen.bounds(this.geojson);
 
     if (this.wrapEnabled) {
-      const b = this.pathGen.bounds(this.geojson);
+      const b = fullBounds;
       if (Number.isFinite(b[0][0]) && Number.isFinite(b[1][0])) {
         this._homeLeft = b[0][0];
         this._wrapPeriod = b[1][0] - b[0][0];
+      }
+    }
+
+    // Pin mode's merged landmass — recomputed every reflow (a resize
+    // changes the projection, so the merged shape's own projected `d`
+    // needs to track it exactly like every individual country path's own
+    // `d` does; the underlying arc-level merge() result itself doesn't
+    // depend on projection, but re-running it here is cheap enough not to
+    // bother caching separately).
+    if (this.pinMode && this._rawGeometries) {
+      // Two merged layers, because pin mode has no per-country paths to
+      // carry the usual playable/unplayable distinction: the whole world,
+      // muted, underneath; the currently-playable subset, in the normal
+      // land color, on top. Drawing the muted layer as *everything* rather
+      // than as only the non-playable remainder is deliberate — the two
+      // layers then overlap along the region boundary instead of merely
+      // abutting, so no sub-pixel gap between them can ever let the ocean
+      // color show through as a seam (the failure mode that plagued the
+      // per-country rendering this replaced). In a World game the top
+      // layer simply covers the bottom one entirely.
+      const mergedAll = merge(this.topology, this._rawGeometries);
+      this.pinLandmass.setAttribute("d", this.pathGen(this._withoutMergeSlivers(mergedAll, width, height)));
+
+      // Terrain (a feature with no id at all — Siachen Glacier, Indian
+      // Ocean Ter.) counts as normal land here, *not* as something the
+      // muted base should show through. It isn't a country, so it's
+      // neither "in play" nor "excluded from play" — it's just ground, and
+      // painting it muted between fully-playable neighbours is what made a
+      // stray grey triangle appear at the India/Pakistan/China trijunction.
+      const playableGeometries = this._rawGeometries.filter((g, i) => {
+        const f = this.geojson.features[i];
+        if (!f) return false;
+        return !f.id || this._playableIds.has(f.id);
+      });
+      const mergedPlayable = playableGeometries.length ? merge(this.topology, playableGeometries) : null;
+      this.pinPlayableLandmass.setAttribute(
+        "d",
+        mergedPlayable ? this.pathGen(this._withoutMergeSlivers(mergedPlayable, width, height)) ?? "" : ""
+      );
+
+      // The revealed target (if one is showing) has to track the fresh
+      // projection too, exactly like every per-country path's own `d` does
+      // outside pin mode.
+      if (this._revealedFeatureId) {
+        const f = this._geometryById.get(this._revealedFeatureId);
+        if (f) this.revealPath.setAttribute("d", this.pathGen(f) ?? "");
       }
     }
 
@@ -538,7 +854,19 @@ export class WorldMap {
     // — see the comment above AREA_RATIO_SINGLE/LARGEST_PART_TIER1_RATIO/LARGEST_PART_TIER2_RATIO for
     // why this needs to scale with the map's own viewport/feature-count,
     // not be a fixed px² value shared by every dataset this class renders.
-    const evenSplitArea = this.featuresById.size > 0 ? (width * height) / this.featuresById.size : Infinity;
+    //
+    // Counts every *rendered* feature, not just the playable ones. Back
+    // when each region re-fit the projection to its own members, playable
+    // count and rendered count were the same thing. Now that every region
+    // shares one whole-dataset projection, using the playable count would
+    // measure a 54-country Europe against the same viewport the full ~240
+    // countries are drawn into, inflating the "typical country" reference
+    // ~4x and flagging ordinary countries as needing a tiny-country assist.
+    // The rendered count keeps this pinned to the geometry actually on
+    // screen — which is also exactly what the ratio constants were
+    // originally calibrated against.
+    const featureCount = this.geojson.features.length;
+    const evenSplitArea = featureCount > 0 ? (width * height) / featureCount : Infinity;
 
     // Pass 1: lay out every path (home copy — ghost copies are <use>
     // references and update automatically). For every playable feature,
@@ -613,18 +941,32 @@ export class WorldMap {
     // enclaves, UK's Northern Ireland vs. Ireland) always gets cut back
     // at the boundary equidistant between the two, never actually
     // overlapping the neighbor's own territory.
+    // Stale from a previous reflow at a different size — qualification
+    // itself depends on the viewport (see AREA_RATIO_SINGLE etc.), so a
+    // resize can change who's in this set.
+    this._hullBaseById.clear();
+
     if (qualifying.length > 0 && sites.length > 0) {
       const delaunay = Delaunay.from(sites.map((s) => [s.cx, s.cy]));
       const voronoi = delaunay.voronoi([0, 0, width, height]);
       const siteIndexById = new Map(sites.map((s, i) => [s.id, i]));
 
       for (const q of qualifying) {
-        const hull = this._computeHull(q.f, q.cx, q.cy);
-        if (!hull) continue;
+        const rawHull = this._computeHull(q.f);
+        if (!rawHull) continue;
+        this._hullBaseById.set(q.id, { points: rawHull, cx: q.cx, cy: q.cy });
 
         const hitArea = this.hitAreasById.get(q.id);
         const clip = this.hitClipsById.get(q.id);
-        hitArea.setAttribute("points", hull.map(([x, y]) => `${x},${y}`).join(" "));
+        // Padded using whatever zoom level is current — usually about to
+        // be immediately corrected by the "zoom" handler below, which
+        // _reflow's own final transform-setting call triggers; set here
+        // too so the shape is still reasonable in the one edge case where
+        // that dispatch doesn't fire (e.g. an already-identity transform
+        // that d3-zoom treats as a no-op).
+        const k = this.currentTransform?.k || 1;
+        const padded = this._padHull(rawHull, q.cx, q.cy, HULL_PADDING / k);
+        hitArea.setAttribute("points", padded.map(([x, y]) => `${x},${y}`).join(" "));
         hitArea.style.display = "";
 
         const cell = voronoi.cellPolygon(siteIndexById.get(q.id));
@@ -665,11 +1007,69 @@ export class WorldMap {
         this.pinMarker.setAttribute("cy", p[1]);
       }
     }
+    // Same idea for the revealed pin-to-border line, if one's currently
+    // shown — both its endpoints are lon/lat pairs, re-projected together.
+    if (this._revealedBorderTarget) {
+      const { pinLonLat, point } = this._revealedBorderTarget;
+      const p1 = this.projection(pinLonLat);
+      const p2 = this.projection(point);
+      if (p1 && p2) {
+        this.pinBorderLine.setAttribute("x1", p1[0]);
+        this.pinBorderLine.setAttribute("y1", p1[1]);
+        this.pinBorderLine.setAttribute("x2", p2[0]);
+        this.pinBorderLine.setAttribute("y2", p2[1]);
+      }
+    }
+    // Same idea for the revealed capital marker, if one's currently shown.
+    if (this._revealedCapitalPoint) {
+      const p = this.projection(this._revealedCapitalPoint);
+      if (p) {
+        this.capitalMarker.setAttribute("cx", p[0]);
+        this.capitalMarker.setAttribute("cy", p[1]);
+      }
+    }
 
+    // The projection now always fits the whole dataset to the viewport, so
+    // the content box *is* the viewport box — no widening needed.
     this.zoomBehavior
+      .scaleExtent([MIN_ZOOM, MAX_ZOOM])
       .extent([[0, 0], [width, height]])
-      .translateExtent(this.wrapEnabled ? [[-Infinity, 0], [Infinity, height]] : [[0, 0], [width, height]]);
-    this._selection.call(this.zoomBehavior.transform, resetZoom ? zoomIdentity : this.currentTransform);
+      .translateExtent(
+        this.wrapEnabled ? [[-Infinity, 0], [Infinity, height]] : [[0, 0], [width, height]]
+      );
+    // A genuine resize resets to this map's own default framing (its
+    // region) — not to raw identity, which is the whole world and only the
+    // right default for a World game, and not to `initialTransform`
+    // either, since a carried-over zoom is a starting point, not something
+    // to snap back to later.
+    let target;
+    if (!this._hasAppliedInitialTransform) {
+      target = this._initialTransform ?? this._defaultTransform(width, height);
+      this._hasAppliedInitialTransform = true;
+    } else {
+      target = resetZoom ? this._defaultTransform(width, height) : this.currentTransform;
+    }
+    this._selection.call(this.zoomBehavior.transform, target);
+  }
+
+  // Where a fresh map starts: a zoom/pan transform framing `focusIds`
+  // (the chosen region) within the region-independent projection, rather
+  // than a differently-fitted projection. Falls back to identity — the
+  // whole world — when nothing specific is focused, and clamps into
+  // [MIN_ZOOM, MAX_ZOOM] so a very small region can't demand a zoom level
+  // the behavior itself would refuse.
+  _defaultTransform(width, height) {
+    if (!this._focusIds || this._focusIds.size === 0) return zoomIdentity;
+    const focusFeatures = this.geojson.features.filter((f) => f.id && this._focusIds.has(f.id));
+    if (focusFeatures.length === 0) return zoomIdentity;
+    const b = this.pathGen.bounds({ type: "FeatureCollection", features: focusFeatures });
+    const bw = b[1][0] - b[0][0];
+    const bh = b[1][1] - b[0][1];
+    if (!Number.isFinite(bw) || !Number.isFinite(bh) || bw <= 0 || bh <= 0) return zoomIdentity;
+    const k = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, Math.min(width / bw, height / bh)));
+    const cx = (b[0][0] + b[1][0]) / 2;
+    const cy = (b[0][1] + b[1][1]) / 2;
+    return zoomIdentity.translate(width / 2 - k * cx, height / 2 - k * cy).scale(k);
   }
 
   // If wrapping is on and the home copy has drifted more than
@@ -738,24 +1138,106 @@ export class WorldMap {
   // geometry APIs.
   _findContainingId(lon, lat) {
     for (const f of this.geojson.features) {
-      if (!f.id || !this.featuresById.has(f.id)) continue; // unplayable — never a valid guess
+      if (!f.id || !this._playableIds.has(f.id)) continue; // unplayable — never a valid guess
       if (pointInFeature(lon, lat, f)) return f.id;
     }
     return null;
   }
 
-  // Distance (km) from a lon/lat point to the nearest edge of feature `id`'s
-  // own outline — 0 if the point already falls inside it. Used by pin-drop
-  // mode's post-confirm feedback: "how far off was this guess" is more
-  // useful measured against the country's actual shape than against its
-  // centroid, especially for large or oddly-shaped countries where a pin
-  // dropped well inside the border can otherwise read as "hundreds of km
-  // from the center".
-  distanceToBorderKm(lon, lat, id) {
+  // Draws pinBorderLine from the last-dropped pin to `point` ([lon, lat])
+  // and remembers it for re-projection on later reflows — shared by
+  // revealBorderDistance and revealCapitalDistance below, which differ only
+  // in *which* point they resolve and how they measure the distance to it.
+  _revealLineTo(point) {
+    this._revealedBorderTarget = { pinLonLat: this.pinLonLat, point };
+    const p1 = this.projection(this.pinLonLat);
+    const p2 = this.projection(point);
+    if (p1 && p2) {
+      this.pinBorderLine.setAttribute("x1", p1[0]);
+      this.pinBorderLine.setAttribute("y1", p1[1]);
+      this.pinBorderLine.setAttribute("x2", p2[0]);
+      this.pinBorderLine.setAttribute("y2", p2[1]);
+      this.pinBorderLine.style.display = "";
+    }
+  }
+
+  // Post-confirm reveal for pin-drop mode's "Region" target: draws a line
+  // from the last-dropped pin to the nearest point on feature `id`'s own
+  // border (and returns the distance to it, in km) — 0, with no line drawn,
+  // if the pin already landed inside it (a correct guess is always this
+  // case, but nothing here assumes that; it's just what "nearest point on
+  // the border" means for a point already past it). Measuring against the
+  // country's actual shape rather than its centroid matters for large or
+  // oddly-shaped countries, where a pin dropped well inside the border
+  // would otherwise read as "hundreds of km away" despite being a correct
+  // guess.
+  revealBorderDistance(id) {
+    if (!this.pinLonLat) return null;
     const f = this._geometryById.get(id);
     if (!f) return null;
-    if (pointInFeature(lon, lat, f)) return 0;
-    return featureBorderDistanceKm(lon, lat, f);
+    if (pointInFeature(this.pinLonLat[0], this.pinLonLat[1], f)) {
+      this.pinBorderLine.style.display = "none";
+      this._revealedBorderTarget = null;
+      return 0;
+    }
+    const nearest = featureNearestBorderPoint(this.pinLonLat[0], this.pinLonLat[1], f);
+    if (!nearest) return null;
+    this._revealLineTo(nearest.point);
+    return nearest.distanceKm;
+  }
+
+  // Post-confirm reveal for pin-drop mode's "Capital" target: draws a line
+  // from the last-dropped pin straight to the capital's own exact point
+  // (`capitalLatLng`, the app's own `[lat, lon]` field order — converted to
+  // this module's `[lon, lat]` convention here, at the one boundary where
+  // it matters) and a small marker there, since — unlike the border case —
+  // there's no country outline reveal that already shows where it is.
+  // Real great-circle distance (`haversineKm`), not the border case's
+  // local-plane approximation: a capital can be genuinely far from the
+  // pin (opposite side of a large country), where that approximation's
+  // flat-earth assumption would start introducing real error. Returns
+  // `null` if the dataset has no capital coordinates for this item.
+  revealCapitalDistance(capitalLatLng) {
+    if (!this.pinLonLat || !capitalLatLng) return null;
+    const point = [capitalLatLng[1], capitalLatLng[0]];
+    this._revealedCapitalPoint = point;
+    const p = this.projection(point);
+    if (p) {
+      this.capitalMarker.setAttribute("cx", p[0]);
+      this.capitalMarker.setAttribute("cy", p[1]);
+      this.capitalMarker.style.display = "";
+    }
+    this._revealLineTo(point);
+    return haversineKm(this.pinLonLat, point);
+  }
+
+  // Drops `topojson.merge()`'s degenerate hairline artifacts from a merged
+  // MultiPolygon — see the MERGE_SLIVER_* constants above for what
+  // identifies one and why it takes both thresholds rather than either
+  // alone. Measured in projected px at the current fit (not in lon/lat),
+  // since "is this a visible hairline on screen" is exactly the question,
+  // and the answer depends on the projection/viewport this reflow just
+  // established. Only whole polygons whose *outer* ring is degenerate are
+  // dropped: both real artifacts are single-ring polygons with no holes,
+  // so nothing real is ever cut out of a legitimate shape this way.
+  _withoutMergeSlivers(merged, width, height) {
+    if (merged?.type !== "MultiPolygon") return merged;
+    const minSpan = Math.max(width, height) * MERGE_SLIVER_MIN_SPAN_FRACTION;
+    const kept = merged.coordinates.filter((polygon) => {
+      const outer = polygon[0];
+      if (!outer) return false;
+      const bounds = this.pathGen.bounds({ type: "Polygon", coordinates: [outer] });
+      const w = bounds[1][0] - bounds[0][0];
+      const h = bounds[1][1] - bounds[0][1];
+      if (!Number.isFinite(w) || !Number.isFinite(h)) return true;
+      const thickness = Math.min(w, h);
+      const span = Math.max(w, h);
+      // A zero-thickness ring is degenerate by definition (Infinity aspect),
+      // which this comparison already handles without a special case.
+      const isDegenerate = span / thickness > MERGE_SLIVER_MIN_ASPECT;
+      return !(isDegenerate && span > minSpan);
+    });
+    return kept.length === merged.coordinates.length ? merged : { type: "MultiPolygon", coordinates: kept };
   }
 
   // The projected area (px², at the map's current fitSize scale) of a
@@ -778,12 +1260,12 @@ export class WorldMap {
   }
 
   // Projects every ring point of a feature (all parts, at the map's
-  // current fitSize scale), takes their convex hull, and pushes each hull
-  // vertex outward from (cx, cy) by HULL_PADDING. For a multi-part
+  // current fitSize scale) and takes their convex hull — *not* yet padded,
+  // see _padHull below for why that's a separate step. For a multi-part
   // feature this hull naturally spans and fills the space between parts
   // (an archipelago's inter-island water); for a single compact blob it's
-  // effectively a slightly-enlarged version of the country's own outline.
-  _computeHull(f, cx, cy) {
+  // close to the country's own outline before padding widens it slightly.
+  _computeHull(f) {
     const geometry = f.geometry;
     if (!geometry) return null;
     const polygons = geometry.type === "MultiPolygon" ? geometry.coordinates : [geometry.coordinates];
@@ -801,14 +1283,23 @@ export class WorldMap {
 
     const delaunay = Delaunay.from(points);
     const hullPoints = Array.from(delaunay.hull, (i) => points[i]);
-    if (hullPoints.length < 3) return null;
+    return hullPoints.length < 3 ? null : hullPoints;
+  }
 
+  // Pushes each hull vertex outward from (cx, cy) by `padding` (projected
+  // px, in the group's own pre-zoom coordinate space — the same space
+  // `_computeHull`'s points are already in). Split out from hull
+  // computation itself so the padding amount can be cheaply re-derived on
+  // every zoom tick (see the "zoom" handler) without re-running the
+  // Delaunay hull each time — a hull's *shape* doesn't need to change with
+  // zoom, only how much assist margin is added around it.
+  _padHull(hullPoints, cx, cy, padding) {
     return hullPoints.map(([x, y]) => {
       const dx = x - cx;
       const dy = y - cy;
       const dist = Math.hypot(dx, dy);
       if (dist < 1e-6) return [x, y];
-      const scale = (dist + HULL_PADDING) / dist;
+      const scale = (dist + padding) / dist;
       return [cx + dx * scale, cy + dy * scale];
     });
   }
@@ -817,9 +1308,16 @@ export class WorldMap {
     return this.currentTransform;
   }
 
-  setClickable(enabled, onClick) {
+  // `onPinConfirm` (pin mode only — ignored otherwise) is called instead of
+  // `onClick` when a click lands within the confirm radius of the pin
+  // that's already down (see the whole-map click listener, where that
+  // distance check lives) rather than elsewhere on the map — the pin-mode
+  // equivalent of map-click/multiple-choice's "click the already-selected
+  // thing again to confirm".
+  setClickable(enabled, onClick, onPinConfirm) {
     this.clickEnabled = enabled;
     this.onClick = onClick ?? null;
+    this._onPinConfirm = onPinConfirm ?? null;
     this.svg.classList.toggle("world-map--clickable", enabled);
   }
 
@@ -845,6 +1343,13 @@ export class WorldMap {
     this._forEachMarked((el) =>
       el.classList.remove("country--highlighted", "country--selected", "country--correct", "country--wrong")
     );
+    if (this.pinMode) {
+      // Also drop the geometry, not just the classes — an unclassed
+      // revealPath would otherwise still paint via the base `.country`
+      // rule until the next _mark replaced its `d`.
+      this._revealedFeatureId = null;
+      this.revealPath.removeAttribute("d");
+    }
   }
 
   // Applies to both the real path (every copy — ghost copies are <use>
@@ -854,7 +1359,21 @@ export class WorldMap {
   // country small enough to need a hit-region, the real shape is often
   // too tiny to see any fill change on, so the hit-region is what
   // actually shows the player their selection/result.
+  //
+  // Pin mode has no per-country paths to mark at all (see the constructor),
+  // so it instead draws the one feature being marked into the shared
+  // `revealPath`. Only a single feature can be marked at a time there,
+  // which is all pin mode ever asks for: `inputs.js` marks the target and
+  // nothing else (`markResult(null, correctId)`).
   _mark(id, className) {
+    if (this.pinMode) {
+      const f = this._geometryById.get(id);
+      if (!f) return;
+      this._revealedFeatureId = id;
+      this.revealPath.setAttribute("d", this.pathGen(f) ?? "");
+      this.revealPath.classList.add(className);
+      return;
+    }
     const path = this.featuresById.get(id);
     if (path) path.classList.add(className);
     const hitArea = this.hitAreasById.get(id);
@@ -862,6 +1381,10 @@ export class WorldMap {
   }
 
   _forEachMarked(fn) {
+    if (this.pinMode) {
+      fn(this.revealPath);
+      return;
+    }
     for (const path of this.featuresById.values()) fn(path);
     for (const hitArea of this.hitAreasById.values()) fn(hitArea);
   }
