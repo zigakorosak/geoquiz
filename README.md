@@ -10,11 +10,11 @@ Live at **[zigakorosak.com/geoquiz](https://zigakorosak.com/geoquiz/)**.
 
 ## Features
 
-- **Countries and Capitals** subjects (more — flags, emblems, currencies,
-  cities — on the roadmap), each with its own question/answer combinations.
-- **Four answer styles**: type the name, pick it from 2–6 multiple-choice
-  options, click the map, or drop a pin on a borderless map (with a
-  distance-from-target readout).
+- **Countries, Capitals, Flags, Emblems, and Currencies** subjects (cities
+  on the roadmap), each with its own question/answer combinations.
+- **Five answer styles**: type the name, pick it from 2–6 multiple-choice
+  options, pick the right flag/emblem from an image grid, click the map,
+  or drop a pin on a borderless map (with a distance-from-target readout).
 - **Region filtering** (Europe, Asia, Africa, the Americas, Oceania, or the
   whole world) and a sovereignty filter (all territories vs. sovereign
   states only), each showing how many items it'd leave you with.

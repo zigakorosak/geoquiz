@@ -1,8 +1,33 @@
 // Regenerates the static game data in public/data/ from upstream datasets.
 //
 // Sources (installed as devDependencies, not shipped at runtime):
-//   - world-countries: attributes (name, capital, region, latlng, flag emoji, ...)
-//   - world-atlas:     topojson world map, countries keyed by ISO 3166-1 numeric id (ccn3)
+//   - world-countries:   attributes (name, capital, region, latlng, flag emoji,
+//                        currencies, ...)
+//   - world-atlas:       topojson world map, countries keyed by ISO 3166-1
+//                        numeric id (ccn3)
+//   - country-flag-icons: real flag SVGs, keyed by ISO 3166-1 alpha-2 (cca2) —
+//                        copied as-is into public/data/flags/; small enough
+//                        (a few hundred bytes to ~1.5KB each) not to need
+//                        any processing.
+//   - coat-of-arms:      national emblem/coat-of-arms SVGs, also keyed by
+//                        cca2 — NOT copied as-is: these are real, detailed
+//                        heraldic exports, several hundred KB and a few over
+//                        1.5MB each, far too heavy to ship per-round. Each
+//                        one is rasterized once here (via the system
+//                        `rsvg-convert` binary — same tool this project's
+//                        own testing already relies on, now a real build-time
+//                        dependency of this script rather than just an ad hoc
+//                        one) down to a fixed-size PNG thumbnail, shrinking
+//                        every file to a few KB–tens of KB. Coverage is
+//                        partial (~206 of this project's 238 countries) —
+//                        a country with no coat-of-arms entry gets
+//                        `emblemUrl: null`, handled the same way a missing
+//                        `capital` already is: excluded from Emblems rounds
+//                        via isAskable (gameWizard.js), still rendered
+//                        normally everywhere else.
+//
+// Requires `rsvg-convert` (librsvg) on PATH to regenerate emblems — not
+// needed to just run the game, only to reproduce public/data/emblems/.
 //
 // Run with: node scripts/generate-data.mjs
 //
@@ -10,8 +35,9 @@
 // hand-maintained. Re-run after bumping either package, or after changing
 // MAP_RESOLUTION / FIELDS below.
 
-import { writeFileSync } from "node:fs";
+import { writeFileSync, mkdirSync, existsSync, copyFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { execFileSync } from "node:child_process";
 import path from "node:path";
 import countries from "world-countries";
 import citiesData from "cities.json" with { type: "json" };
@@ -71,12 +97,79 @@ function findCapitalLatLng(name, cca2, capital) {
   return hit ? [Number(hit.lat), Number(hit.lng)] : null;
 }
 
+// world-countries' own `currencies` is keyed by ISO 4217 code with a
+// {name, symbol} value, and can (rarely) list more than one — e.g. a few
+// small economies that also accept a neighbor's currency alongside their
+// own. Only the first is used: a "Currencies" round asks for *the*
+// currency, and picking one consistently (rather than joining multiple
+// names together) keeps both the prompt and every multiple-choice/
+// picture-choice option a single, clean value.
+function primaryCurrencyName(currencies) {
+  return Object.values(currencies ?? {})[0]?.name ?? null;
+}
+
 const MAP_RESOLUTION = "50m"; // one of: 110m (coarse), 50m (medium), 10m (fine, large)
+// Both dimensions rsvg-convert rasterizes each coat-of-arms into — not
+// necessarily the shape it ends up as: rsvg-convert's default
+// preserveAspectRatio ("xMidYMid meet") fits the source's own aspect ratio
+// *inside* this box rather than stretching it, so a tall shield or a round
+// seal comes out looking exactly as it should, just letterboxed within a
+// square canvas. One size, reused for both the (larger) prompt display and
+// the (smaller) picture-choice thumbnail — CSS scales it down for the
+// latter; 240px is comfortably crisp scaled down, and detailed enough not
+// to look muddy at prompt size either.
+const EMBLEM_PX = 240;
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Written to public/, not src/, so the game fetches them at runtime instead
 // of Vite inlining ~1MB of JSON into the JS bundle.
 const outDir = path.join(__dirname, "..", "public", "data");
+const flagsOutDir = path.join(outDir, "flags");
+const emblemsOutDir = path.join(outDir, "emblems");
+mkdirSync(flagsOutDir, { recursive: true });
+mkdirSync(emblemsOutDir, { recursive: true });
+
+// Both source packages key their per-country assets by ISO 3166-1 alpha-2
+// (cca2) — resolved as plain node_modules paths rather than through either
+// package's own JS API, since all that's actually needed is the raw SVG
+// file each one ships, not their (React-oriented) exported components.
+const FLAG_SVG_DIR = path.join(__dirname, "..", "node_modules", "country-flag-icons", "3x2");
+const COAT_SVG_DIR = path.join(__dirname, "..", "node_modules", "coat-of-arms", "dist", "coats");
+
+// Resolves one country's flag + emblem, returning the pair of paths
+// (relative to public/, matching how countries.json's other URLs — see
+// core/datasets.js — are stored BASE_URL-agnostic and prefixed with
+// import.meta.env.BASE_URL at fetch time, since this script has no access
+// to that browser-only value) the client can load each from, or null for
+// either the source package doesn't cover. Flags are copied as-is (already
+// small); emblems are rasterized — see EMBLEM_PX's comment for why.
+function resolveFlagAndEmblem(cca2) {
+  if (!cca2) return { flagUrl: null, emblemUrl: null };
+
+  const flagSrc = path.join(FLAG_SVG_DIR, `${cca2}.svg`);
+  let flagUrl = null;
+  if (existsSync(flagSrc)) {
+    copyFileSync(flagSrc, path.join(flagsOutDir, `${cca2}.svg`));
+    flagUrl = `data/flags/${cca2}.svg`;
+  }
+
+  const coatSrc = path.join(COAT_SVG_DIR, `${cca2}.svg`);
+  let emblemUrl = null;
+  if (existsSync(coatSrc)) {
+    execFileSync("rsvg-convert", [
+      "-w",
+      String(EMBLEM_PX),
+      "-h",
+      String(EMBLEM_PX),
+      coatSrc,
+      "-o",
+      path.join(emblemsOutDir, `${cca2}.png`),
+    ]);
+    emblemUrl = `data/emblems/${cca2}.png`;
+  }
+
+  return { flagUrl, emblemUrl };
+}
 
 const topoModule = await import(`world-atlas/countries-${MAP_RESOLUTION}.json`, {
   with: { type: "json" },
@@ -121,6 +214,12 @@ const EXTRA_TERRITORIES = [
       // is (~10,900 km²) for this to still be a reasonable stand-in.
       capitalLatLng: kosovoSource.latlng,
       flagEmoji: kosovoSource.flag,
+      // world-countries has real currency data for Kosovo (it just lacks
+      // the ccn3 id that would otherwise let it join the standard path
+      // below) — the Euro, unilaterally adopted despite Kosovo being
+      // outside the Eurozone proper.
+      currency: primaryCurrencyName(kosovoSource.currencies),
+      ...resolveFlagAndEmblem(kosovoSource.cca2),
       independent: kosovoSource.independent,
       area: kosovoSource.area,
     },
@@ -139,6 +238,11 @@ const EXTRA_TERRITORIES = [
       latlng: [9.4942, 44.0269], // already Hargeisa's own coordinates, not a separate country-wide centroid
       capitalLatLng: [9.4942, 44.0269],
       flagEmoji: null,
+      // Its own unrecognized currency, not used anywhere with an ISO 4217
+      // code (no cca2 to look one up by regardless) — public knowledge.
+      currency: "Somaliland shilling",
+      flagUrl: null,
+      emblemUrl: null,
       independent: false,
       area: 176120,
     },
@@ -157,6 +261,9 @@ const EXTRA_TERRITORIES = [
       latlng: [35.1856, 33.3823], // already North Nicosia's own coordinates
       capitalLatLng: [35.1856, 33.3823],
       flagEmoji: null,
+      currency: "Turkish lira", // uses Turkey's currency, not its own
+      flagUrl: null,
+      emblemUrl: null,
       independent: false,
       area: 3355,
     },
@@ -202,6 +309,8 @@ const gameCountries = countries
     latlng: c.latlng,
     capitalLatLng: findCapitalLatLng(c.name.common, c.cca2, c.capital?.[0] ?? null),
     flagEmoji: c.flag,
+    currency: primaryCurrencyName(c.currencies),
+    ...resolveFlagAndEmblem(c.cca2),
     independent: c.independent,
     area: c.area,
     isExtraTerritory: false,
@@ -233,6 +342,18 @@ if (missingCapitalLatLng.length) {
   for (const c of missingCapitalLatLng) console.log(`  - ${c.name} (capital: ${c.capital})`);
 } else {
   console.log(`\nEvery country with a capital has a resolved capitalLatLng.`);
+}
+
+const withFlag = gameCountries.filter((c) => c.flagUrl).length;
+const withEmblem = gameCountries.filter((c) => c.emblemUrl).length;
+const withCurrency = gameCountries.filter((c) => c.currency).length;
+console.log(
+  `\nFlags: ${withFlag}/${gameCountries.length}. Emblems: ${withEmblem}/${gameCountries.length}. Currencies: ${withCurrency}/${gameCountries.length}.`
+);
+const missingEmblem = gameCountries.filter((c) => !c.emblemUrl);
+if (missingEmblem.length) {
+  console.log(`Countries with no emblem (excluded from Emblems rounds, still playable everywhere else):`);
+  for (const c of missingEmblem) console.log(`  - ${c.name}`);
 }
 
 if (stillUnmatched.length) {

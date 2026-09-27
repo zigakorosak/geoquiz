@@ -21,8 +21,19 @@
 export const subjects = [
   { key: "countries", label: "Countries", available: true, datasetKey: "countries", attributeKeys: ["name", "location"] },
   { key: "capitals", label: "Capitals", available: true, datasetKey: "countries", attributeKeys: ["capital", "location"] },
-  { key: "flags", label: "Flags", available: false },
-  { key: "emblems", label: "Emblems", available: false },
-  { key: "currencies", label: "Currencies", available: false },
+  // `region` added to these three (not Countries/Capitals) per explicit
+  // request — a subject's own attributeKeys just being a *set*, not fixed
+  // pairs, means adding one more key here offers every cross-pairing
+  // among the three (Region<->Flag, Region<->Name, ...) for free, not
+  // just Region<->Name.
+  { key: "flags", label: "Flags", available: true, datasetKey: "countries", attributeKeys: ["name", "flag", "region"] },
+  { key: "emblems", label: "Emblems", available: true, datasetKey: "countries", attributeKeys: ["name", "emblem", "region"] },
+  {
+    key: "currencies",
+    label: "Currencies",
+    available: true,
+    datasetKey: "countries",
+    attributeKeys: ["name", "currency", "region"],
+  },
   { key: "cities", label: "Cities", available: false },
 ];

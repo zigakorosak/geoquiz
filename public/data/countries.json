@@ -17,6 +17,9 @@
       69.17233
     ],
     "flagEmoji": "🇦🇫",
+    "currency": "Afghan afghani",
+    "flagUrl": "data/flags/AF.svg",
+    "emblemUrl": "data/emblems/AF.png",
     "independent": true,
     "area": 652230,
     "isExtraTerritory": false
@@ -39,6 +42,9 @@
       19.93481
     ],
     "flagEmoji": "🇦🇽",
+    "currency": "Euro",
+    "flagUrl": "data/flags/AX.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 1580,
     "isExtraTerritory": false
@@ -61,6 +67,9 @@
       19.81866
     ],
     "flagEmoji": "🇦🇱",
+    "currency": "Albanian lek",
+    "flagUrl": "data/flags/AL.svg",
+    "emblemUrl": "data/emblems/AL.png",
     "independent": true,
     "area": 28748,
     "isExtraTerritory": false
@@ -83,6 +92,9 @@
       3.08746
     ],
     "flagEmoji": "🇩🇿",
+    "currency": "Algerian dinar",
+    "flagUrl": "data/flags/DZ.svg",
+    "emblemUrl": "data/emblems/DZ.png",
     "independent": true,
     "area": 2381741,
     "isExtraTerritory": false
@@ -105,6 +117,9 @@
       -170.7025
     ],
     "flagEmoji": "🇦🇸",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/AS.svg",
+    "emblemUrl": "data/emblems/AS.png",
     "independent": false,
     "area": 199,
     "isExtraTerritory": false
@@ -127,6 +142,9 @@
       1.52109
     ],
     "flagEmoji": "🇦🇩",
+    "currency": "Euro",
+    "flagUrl": "data/flags/AD.svg",
+    "emblemUrl": "data/emblems/AD.png",
     "independent": true,
     "area": 468,
     "isExtraTerritory": false
@@ -149,6 +167,9 @@
       13.23432
     ],
     "flagEmoji": "🇦🇴",
+    "currency": "Angolan kwanza",
+    "flagUrl": "data/flags/AO.svg",
+    "emblemUrl": "data/emblems/AO.png",
     "independent": true,
     "area": 1246700,
     "isExtraTerritory": false
@@ -171,6 +192,9 @@
       -63.05783
     ],
     "flagEmoji": "🇦🇮",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/AI.svg",
+    "emblemUrl": "data/emblems/AI.png",
     "independent": false,
     "area": 91,
     "isExtraTerritory": false
@@ -190,6 +214,9 @@
     ],
     "capitalLatLng": null,
     "flagEmoji": "🇦🇶",
+    "currency": null,
+    "flagUrl": "data/flags/AQ.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 14000000,
     "isExtraTerritory": false
@@ -212,6 +239,9 @@
       -61.84329
     ],
     "flagEmoji": "🇦🇬",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/AG.svg",
+    "emblemUrl": "data/emblems/AG.png",
     "independent": true,
     "area": 442,
     "isExtraTerritory": false
@@ -234,6 +264,9 @@
       -58.37723
     ],
     "flagEmoji": "🇦🇷",
+    "currency": "Argentine peso",
+    "flagUrl": "data/flags/AR.svg",
+    "emblemUrl": "data/emblems/AR.png",
     "independent": true,
     "area": 2780400,
     "isExtraTerritory": false
@@ -256,6 +289,9 @@
       44.5126
     ],
     "flagEmoji": "🇦🇲",
+    "currency": "Armenian dram",
+    "flagUrl": "data/flags/AM.svg",
+    "emblemUrl": "data/emblems/AM.png",
     "independent": true,
     "area": 29743,
     "isExtraTerritory": false
@@ -278,6 +314,9 @@
       -70.02703
     ],
     "flagEmoji": "🇦🇼",
+    "currency": "Aruban florin",
+    "flagUrl": "data/flags/AW.svg",
+    "emblemUrl": "data/emblems/AW.png",
     "independent": false,
     "area": 180,
     "isExtraTerritory": false
@@ -300,6 +339,9 @@
       149.12807
     ],
     "flagEmoji": "🇦🇺",
+    "currency": "Australian dollar",
+    "flagUrl": "data/flags/AU.svg",
+    "emblemUrl": "data/emblems/AU.png",
     "independent": true,
     "area": 7692024,
     "isExtraTerritory": false
@@ -322,6 +364,9 @@
       16.37208
     ],
     "flagEmoji": "🇦🇹",
+    "currency": "Euro",
+    "flagUrl": "data/flags/AT.svg",
+    "emblemUrl": "data/emblems/AT.png",
     "independent": true,
     "area": 83871,
     "isExtraTerritory": false
@@ -344,6 +389,9 @@
       49.89201
     ],
     "flagEmoji": "🇦🇿",
+    "currency": "Azerbaijani manat",
+    "flagUrl": "data/flags/AZ.svg",
+    "emblemUrl": "data/emblems/AZ.png",
     "independent": true,
     "area": 86600,
     "isExtraTerritory": false
@@ -366,6 +414,9 @@
       -77.34306
     ],
     "flagEmoji": "🇧🇸",
+    "currency": "Bahamian dollar",
+    "flagUrl": "data/flags/BS.svg",
+    "emblemUrl": "data/emblems/BS.png",
     "independent": true,
     "area": 13943,
     "isExtraTerritory": false
@@ -388,6 +439,9 @@
       50.58565
     ],
     "flagEmoji": "🇧🇭",
+    "currency": "Bahraini dinar",
+    "flagUrl": "data/flags/BH.svg",
+    "emblemUrl": "data/emblems/BH.png",
     "independent": true,
     "area": 765,
     "isExtraTerritory": false
@@ -410,6 +464,9 @@
       90.40744
     ],
     "flagEmoji": "🇧🇩",
+    "currency": "Bangladeshi taka",
+    "flagUrl": "data/flags/BD.svg",
+    "emblemUrl": "data/emblems/BD.png",
     "independent": true,
     "area": 147570,
     "isExtraTerritory": false
@@ -432,6 +489,9 @@
       -59.62021
     ],
     "flagEmoji": "🇧🇧",
+    "currency": "Barbadian dollar",
+    "flagUrl": "data/flags/BB.svg",
+    "emblemUrl": "data/emblems/BB.png",
     "independent": true,
     "area": 430,
     "isExtraTerritory": false
@@ -454,6 +514,9 @@
       27.56653
     ],
     "flagEmoji": "🇧🇾",
+    "currency": "Belarusian ruble",
+    "flagUrl": "data/flags/BY.svg",
+    "emblemUrl": "data/emblems/BY.png",
     "independent": true,
     "area": 207600,
     "isExtraTerritory": false
@@ -476,6 +539,9 @@
       4.34878
     ],
     "flagEmoji": "🇧🇪",
+    "currency": "Euro",
+    "flagUrl": "data/flags/BE.svg",
+    "emblemUrl": "data/emblems/BE.png",
     "independent": true,
     "area": 30528,
     "isExtraTerritory": false
@@ -498,6 +564,9 @@
       -88.76401
     ],
     "flagEmoji": "🇧🇿",
+    "currency": "Belize dollar",
+    "flagUrl": "data/flags/BZ.svg",
+    "emblemUrl": "data/emblems/BZ.png",
     "independent": true,
     "area": 22966,
     "isExtraTerritory": false
@@ -520,6 +589,9 @@
       2.60359
     ],
     "flagEmoji": "🇧🇯",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/BJ.svg",
+    "emblemUrl": "data/emblems/BJ.png",
     "independent": true,
     "area": 112622,
     "isExtraTerritory": false
@@ -542,6 +614,9 @@
       -64.78303
     ],
     "flagEmoji": "🇧🇲",
+    "currency": "Bermudian dollar",
+    "flagUrl": "data/flags/BM.svg",
+    "emblemUrl": "data/emblems/BM.png",
     "independent": false,
     "area": 54,
     "isExtraTerritory": false
@@ -564,6 +639,9 @@
       89.64191
     ],
     "flagEmoji": "🇧🇹",
+    "currency": "Bhutanese ngultrum",
+    "flagUrl": "data/flags/BT.svg",
+    "emblemUrl": "data/emblems/BT.png",
     "independent": true,
     "area": 38394,
     "isExtraTerritory": false
@@ -586,6 +664,9 @@
       -65.26274
     ],
     "flagEmoji": "🇧🇴",
+    "currency": "Bolivian boliviano",
+    "flagUrl": "data/flags/BO.svg",
+    "emblemUrl": "data/emblems/BO.png",
     "independent": true,
     "area": 1098581,
     "isExtraTerritory": false
@@ -608,6 +689,9 @@
       18.35644
     ],
     "flagEmoji": "🇧🇦",
+    "currency": "Bosnia and Herzegovina convertible mark",
+    "flagUrl": "data/flags/BA.svg",
+    "emblemUrl": "data/emblems/BA.png",
     "independent": true,
     "area": 51209,
     "isExtraTerritory": false
@@ -630,6 +714,9 @@
       25.90859
     ],
     "flagEmoji": "🇧🇼",
+    "currency": "Botswana pula",
+    "flagUrl": "data/flags/BW.svg",
+    "emblemUrl": "data/emblems/BW.png",
     "independent": true,
     "area": 582000,
     "isExtraTerritory": false
@@ -652,6 +739,9 @@
       -47.92972
     ],
     "flagEmoji": "🇧🇷",
+    "currency": "Brazilian real",
+    "flagUrl": "data/flags/BR.svg",
+    "emblemUrl": "data/emblems/BR.png",
     "independent": true,
     "area": 8515767,
     "isExtraTerritory": false
@@ -674,6 +764,9 @@
       72.4229
     ],
     "flagEmoji": "🇮🇴",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/IO.svg",
+    "emblemUrl": "data/emblems/IO.png",
     "independent": false,
     "area": 60,
     "isExtraTerritory": false
@@ -696,6 +789,9 @@
       -64.62079
     ],
     "flagEmoji": "🇻🇬",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/VG.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 151,
     "isExtraTerritory": false
@@ -718,6 +814,9 @@
       114.94006
     ],
     "flagEmoji": "🇧🇳",
+    "currency": "Brunei dollar",
+    "flagUrl": "data/flags/BN.svg",
+    "emblemUrl": "data/emblems/BN.png",
     "independent": true,
     "area": 5765,
     "isExtraTerritory": false
@@ -740,6 +839,9 @@
       23.32415
     ],
     "flagEmoji": "🇧🇬",
+    "currency": "Bulgarian lev",
+    "flagUrl": "data/flags/BG.svg",
+    "emblemUrl": "data/emblems/BG.png",
     "independent": true,
     "area": 110879,
     "isExtraTerritory": false
@@ -762,6 +864,9 @@
       -1.53388
     ],
     "flagEmoji": "🇧🇫",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/BF.svg",
+    "emblemUrl": "data/emblems/BF.png",
     "independent": true,
     "area": 272967,
     "isExtraTerritory": false
@@ -784,6 +889,9 @@
       29.92463
     ],
     "flagEmoji": "🇧🇮",
+    "currency": "Burundian franc",
+    "flagUrl": "data/flags/BI.svg",
+    "emblemUrl": "data/emblems/BI.png",
     "independent": true,
     "area": 27834,
     "isExtraTerritory": false
@@ -806,6 +914,9 @@
       104.91601
     ],
     "flagEmoji": "🇰🇭",
+    "currency": "Cambodian riel",
+    "flagUrl": "data/flags/KH.svg",
+    "emblemUrl": "data/emblems/KH.png",
     "independent": true,
     "area": 181035,
     "isExtraTerritory": false
@@ -828,6 +939,9 @@
       11.51667
     ],
     "flagEmoji": "🇨🇲",
+    "currency": "Central African CFA franc",
+    "flagUrl": "data/flags/CM.svg",
+    "emblemUrl": "data/emblems/CM.png",
     "independent": true,
     "area": 475442,
     "isExtraTerritory": false
@@ -850,6 +964,9 @@
       -75.69812
     ],
     "flagEmoji": "🇨🇦",
+    "currency": "Canadian dollar",
+    "flagUrl": "data/flags/CA.svg",
+    "emblemUrl": "data/emblems/CA.png",
     "independent": true,
     "area": 9984670,
     "isExtraTerritory": false
@@ -872,6 +989,9 @@
       -23.51254
     ],
     "flagEmoji": "🇨🇻",
+    "currency": "Cape Verdean escudo",
+    "flagUrl": "data/flags/CV.svg",
+    "emblemUrl": "data/emblems/CV.png",
     "independent": true,
     "area": 4033,
     "isExtraTerritory": false
@@ -894,6 +1014,9 @@
       -81.37436
     ],
     "flagEmoji": "🇰🇾",
+    "currency": "Cayman Islands dollar",
+    "flagUrl": "data/flags/KY.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 264,
     "isExtraTerritory": false
@@ -916,6 +1039,9 @@
       18.55496
     ],
     "flagEmoji": "🇨🇫",
+    "currency": "Central African CFA franc",
+    "flagUrl": "data/flags/CF.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 622984,
     "isExtraTerritory": false
@@ -938,6 +1064,9 @@
       15.0444
     ],
     "flagEmoji": "🇹🇩",
+    "currency": "Central African CFA franc",
+    "flagUrl": "data/flags/TD.svg",
+    "emblemUrl": "data/emblems/TD.png",
     "independent": true,
     "area": 1284000,
     "isExtraTerritory": false
@@ -960,6 +1089,9 @@
       -70.64827
     ],
     "flagEmoji": "🇨🇱",
+    "currency": "Chilean peso",
+    "flagUrl": "data/flags/CL.svg",
+    "emblemUrl": "data/emblems/CL.png",
     "independent": true,
     "area": 756102,
     "isExtraTerritory": false
@@ -982,6 +1114,9 @@
       116.39723
     ],
     "flagEmoji": "🇨🇳",
+    "currency": "Chinese yuan",
+    "flagUrl": "data/flags/CN.svg",
+    "emblemUrl": "data/emblems/CN.png",
     "independent": true,
     "area": 9706961,
     "isExtraTerritory": false
@@ -1004,6 +1139,9 @@
       -74.08175
     ],
     "flagEmoji": "🇨🇴",
+    "currency": "Colombian peso",
+    "flagUrl": "data/flags/CO.svg",
+    "emblemUrl": "data/emblems/CO.png",
     "independent": true,
     "area": 1141748,
     "isExtraTerritory": false
@@ -1026,6 +1164,9 @@
       43.25506
     ],
     "flagEmoji": "🇰🇲",
+    "currency": "Comorian franc",
+    "flagUrl": "data/flags/KM.svg",
+    "emblemUrl": "data/emblems/KM.png",
     "independent": true,
     "area": 1862,
     "isExtraTerritory": false
@@ -1048,6 +1189,9 @@
       -159.77546
     ],
     "flagEmoji": "🇨🇰",
+    "currency": "Cook Islands dollar",
+    "flagUrl": "data/flags/CK.svg",
+    "emblemUrl": "data/emblems/CK.png",
     "independent": false,
     "area": 236,
     "isExtraTerritory": false
@@ -1070,6 +1214,9 @@
       -85.13572
     ],
     "flagEmoji": "🇨🇷",
+    "currency": "Costa Rican colón",
+    "flagUrl": "data/flags/CR.svg",
+    "emblemUrl": "data/emblems/CR.png",
     "independent": true,
     "area": 51100,
     "isExtraTerritory": false
@@ -1092,6 +1239,9 @@
       15.97798
     ],
     "flagEmoji": "🇭🇷",
+    "currency": "Euro",
+    "flagUrl": "data/flags/HR.svg",
+    "emblemUrl": "data/emblems/HR.png",
     "independent": true,
     "area": 56594,
     "isExtraTerritory": false
@@ -1114,6 +1264,9 @@
       -82.38304
     ],
     "flagEmoji": "🇨🇺",
+    "currency": "Cuban convertible peso",
+    "flagUrl": "data/flags/CU.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 109884,
     "isExtraTerritory": false
@@ -1136,6 +1289,9 @@
       -68.88641
     ],
     "flagEmoji": "🇨🇼",
+    "currency": "Netherlands Antillean guilder",
+    "flagUrl": "data/flags/CW.svg",
+    "emblemUrl": "data/emblems/CW.png",
     "independent": false,
     "area": 444,
     "isExtraTerritory": false
@@ -1158,6 +1314,9 @@
       33.35397
     ],
     "flagEmoji": "🇨🇾",
+    "currency": "Euro",
+    "flagUrl": "data/flags/CY.svg",
+    "emblemUrl": "data/emblems/CY.png",
     "independent": true,
     "area": 9251,
     "isExtraTerritory": false
@@ -1180,6 +1339,9 @@
       14.42076
     ],
     "flagEmoji": "🇨🇿",
+    "currency": "Czech koruna",
+    "flagUrl": "data/flags/CZ.svg",
+    "emblemUrl": "data/emblems/CZ.png",
     "independent": true,
     "area": 78865,
     "isExtraTerritory": false
@@ -1202,6 +1364,9 @@
       12.56553
     ],
     "flagEmoji": "🇩🇰",
+    "currency": "Danish krone",
+    "flagUrl": "data/flags/DK.svg",
+    "emblemUrl": "data/emblems/DK.png",
     "independent": true,
     "area": 43094,
     "isExtraTerritory": false
@@ -1224,6 +1389,9 @@
       43.14503
     ],
     "flagEmoji": "🇩🇯",
+    "currency": "Djiboutian franc",
+    "flagUrl": "data/flags/DJ.svg",
+    "emblemUrl": "data/emblems/DJ.png",
     "independent": true,
     "area": 23200,
     "isExtraTerritory": false
@@ -1246,6 +1414,9 @@
       -61.38808
     ],
     "flagEmoji": "🇩🇲",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/DM.svg",
+    "emblemUrl": "data/emblems/DM.png",
     "independent": true,
     "area": 751,
     "isExtraTerritory": false
@@ -1268,6 +1439,9 @@
       -69.89232
     ],
     "flagEmoji": "🇩🇴",
+    "currency": "Dominican peso",
+    "flagUrl": "data/flags/DO.svg",
+    "emblemUrl": "data/emblems/DO.png",
     "independent": true,
     "area": 48671,
     "isExtraTerritory": false
@@ -1290,6 +1464,9 @@
       15.31357
     ],
     "flagEmoji": "🇨🇩",
+    "currency": "Congolese franc",
+    "flagUrl": "data/flags/CD.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 2344858,
     "isExtraTerritory": false
@@ -1312,6 +1489,9 @@
       -78.52495
     ],
     "flagEmoji": "🇪🇨",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/EC.svg",
+    "emblemUrl": "data/emblems/EC.png",
     "independent": true,
     "area": 276841,
     "isExtraTerritory": false
@@ -1334,6 +1514,9 @@
       31.24967
     ],
     "flagEmoji": "🇪🇬",
+    "currency": "Egyptian pound",
+    "flagUrl": "data/flags/EG.svg",
+    "emblemUrl": "data/emblems/EG.png",
     "independent": true,
     "area": 1002450,
     "isExtraTerritory": false
@@ -1356,6 +1539,9 @@
       -89.18718
     ],
     "flagEmoji": "🇸🇻",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/SV.svg",
+    "emblemUrl": "data/emblems/SV.png",
     "independent": true,
     "area": 21041,
     "isExtraTerritory": false
@@ -1378,6 +1564,9 @@
       8.78166
     ],
     "flagEmoji": "🇬🇶",
+    "currency": "Central African CFA franc",
+    "flagUrl": "data/flags/GQ.svg",
+    "emblemUrl": "data/emblems/GQ.png",
     "independent": true,
     "area": 28051,
     "isExtraTerritory": false
@@ -1400,6 +1589,9 @@
       38.93184
     ],
     "flagEmoji": "🇪🇷",
+    "currency": "Eritrean nakfa",
+    "flagUrl": "data/flags/ER.svg",
+    "emblemUrl": "data/emblems/ER.png",
     "independent": true,
     "area": 117600,
     "isExtraTerritory": false
@@ -1422,6 +1614,9 @@
       24.75353
     ],
     "flagEmoji": "🇪🇪",
+    "currency": "Euro",
+    "flagUrl": "data/flags/EE.svg",
+    "emblemUrl": "data/emblems/EE.png",
     "independent": true,
     "area": 45227,
     "isExtraTerritory": false
@@ -1444,6 +1639,9 @@
       31.2
     ],
     "flagEmoji": "🇸🇿",
+    "currency": "Swazi lilangeni",
+    "flagUrl": "data/flags/SZ.svg",
+    "emblemUrl": "data/emblems/SZ.png",
     "independent": true,
     "area": 17364,
     "isExtraTerritory": false
@@ -1466,6 +1664,9 @@
       38.74689
     ],
     "flagEmoji": "🇪🇹",
+    "currency": "Ethiopian birr",
+    "flagUrl": "data/flags/ET.svg",
+    "emblemUrl": "data/emblems/ET.png",
     "independent": true,
     "area": 1104300,
     "isExtraTerritory": false
@@ -1488,6 +1689,9 @@
       -57.85701
     ],
     "flagEmoji": "🇫🇰",
+    "currency": "Falkland Islands pound",
+    "flagUrl": "data/flags/FK.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 12173,
     "isExtraTerritory": false
@@ -1510,6 +1714,9 @@
       -6.77164
     ],
     "flagEmoji": "🇫🇴",
+    "currency": "Danish krone",
+    "flagUrl": "data/flags/FO.svg",
+    "emblemUrl": "data/emblems/FO.png",
     "independent": false,
     "area": 1393,
     "isExtraTerritory": false
@@ -1532,6 +1739,9 @@
       178.42531
     ],
     "flagEmoji": "🇫🇯",
+    "currency": "Fijian dollar",
+    "flagUrl": "data/flags/FJ.svg",
+    "emblemUrl": "data/emblems/FJ.png",
     "independent": true,
     "area": 18272,
     "isExtraTerritory": false
@@ -1554,6 +1764,9 @@
       24.93545
     ],
     "flagEmoji": "🇫🇮",
+    "currency": "Euro",
+    "flagUrl": "data/flags/FI.svg",
+    "emblemUrl": "data/emblems/FI.png",
     "independent": true,
     "area": 338424,
     "isExtraTerritory": false
@@ -1576,6 +1789,9 @@
       2.3488
     ],
     "flagEmoji": "🇫🇷",
+    "currency": "Euro",
+    "flagUrl": "data/flags/FR.svg",
+    "emblemUrl": "data/emblems/FR.png",
     "independent": true,
     "area": 551695,
     "isExtraTerritory": false
@@ -1598,6 +1814,9 @@
       -149.56843
     ],
     "flagEmoji": "🇵🇫",
+    "currency": "CFP franc",
+    "flagUrl": "data/flags/PF.svg",
+    "emblemUrl": "data/emblems/PF.png",
     "independent": false,
     "area": 4167,
     "isExtraTerritory": false
@@ -1620,6 +1839,9 @@
       70.21937
     ],
     "flagEmoji": "🇹🇫",
+    "currency": "Euro",
+    "flagUrl": "data/flags/TF.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 7747,
     "isExtraTerritory": false
@@ -1642,6 +1864,9 @@
       9.45356
     ],
     "flagEmoji": "🇬🇦",
+    "currency": "Central African CFA franc",
+    "flagUrl": "data/flags/GA.svg",
+    "emblemUrl": "data/emblems/GA.png",
     "independent": true,
     "area": 267668,
     "isExtraTerritory": false
@@ -1664,6 +1889,9 @@
       -16.57803
     ],
     "flagEmoji": "🇬🇲",
+    "currency": "dalasi",
+    "flagUrl": "data/flags/GM.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 10689,
     "isExtraTerritory": false
@@ -1686,6 +1914,9 @@
       44.83412
     ],
     "flagEmoji": "🇬🇪",
+    "currency": "lari",
+    "flagUrl": "data/flags/GE.svg",
+    "emblemUrl": "data/emblems/GE.png",
     "independent": true,
     "area": 69700,
     "isExtraTerritory": false
@@ -1708,6 +1939,9 @@
       13.41053
     ],
     "flagEmoji": "🇩🇪",
+    "currency": "Euro",
+    "flagUrl": "data/flags/DE.svg",
+    "emblemUrl": "data/emblems/DE.png",
     "independent": true,
     "area": 357114,
     "isExtraTerritory": false
@@ -1730,6 +1964,9 @@
       -0.1969
     ],
     "flagEmoji": "🇬🇭",
+    "currency": "Ghanaian cedi",
+    "flagUrl": "data/flags/GH.svg",
+    "emblemUrl": "data/emblems/GH.png",
     "independent": true,
     "area": 238533,
     "isExtraTerritory": false
@@ -1752,6 +1989,9 @@
       23.72784
     ],
     "flagEmoji": "🇬🇷",
+    "currency": "Euro",
+    "flagUrl": "data/flags/GR.svg",
+    "emblemUrl": "data/emblems/GR.png",
     "independent": true,
     "area": 131990,
     "isExtraTerritory": false
@@ -1774,6 +2014,9 @@
       -51.72157
     ],
     "flagEmoji": "🇬🇱",
+    "currency": "krone",
+    "flagUrl": "data/flags/GL.svg",
+    "emblemUrl": "data/emblems/GL.png",
     "independent": false,
     "area": 2166086,
     "isExtraTerritory": false
@@ -1796,6 +2039,9 @@
       -61.75226
     ],
     "flagEmoji": "🇬🇩",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/GD.svg",
+    "emblemUrl": "data/emblems/GD.png",
     "independent": true,
     "area": 344,
     "isExtraTerritory": false
@@ -1818,6 +2064,9 @@
       144.74886
     ],
     "flagEmoji": "🇬🇺",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/GU.svg",
+    "emblemUrl": "data/emblems/GU.png",
     "independent": false,
     "area": 549,
     "isExtraTerritory": false
@@ -1840,6 +2089,9 @@
       -90.51327
     ],
     "flagEmoji": "🇬🇹",
+    "currency": "Guatemalan quetzal",
+    "flagUrl": "data/flags/GT.svg",
+    "emblemUrl": "data/emblems/GT.png",
     "independent": true,
     "area": 108889,
     "isExtraTerritory": false
@@ -1862,6 +2114,9 @@
       -2.53527
     ],
     "flagEmoji": "🇬🇬",
+    "currency": "British pound",
+    "flagUrl": "data/flags/GG.svg",
+    "emblemUrl": "data/emblems/GG.png",
     "independent": false,
     "area": 78,
     "isExtraTerritory": false
@@ -1884,6 +2139,9 @@
       -13.67729
     ],
     "flagEmoji": "🇬🇳",
+    "currency": "Guinean franc",
+    "flagUrl": "data/flags/GN.svg",
+    "emblemUrl": "data/emblems/GN.png",
     "independent": true,
     "area": 245857,
     "isExtraTerritory": false
@@ -1906,6 +2164,9 @@
       -15.59767
     ],
     "flagEmoji": "🇬🇼",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/GW.svg",
+    "emblemUrl": "data/emblems/GW.png",
     "independent": true,
     "area": 36125,
     "isExtraTerritory": false
@@ -1928,6 +2189,9 @@
       -58.15527
     ],
     "flagEmoji": "🇬🇾",
+    "currency": "Guyanese dollar",
+    "flagUrl": "data/flags/GY.svg",
+    "emblemUrl": "data/emblems/GY.png",
     "independent": true,
     "area": 214969,
     "isExtraTerritory": false
@@ -1950,6 +2214,9 @@
       -72.33881
     ],
     "flagEmoji": "🇭🇹",
+    "currency": "Haitian gourde",
+    "flagUrl": "data/flags/HT.svg",
+    "emblemUrl": "data/emblems/HT.png",
     "independent": true,
     "area": 27750,
     "isExtraTerritory": false
@@ -1969,6 +2236,9 @@
     ],
     "capitalLatLng": null,
     "flagEmoji": "🇭🇲",
+    "currency": null,
+    "flagUrl": "data/flags/HM.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 412,
     "isExtraTerritory": false
@@ -1991,6 +2261,9 @@
       -87.20681
     ],
     "flagEmoji": "🇭🇳",
+    "currency": "Honduran lempira",
+    "flagUrl": "data/flags/HN.svg",
+    "emblemUrl": "data/emblems/HN.png",
     "independent": true,
     "area": 112492,
     "isExtraTerritory": false
@@ -2013,6 +2286,9 @@
       114.14417
     ],
     "flagEmoji": "🇭🇰",
+    "currency": "Hong Kong dollar",
+    "flagUrl": "data/flags/HK.svg",
+    "emblemUrl": "data/emblems/HK.png",
     "independent": false,
     "area": 1104,
     "isExtraTerritory": false
@@ -2035,6 +2311,9 @@
       19.04045
     ],
     "flagEmoji": "🇭🇺",
+    "currency": "Hungarian forint",
+    "flagUrl": "data/flags/HU.svg",
+    "emblemUrl": "data/emblems/HU.png",
     "independent": true,
     "area": 93028,
     "isExtraTerritory": false
@@ -2057,6 +2336,9 @@
       -21.89541
     ],
     "flagEmoji": "🇮🇸",
+    "currency": "Icelandic króna",
+    "flagUrl": "data/flags/IS.svg",
+    "emblemUrl": "data/emblems/IS.png",
     "independent": true,
     "area": 103000,
     "isExtraTerritory": false
@@ -2079,6 +2361,9 @@
       77.2148
     ],
     "flagEmoji": "🇮🇳",
+    "currency": "Indian rupee",
+    "flagUrl": "data/flags/IN.svg",
+    "emblemUrl": "data/emblems/IN.png",
     "independent": true,
     "area": 3287590,
     "isExtraTerritory": false
@@ -2101,6 +2386,9 @@
       106.84513
     ],
     "flagEmoji": "🇮🇩",
+    "currency": "Indonesian rupiah",
+    "flagUrl": "data/flags/ID.svg",
+    "emblemUrl": "data/emblems/ID.png",
     "independent": true,
     "area": 1904569,
     "isExtraTerritory": false
@@ -2123,6 +2411,9 @@
       51.42151
     ],
     "flagEmoji": "🇮🇷",
+    "currency": "Iranian rial",
+    "flagUrl": "data/flags/IR.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 1648195,
     "isExtraTerritory": false
@@ -2145,6 +2436,9 @@
       44.40088
     ],
     "flagEmoji": "🇮🇶",
+    "currency": "Iraqi dinar",
+    "flagUrl": "data/flags/IQ.svg",
+    "emblemUrl": "data/emblems/IQ.png",
     "independent": true,
     "area": 438317,
     "isExtraTerritory": false
@@ -2167,6 +2461,9 @@
       -6.24889
     ],
     "flagEmoji": "🇮🇪",
+    "currency": "Euro",
+    "flagUrl": "data/flags/IE.svg",
+    "emblemUrl": "data/emblems/IE.png",
     "independent": true,
     "area": 70273,
     "isExtraTerritory": false
@@ -2189,6 +2486,9 @@
       -4.48333
     ],
     "flagEmoji": "🇮🇲",
+    "currency": "British pound",
+    "flagUrl": "data/flags/IM.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 572,
     "isExtraTerritory": false
@@ -2211,6 +2511,9 @@
       35.21633
     ],
     "flagEmoji": "🇮🇱",
+    "currency": "Israeli new shekel",
+    "flagUrl": "data/flags/IL.svg",
+    "emblemUrl": "data/emblems/IL.png",
     "independent": true,
     "area": 20770,
     "isExtraTerritory": false
@@ -2233,6 +2536,9 @@
       12.51133
     ],
     "flagEmoji": "🇮🇹",
+    "currency": "Euro",
+    "flagUrl": "data/flags/IT.svg",
+    "emblemUrl": "data/emblems/IT.png",
     "independent": true,
     "area": 301336,
     "isExtraTerritory": false
@@ -2255,6 +2561,9 @@
       -5.27674
     ],
     "flagEmoji": "🇨🇮",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/CI.svg",
+    "emblemUrl": "data/emblems/CI.png",
     "independent": true,
     "area": 322463,
     "isExtraTerritory": false
@@ -2277,6 +2586,9 @@
       -76.79358
     ],
     "flagEmoji": "🇯🇲",
+    "currency": "Jamaican dollar",
+    "flagUrl": "data/flags/JM.svg",
+    "emblemUrl": "data/emblems/JM.png",
     "independent": true,
     "area": 10991,
     "isExtraTerritory": false
@@ -2299,6 +2611,9 @@
       139.69171
     ],
     "flagEmoji": "🇯🇵",
+    "currency": "Japanese yen",
+    "flagUrl": "data/flags/JP.svg",
+    "emblemUrl": "data/emblems/JP.png",
     "independent": true,
     "area": 377930,
     "isExtraTerritory": false
@@ -2321,6 +2636,9 @@
       -2.10491
     ],
     "flagEmoji": "🇯🇪",
+    "currency": "British pound",
+    "flagUrl": "data/flags/JE.svg",
+    "emblemUrl": "data/emblems/JE.png",
     "independent": false,
     "area": 116,
     "isExtraTerritory": false
@@ -2343,6 +2661,9 @@
       35.94503
     ],
     "flagEmoji": "🇯🇴",
+    "currency": "Jordanian dinar",
+    "flagUrl": "data/flags/JO.svg",
+    "emblemUrl": "data/emblems/JO.png",
     "independent": true,
     "area": 89342,
     "isExtraTerritory": false
@@ -2365,6 +2686,9 @@
       71.44598
     ],
     "flagEmoji": "🇰🇿",
+    "currency": "Kazakhstani tenge",
+    "flagUrl": "data/flags/KZ.svg",
+    "emblemUrl": "data/emblems/KZ.png",
     "independent": true,
     "area": 2724900,
     "isExtraTerritory": false
@@ -2387,6 +2711,9 @@
       36.81667
     ],
     "flagEmoji": "🇰🇪",
+    "currency": "Kenyan shilling",
+    "flagUrl": "data/flags/KE.svg",
+    "emblemUrl": "data/emblems/KE.png",
     "independent": true,
     "area": 580367,
     "isExtraTerritory": false
@@ -2409,6 +2736,9 @@
       172.97696
     ],
     "flagEmoji": "🇰🇮",
+    "currency": "Australian dollar",
+    "flagUrl": "data/flags/KI.svg",
+    "emblemUrl": "data/emblems/KI.png",
     "independent": true,
     "area": 811,
     "isExtraTerritory": false
@@ -2431,6 +2761,9 @@
       21.166667
     ],
     "flagEmoji": "🇽🇰",
+    "currency": "Euro",
+    "flagUrl": "data/flags/XK.svg",
+    "emblemUrl": "data/emblems/XK.png",
     "independent": null,
     "area": 10908,
     "isExtraTerritory": true
@@ -2453,6 +2786,9 @@
       47.97429
     ],
     "flagEmoji": "🇰🇼",
+    "currency": "Kuwaiti dinar",
+    "flagUrl": "data/flags/KW.svg",
+    "emblemUrl": "data/emblems/KW.png",
     "independent": true,
     "area": 17818,
     "isExtraTerritory": false
@@ -2475,6 +2811,9 @@
       74.59
     ],
     "flagEmoji": "🇰🇬",
+    "currency": "Kyrgyzstani som",
+    "flagUrl": "data/flags/KG.svg",
+    "emblemUrl": "data/emblems/KG.png",
     "independent": true,
     "area": 199951,
     "isExtraTerritory": false
@@ -2497,6 +2836,9 @@
       102.6
     ],
     "flagEmoji": "🇱🇦",
+    "currency": "Lao kip",
+    "flagUrl": "data/flags/LA.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 236800,
     "isExtraTerritory": false
@@ -2519,6 +2861,9 @@
       24.10589
     ],
     "flagEmoji": "🇱🇻",
+    "currency": "Euro",
+    "flagUrl": "data/flags/LV.svg",
+    "emblemUrl": "data/emblems/LV.png",
     "independent": true,
     "area": 64559,
     "isExtraTerritory": false
@@ -2541,6 +2886,9 @@
       35.50157
     ],
     "flagEmoji": "🇱🇧",
+    "currency": "Lebanese pound",
+    "flagUrl": "data/flags/LB.svg",
+    "emblemUrl": "data/emblems/LB.png",
     "independent": true,
     "area": 10452,
     "isExtraTerritory": false
@@ -2563,6 +2911,9 @@
       27.48333
     ],
     "flagEmoji": "🇱🇸",
+    "currency": "Lesotho loti",
+    "flagUrl": "data/flags/LS.svg",
+    "emblemUrl": "data/emblems/LS.png",
     "independent": true,
     "area": 30355,
     "isExtraTerritory": false
@@ -2585,6 +2936,9 @@
       -10.7969
     ],
     "flagEmoji": "🇱🇷",
+    "currency": "Liberian dollar",
+    "flagUrl": "data/flags/LR.svg",
+    "emblemUrl": "data/emblems/LR.png",
     "independent": true,
     "area": 111369,
     "isExtraTerritory": false
@@ -2607,6 +2961,9 @@
       13.18733
     ],
     "flagEmoji": "🇱🇾",
+    "currency": "Libyan dinar",
+    "flagUrl": "data/flags/LY.svg",
+    "emblemUrl": "data/emblems/LY.png",
     "independent": true,
     "area": 1759540,
     "isExtraTerritory": false
@@ -2629,6 +2986,9 @@
       9.52154
     ],
     "flagEmoji": "🇱🇮",
+    "currency": "Swiss franc",
+    "flagUrl": "data/flags/LI.svg",
+    "emblemUrl": "data/emblems/LI.png",
     "independent": true,
     "area": 160,
     "isExtraTerritory": false
@@ -2651,6 +3011,9 @@
       25.2798
     ],
     "flagEmoji": "🇱🇹",
+    "currency": "Euro",
+    "flagUrl": "data/flags/LT.svg",
+    "emblemUrl": "data/emblems/LT.png",
     "independent": true,
     "area": 65300,
     "isExtraTerritory": false
@@ -2673,6 +3036,9 @@
       6.13268
     ],
     "flagEmoji": "🇱🇺",
+    "currency": "Euro",
+    "flagUrl": "data/flags/LU.svg",
+    "emblemUrl": "data/emblems/LU.png",
     "independent": true,
     "area": 2586,
     "isExtraTerritory": false
@@ -2692,6 +3058,9 @@
     ],
     "capitalLatLng": null,
     "flagEmoji": "🇲🇴",
+    "currency": "Macanese pataca",
+    "flagUrl": "data/flags/MO.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 30,
     "isExtraTerritory": false
@@ -2714,6 +3083,9 @@
       47.53613
     ],
     "flagEmoji": "🇲🇬",
+    "currency": "Malagasy ariary",
+    "flagUrl": "data/flags/MG.svg",
+    "emblemUrl": "data/emblems/MG.png",
     "independent": true,
     "area": 587041,
     "isExtraTerritory": false
@@ -2736,6 +3108,9 @@
       33.78725
     ],
     "flagEmoji": "🇲🇼",
+    "currency": "Malawian kwacha",
+    "flagUrl": "data/flags/MW.svg",
+    "emblemUrl": "data/emblems/MW.png",
     "independent": true,
     "area": 118484,
     "isExtraTerritory": false
@@ -2758,6 +3133,9 @@
       101.68653
     ],
     "flagEmoji": "🇲🇾",
+    "currency": "Malaysian ringgit",
+    "flagUrl": "data/flags/MY.svg",
+    "emblemUrl": "data/emblems/MY.png",
     "independent": true,
     "area": 330803,
     "isExtraTerritory": false
@@ -2780,6 +3158,9 @@
       73.50916
     ],
     "flagEmoji": "🇲🇻",
+    "currency": "Maldivian rufiyaa",
+    "flagUrl": "data/flags/MV.svg",
+    "emblemUrl": "data/emblems/MV.png",
     "independent": true,
     "area": 300,
     "isExtraTerritory": false
@@ -2802,6 +3183,9 @@
       -7.97522
     ],
     "flagEmoji": "🇲🇱",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/ML.svg",
+    "emblemUrl": "data/emblems/ML.png",
     "independent": true,
     "area": 1240192,
     "isExtraTerritory": false
@@ -2824,6 +3208,9 @@
       14.5148
     ],
     "flagEmoji": "🇲🇹",
+    "currency": "Euro",
+    "flagUrl": "data/flags/MT.svg",
+    "emblemUrl": "data/emblems/MT.png",
     "independent": true,
     "area": 316,
     "isExtraTerritory": false
@@ -2846,6 +3233,9 @@
       171.38027
     ],
     "flagEmoji": "🇲🇭",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/MH.svg",
+    "emblemUrl": "data/emblems/MH.png",
     "independent": true,
     "area": 181,
     "isExtraTerritory": false
@@ -2868,6 +3258,9 @@
       -15.9785
     ],
     "flagEmoji": "🇲🇷",
+    "currency": "Mauritanian ouguiya",
+    "flagUrl": "data/flags/MR.svg",
+    "emblemUrl": "data/emblems/MR.png",
     "independent": true,
     "area": 1030700,
     "isExtraTerritory": false
@@ -2890,6 +3283,9 @@
       57.49889
     ],
     "flagEmoji": "🇲🇺",
+    "currency": "Mauritian rupee",
+    "flagUrl": "data/flags/MU.svg",
+    "emblemUrl": "data/emblems/MU.png",
     "independent": true,
     "area": 2040,
     "isExtraTerritory": false
@@ -2912,6 +3308,9 @@
       -99.12766
     ],
     "flagEmoji": "🇲🇽",
+    "currency": "Mexican peso",
+    "flagUrl": "data/flags/MX.svg",
+    "emblemUrl": "data/emblems/MX.png",
     "independent": true,
     "area": 1964375,
     "isExtraTerritory": false
@@ -2934,6 +3333,9 @@
       158.16109
     ],
     "flagEmoji": "🇫🇲",
+    "currency": null,
+    "flagUrl": "data/flags/FM.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 702,
     "isExtraTerritory": false
@@ -2956,6 +3358,9 @@
       28.85938
     ],
     "flagEmoji": "🇲🇩",
+    "currency": "Moldovan leu",
+    "flagUrl": "data/flags/MD.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 33846,
     "isExtraTerritory": false
@@ -2978,6 +3383,9 @@
       7.42145
     ],
     "flagEmoji": "🇲🇨",
+    "currency": "Euro",
+    "flagUrl": "data/flags/MC.svg",
+    "emblemUrl": "data/emblems/MC.png",
     "independent": true,
     "area": 2.02,
     "isExtraTerritory": false
@@ -3000,6 +3408,9 @@
       106.88324
     ],
     "flagEmoji": "🇲🇳",
+    "currency": "Mongolian tögrög",
+    "flagUrl": "data/flags/MN.svg",
+    "emblemUrl": "data/emblems/MN.png",
     "independent": true,
     "area": 1564110,
     "isExtraTerritory": false
@@ -3022,6 +3433,9 @@
       19.26309
     ],
     "flagEmoji": "🇲🇪",
+    "currency": "Euro",
+    "flagUrl": "data/flags/ME.svg",
+    "emblemUrl": "data/emblems/ME.png",
     "independent": true,
     "area": 13812,
     "isExtraTerritory": false
@@ -3044,6 +3458,9 @@
       -62.21292
     ],
     "flagEmoji": "🇲🇸",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/MS.svg",
+    "emblemUrl": "data/emblems/MS.png",
     "independent": false,
     "area": 102,
     "isExtraTerritory": false
@@ -3066,6 +3483,9 @@
       -6.83255
     ],
     "flagEmoji": "🇲🇦",
+    "currency": "Moroccan dirham",
+    "flagUrl": "data/flags/MA.svg",
+    "emblemUrl": "data/emblems/MA.png",
     "independent": true,
     "area": 446550,
     "isExtraTerritory": false
@@ -3088,6 +3508,9 @@
       32.58322
     ],
     "flagEmoji": "🇲🇿",
+    "currency": "Mozambican metical",
+    "flagUrl": "data/flags/MZ.svg",
+    "emblemUrl": "data/emblems/MZ.png",
     "independent": true,
     "area": 801590,
     "isExtraTerritory": false
@@ -3110,6 +3533,9 @@
       96.12972
     ],
     "flagEmoji": "🇲🇲",
+    "currency": "Burmese kyat",
+    "flagUrl": "data/flags/MM.svg",
+    "emblemUrl": "data/emblems/MM.png",
     "independent": true,
     "area": 676578,
     "isExtraTerritory": false
@@ -3132,6 +3558,9 @@
       17.08323
     ],
     "flagEmoji": "🇳🇦",
+    "currency": "Namibian dollar",
+    "flagUrl": "data/flags/NA.svg",
+    "emblemUrl": "data/emblems/NA.png",
     "independent": true,
     "area": 825615,
     "isExtraTerritory": false
@@ -3154,6 +3583,9 @@
       166.9252
     ],
     "flagEmoji": "🇳🇷",
+    "currency": "Australian dollar",
+    "flagUrl": "data/flags/NR.svg",
+    "emblemUrl": "data/emblems/NR.png",
     "independent": true,
     "area": 21,
     "isExtraTerritory": false
@@ -3176,6 +3608,9 @@
       85.3206
     ],
     "flagEmoji": "🇳🇵",
+    "currency": "Nepalese rupee",
+    "flagUrl": "data/flags/NP.svg",
+    "emblemUrl": "data/emblems/NP.png",
     "independent": true,
     "area": 147181,
     "isExtraTerritory": false
@@ -3198,6 +3633,9 @@
       4.88969
     ],
     "flagEmoji": "🇳🇱",
+    "currency": "Euro",
+    "flagUrl": "data/flags/NL.svg",
+    "emblemUrl": "data/emblems/NL.png",
     "independent": true,
     "area": 41850,
     "isExtraTerritory": false
@@ -3220,6 +3658,9 @@
       166.44884
     ],
     "flagEmoji": "🇳🇨",
+    "currency": "CFP franc",
+    "flagUrl": "data/flags/NC.svg",
+    "emblemUrl": "data/emblems/NC.png",
     "independent": false,
     "area": 18575,
     "isExtraTerritory": false
@@ -3242,6 +3683,9 @@
       174.77557
     ],
     "flagEmoji": "🇳🇿",
+    "currency": "New Zealand dollar",
+    "flagUrl": "data/flags/NZ.svg",
+    "emblemUrl": "data/emblems/NZ.png",
     "independent": true,
     "area": 270467,
     "isExtraTerritory": false
@@ -3264,6 +3708,9 @@
       -86.2504
     ],
     "flagEmoji": "🇳🇮",
+    "currency": "Nicaraguan córdoba",
+    "flagUrl": "data/flags/NI.svg",
+    "emblemUrl": "data/emblems/NI.png",
     "independent": true,
     "area": 130373,
     "isExtraTerritory": false
@@ -3286,6 +3733,9 @@
       2.1098
     ],
     "flagEmoji": "🇳🇪",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/NE.svg",
+    "emblemUrl": "data/emblems/NE.png",
     "independent": true,
     "area": 1267000,
     "isExtraTerritory": false
@@ -3308,6 +3758,9 @@
       7.49508
     ],
     "flagEmoji": "🇳🇬",
+    "currency": "Nigerian naira",
+    "flagUrl": "data/flags/NG.svg",
+    "emblemUrl": "data/emblems/NG.png",
     "independent": true,
     "area": 923768,
     "isExtraTerritory": false
@@ -3330,6 +3783,9 @@
       -169.91957
     ],
     "flagEmoji": "🇳🇺",
+    "currency": "New Zealand dollar",
+    "flagUrl": "data/flags/NU.svg",
+    "emblemUrl": "data/emblems/NU.png",
     "independent": false,
     "area": 260,
     "isExtraTerritory": false
@@ -3352,6 +3808,9 @@
       167.96628
     ],
     "flagEmoji": "🇳🇫",
+    "currency": "Australian dollar",
+    "flagUrl": "data/flags/NF.svg",
+    "emblemUrl": "data/emblems/NF.png",
     "independent": false,
     "area": 36,
     "isExtraTerritory": false
@@ -3374,6 +3833,9 @@
       125.75432
     ],
     "flagEmoji": "🇰🇵",
+    "currency": "North Korean won",
+    "flagUrl": "data/flags/KP.svg",
+    "emblemUrl": "data/emblems/KP.png",
     "independent": true,
     "area": 120538,
     "isExtraTerritory": false
@@ -3396,6 +3858,9 @@
       21.43141
     ],
     "flagEmoji": "🇲🇰",
+    "currency": "denar",
+    "flagUrl": "data/flags/MK.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 25713,
     "isExtraTerritory": false
@@ -3418,6 +3883,9 @@
       33.3823
     ],
     "flagEmoji": null,
+    "currency": "Turkish lira",
+    "flagUrl": null,
+    "emblemUrl": null,
     "independent": false,
     "area": 3355,
     "isExtraTerritory": true
@@ -3440,6 +3908,9 @@
       145.7545
     ],
     "flagEmoji": "🇲🇵",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/MP.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 464,
     "isExtraTerritory": false
@@ -3462,6 +3933,9 @@
       10.74609
     ],
     "flagEmoji": "🇳🇴",
+    "currency": "Norwegian krone",
+    "flagUrl": "data/flags/NO.svg",
+    "emblemUrl": "data/emblems/NO.png",
     "independent": true,
     "area": 323802,
     "isExtraTerritory": false
@@ -3484,6 +3958,9 @@
       58.40778
     ],
     "flagEmoji": "🇴🇲",
+    "currency": "Omani rial",
+    "flagUrl": "data/flags/OM.svg",
+    "emblemUrl": "data/emblems/OM.png",
     "independent": true,
     "area": 309500,
     "isExtraTerritory": false
@@ -3506,6 +3983,9 @@
       73.04329
     ],
     "flagEmoji": "🇵🇰",
+    "currency": "Pakistani rupee",
+    "flagUrl": "data/flags/PK.svg",
+    "emblemUrl": "data/emblems/PK.png",
     "independent": true,
     "area": 881912,
     "isExtraTerritory": false
@@ -3528,6 +4008,9 @@
       134.6238
     ],
     "flagEmoji": "🇵🇼",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/PW.svg",
+    "emblemUrl": "data/emblems/PW.png",
     "independent": true,
     "area": 459,
     "isExtraTerritory": false
@@ -3550,6 +4033,9 @@
       35.20422
     ],
     "flagEmoji": "🇵🇸",
+    "currency": "Egyptian pound",
+    "flagUrl": "data/flags/PS.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 6220,
     "isExtraTerritory": false
@@ -3572,6 +4058,9 @@
       -79.51973
     ],
     "flagEmoji": "🇵🇦",
+    "currency": "Panamanian balboa",
+    "flagUrl": "data/flags/PA.svg",
+    "emblemUrl": "data/emblems/PA.png",
     "independent": true,
     "area": 75417,
     "isExtraTerritory": false
@@ -3594,6 +4083,9 @@
       147.15089
     ],
     "flagEmoji": "🇵🇬",
+    "currency": "Papua New Guinean kina",
+    "flagUrl": "data/flags/PG.svg",
+    "emblemUrl": "data/emblems/PG.png",
     "independent": true,
     "area": 462840,
     "isExtraTerritory": false
@@ -3616,6 +4108,9 @@
       -57.647
     ],
     "flagEmoji": "🇵🇾",
+    "currency": "Paraguayan guaraní",
+    "flagUrl": "data/flags/PY.svg",
+    "emblemUrl": "data/emblems/PY.png",
     "independent": true,
     "area": 406752,
     "isExtraTerritory": false
@@ -3638,6 +4133,9 @@
       -77.02824
     ],
     "flagEmoji": "🇵🇪",
+    "currency": "Peruvian sol",
+    "flagUrl": "data/flags/PE.svg",
+    "emblemUrl": "data/emblems/PE.png",
     "independent": true,
     "area": 1285216,
     "isExtraTerritory": false
@@ -3660,6 +4158,9 @@
       120.9822
     ],
     "flagEmoji": "🇵🇭",
+    "currency": "Philippine peso",
+    "flagUrl": "data/flags/PH.svg",
+    "emblemUrl": "data/emblems/PH.png",
     "independent": true,
     "area": 342353,
     "isExtraTerritory": false
@@ -3682,6 +4183,9 @@
       -130.10147
     ],
     "flagEmoji": "🇵🇳",
+    "currency": "New Zealand dollar",
+    "flagUrl": "data/flags/PN.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 47,
     "isExtraTerritory": false
@@ -3704,6 +4208,9 @@
       21.01178
     ],
     "flagEmoji": "🇵🇱",
+    "currency": "Polish złoty",
+    "flagUrl": "data/flags/PL.svg",
+    "emblemUrl": "data/emblems/PL.png",
     "independent": true,
     "area": 312679,
     "isExtraTerritory": false
@@ -3726,6 +4233,9 @@
       -9.1498
     ],
     "flagEmoji": "🇵🇹",
+    "currency": "Euro",
+    "flagUrl": "data/flags/PT.svg",
+    "emblemUrl": "data/emblems/PT.png",
     "independent": true,
     "area": 92090,
     "isExtraTerritory": false
@@ -3748,6 +4258,9 @@
       -66.10572
     ],
     "flagEmoji": "🇵🇷",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/PR.svg",
+    "emblemUrl": "data/emblems/PR.png",
     "independent": false,
     "area": 8870,
     "isExtraTerritory": false
@@ -3770,6 +4283,9 @@
       51.53096
     ],
     "flagEmoji": "🇶🇦",
+    "currency": "Qatari riyal",
+    "flagUrl": "data/flags/QA.svg",
+    "emblemUrl": "data/emblems/QA.png",
     "independent": true,
     "area": 11586,
     "isExtraTerritory": false
@@ -3792,6 +4308,9 @@
       15.28318
     ],
     "flagEmoji": "🇨🇬",
+    "currency": "Central African CFA franc",
+    "flagUrl": "data/flags/CG.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 342000,
     "isExtraTerritory": false
@@ -3814,6 +4333,9 @@
       26.10626
     ],
     "flagEmoji": "🇷🇴",
+    "currency": "Romanian leu",
+    "flagUrl": "data/flags/RO.svg",
+    "emblemUrl": "data/emblems/RO.png",
     "independent": true,
     "area": 238391,
     "isExtraTerritory": false
@@ -3836,6 +4358,9 @@
       37.61781
     ],
     "flagEmoji": "🇷🇺",
+    "currency": "Russian ruble",
+    "flagUrl": "data/flags/RU.svg",
+    "emblemUrl": "data/emblems/RU.png",
     "independent": true,
     "area": 17098242,
     "isExtraTerritory": false
@@ -3858,6 +4383,9 @@
       30.05885
     ],
     "flagEmoji": "🇷🇼",
+    "currency": "Rwandan franc",
+    "flagUrl": "data/flags/RW.svg",
+    "emblemUrl": "data/emblems/RW.png",
     "independent": true,
     "area": 26338,
     "isExtraTerritory": false
@@ -3880,6 +4408,9 @@
       -62.84978
     ],
     "flagEmoji": "🇧🇱",
+    "currency": "Euro",
+    "flagUrl": "data/flags/BL.svg",
+    "emblemUrl": "data/emblems/BL.png",
     "independent": false,
     "area": 21,
     "isExtraTerritory": false
@@ -3902,6 +4433,9 @@
       -5.71816
     ],
     "flagEmoji": "🇸🇭",
+    "currency": "Pound sterling",
+    "flagUrl": "data/flags/SH.svg",
+    "emblemUrl": "data/emblems/SH.png",
     "independent": false,
     "area": 394,
     "isExtraTerritory": false
@@ -3924,6 +4458,9 @@
       -62.72499
     ],
     "flagEmoji": "🇰🇳",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/KN.svg",
+    "emblemUrl": "data/emblems/KN.png",
     "independent": true,
     "area": 261,
     "isExtraTerritory": false
@@ -3946,6 +4483,9 @@
       -61.00614
     ],
     "flagEmoji": "🇱🇨",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/LC.svg",
+    "emblemUrl": "data/emblems/LC.png",
     "independent": true,
     "area": 616,
     "isExtraTerritory": false
@@ -3968,6 +4508,9 @@
       -63.08302
     ],
     "flagEmoji": "🇲🇫",
+    "currency": "Euro",
+    "flagUrl": "data/flags/MF.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 53,
     "isExtraTerritory": false
@@ -3990,6 +4533,9 @@
       -56.1773
     ],
     "flagEmoji": "🇵🇲",
+    "currency": "Euro",
+    "flagUrl": "data/flags/PM.svg",
+    "emblemUrl": "data/emblems/PM.png",
     "independent": false,
     "area": 242,
     "isExtraTerritory": false
@@ -4012,6 +4558,9 @@
       -61.22742
     ],
     "flagEmoji": "🇻🇨",
+    "currency": "Eastern Caribbean dollar",
+    "flagUrl": "data/flags/VC.svg",
+    "emblemUrl": "data/emblems/VC.png",
     "independent": true,
     "area": 389,
     "isExtraTerritory": false
@@ -4034,6 +4583,9 @@
       -171.76666
     ],
     "flagEmoji": "🇼🇸",
+    "currency": "Samoan tālā",
+    "flagUrl": "data/flags/WS.svg",
+    "emblemUrl": "data/emblems/WS.png",
     "independent": true,
     "area": 2842,
     "isExtraTerritory": false
@@ -4056,6 +4608,9 @@
       12.44639
     ],
     "flagEmoji": "🇸🇲",
+    "currency": "Euro",
+    "flagUrl": "data/flags/SM.svg",
+    "emblemUrl": "data/emblems/SM.png",
     "independent": true,
     "area": 61,
     "isExtraTerritory": false
@@ -4078,6 +4633,9 @@
       6.7299
     ],
     "flagEmoji": "🇸🇹",
+    "currency": "São Tomé and Príncipe dobra",
+    "flagUrl": "data/flags/ST.svg",
+    "emblemUrl": "data/emblems/ST.png",
     "independent": true,
     "area": 964,
     "isExtraTerritory": false
@@ -4100,6 +4658,9 @@
       46.72185
     ],
     "flagEmoji": "🇸🇦",
+    "currency": "Saudi riyal",
+    "flagUrl": "data/flags/SA.svg",
+    "emblemUrl": "data/emblems/SA.png",
     "independent": true,
     "area": 2149690,
     "isExtraTerritory": false
@@ -4122,6 +4683,9 @@
       -17.44406
     ],
     "flagEmoji": "🇸🇳",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/SN.svg",
+    "emblemUrl": "data/emblems/SN.png",
     "independent": true,
     "area": 196722,
     "isExtraTerritory": false
@@ -4144,6 +4708,9 @@
       20.46513
     ],
     "flagEmoji": "🇷🇸",
+    "currency": "Serbian dinar",
+    "flagUrl": "data/flags/RS.svg",
+    "emblemUrl": "data/emblems/RS.png",
     "independent": true,
     "area": 88361,
     "isExtraTerritory": false
@@ -4166,6 +4733,9 @@
       55.45501
     ],
     "flagEmoji": "🇸🇨",
+    "currency": "Seychellois rupee",
+    "flagUrl": "data/flags/SC.svg",
+    "emblemUrl": "data/emblems/SC.png",
     "independent": true,
     "area": 452,
     "isExtraTerritory": false
@@ -4188,6 +4758,9 @@
       -13.2356
     ],
     "flagEmoji": "🇸🇱",
+    "currency": "Sierra Leonean leone",
+    "flagUrl": "data/flags/SL.svg",
+    "emblemUrl": "data/emblems/SL.png",
     "independent": true,
     "area": 71740,
     "isExtraTerritory": false
@@ -4210,6 +4783,9 @@
       103.85007
     ],
     "flagEmoji": "🇸🇬",
+    "currency": "Singapore dollar",
+    "flagUrl": "data/flags/SG.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 710,
     "isExtraTerritory": false
@@ -4232,6 +4808,9 @@
       -63.04582
     ],
     "flagEmoji": "🇸🇽",
+    "currency": "Netherlands Antillean guilder",
+    "flagUrl": "data/flags/SX.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 34,
     "isExtraTerritory": false
@@ -4254,6 +4833,9 @@
       17.10674
     ],
     "flagEmoji": "🇸🇰",
+    "currency": "Euro",
+    "flagUrl": "data/flags/SK.svg",
+    "emblemUrl": "data/emblems/SK.png",
     "independent": true,
     "area": 49037,
     "isExtraTerritory": false
@@ -4276,6 +4858,9 @@
       14.50513
     ],
     "flagEmoji": "🇸🇮",
+    "currency": "Euro",
+    "flagUrl": "data/flags/SI.svg",
+    "emblemUrl": "data/emblems/SI.png",
     "independent": true,
     "area": 20273,
     "isExtraTerritory": false
@@ -4298,6 +4883,9 @@
       159.95
     ],
     "flagEmoji": "🇸🇧",
+    "currency": "Solomon Islands dollar",
+    "flagUrl": "data/flags/SB.svg",
+    "emblemUrl": "data/emblems/SB.png",
     "independent": true,
     "area": 28896,
     "isExtraTerritory": false
@@ -4320,6 +4908,9 @@
       45.34375
     ],
     "flagEmoji": "🇸🇴",
+    "currency": "Somali shilling",
+    "flagUrl": "data/flags/SO.svg",
+    "emblemUrl": "data/emblems/SO.png",
     "independent": true,
     "area": 637657,
     "isExtraTerritory": false
@@ -4342,6 +4933,9 @@
       44.0269
     ],
     "flagEmoji": null,
+    "currency": "Somaliland shilling",
+    "flagUrl": null,
+    "emblemUrl": null,
     "independent": false,
     "area": 176120,
     "isExtraTerritory": true
@@ -4364,6 +4958,9 @@
       28.18783
     ],
     "flagEmoji": "🇿🇦",
+    "currency": "South African rand",
+    "flagUrl": "data/flags/ZA.svg",
+    "emblemUrl": "data/emblems/ZA.png",
     "independent": true,
     "area": 1221037,
     "isExtraTerritory": false
@@ -4386,6 +4983,9 @@
       -36.5092
     ],
     "flagEmoji": "🇬🇸",
+    "currency": "Saint Helena pound",
+    "flagUrl": "data/flags/GS.svg",
+    "emblemUrl": "data/emblems/GS.png",
     "independent": false,
     "area": 3903,
     "isExtraTerritory": false
@@ -4408,6 +5008,9 @@
       126.9784
     ],
     "flagEmoji": "🇰🇷",
+    "currency": "South Korean won",
+    "flagUrl": "data/flags/KR.svg",
+    "emblemUrl": "data/emblems/KR.png",
     "independent": true,
     "area": 100210,
     "isExtraTerritory": false
@@ -4430,6 +5033,9 @@
       31.58247
     ],
     "flagEmoji": "🇸🇸",
+    "currency": "South Sudanese pound",
+    "flagUrl": "data/flags/SS.svg",
+    "emblemUrl": "data/emblems/SS.png",
     "independent": true,
     "area": 619745,
     "isExtraTerritory": false
@@ -4452,6 +5058,9 @@
       -3.70256
     ],
     "flagEmoji": "🇪🇸",
+    "currency": "Euro",
+    "flagUrl": "data/flags/ES.svg",
+    "emblemUrl": "data/emblems/ES.png",
     "independent": true,
     "area": 505992,
     "isExtraTerritory": false
@@ -4474,6 +5083,9 @@
       79.84868
     ],
     "flagEmoji": "🇱🇰",
+    "currency": "Sri Lankan rupee",
+    "flagUrl": "data/flags/LK.svg",
+    "emblemUrl": "data/emblems/LK.png",
     "independent": true,
     "area": 65610,
     "isExtraTerritory": false
@@ -4496,6 +5108,9 @@
       32.53241
     ],
     "flagEmoji": "🇸🇩",
+    "currency": "Sudanese pound",
+    "flagUrl": "data/flags/SD.svg",
+    "emblemUrl": "data/emblems/SD.png",
     "independent": true,
     "area": 1886068,
     "isExtraTerritory": false
@@ -4518,6 +5133,9 @@
       -55.16682
     ],
     "flagEmoji": "🇸🇷",
+    "currency": "Surinamese dollar",
+    "flagUrl": "data/flags/SR.svg",
+    "emblemUrl": "data/emblems/SR.png",
     "independent": true,
     "area": 163820,
     "isExtraTerritory": false
@@ -4540,6 +5158,9 @@
       18.06871
     ],
     "flagEmoji": "🇸🇪",
+    "currency": "Swedish krona",
+    "flagUrl": "data/flags/SE.svg",
+    "emblemUrl": "data/emblems/SE.png",
     "independent": true,
     "area": 450295,
     "isExtraTerritory": false
@@ -4562,6 +5183,9 @@
       7.44744
     ],
     "flagEmoji": "🇨🇭",
+    "currency": "Swiss franc",
+    "flagUrl": "data/flags/CH.svg",
+    "emblemUrl": "data/emblems/CH.png",
     "independent": true,
     "area": 41284,
     "isExtraTerritory": false
@@ -4584,6 +5208,9 @@
       36.29128
     ],
     "flagEmoji": "🇸🇾",
+    "currency": "Syrian pound",
+    "flagUrl": "data/flags/SY.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 185180,
     "isExtraTerritory": false
@@ -4606,6 +5233,9 @@
       121.52639
     ],
     "flagEmoji": "🇹🇼",
+    "currency": "New Taiwan dollar",
+    "flagUrl": "data/flags/TW.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 36193,
     "isExtraTerritory": false
@@ -4628,6 +5258,9 @@
       68.77905
     ],
     "flagEmoji": "🇹🇯",
+    "currency": "Tajikistani somoni",
+    "flagUrl": "data/flags/TJ.svg",
+    "emblemUrl": "data/emblems/TJ.png",
     "independent": true,
     "area": 143100,
     "isExtraTerritory": false
@@ -4650,6 +5283,9 @@
       35.73947
     ],
     "flagEmoji": "🇹🇿",
+    "currency": "Tanzanian shilling",
+    "flagUrl": "data/flags/TZ.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 945087,
     "isExtraTerritory": false
@@ -4672,6 +5308,9 @@
       100.50144
     ],
     "flagEmoji": "🇹🇭",
+    "currency": "Thai baht",
+    "flagUrl": "data/flags/TH.svg",
+    "emblemUrl": "data/emblems/TH.png",
     "independent": true,
     "area": 513120,
     "isExtraTerritory": false
@@ -4694,6 +5333,9 @@
       125.57361
     ],
     "flagEmoji": "🇹🇱",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/TL.svg",
+    "emblemUrl": "data/emblems/TL.png",
     "independent": true,
     "area": 14874,
     "isExtraTerritory": false
@@ -4716,6 +5358,9 @@
       1.22154
     ],
     "flagEmoji": "🇹🇬",
+    "currency": "West African CFA franc",
+    "flagUrl": "data/flags/TG.svg",
+    "emblemUrl": "data/emblems/TG.png",
     "independent": true,
     "area": 56785,
     "isExtraTerritory": false
@@ -4738,6 +5383,9 @@
       -175.20114
     ],
     "flagEmoji": "🇹🇴",
+    "currency": "Tongan paʻanga",
+    "flagUrl": "data/flags/TO.svg",
+    "emblemUrl": "data/emblems/TO.png",
     "independent": true,
     "area": 747,
     "isExtraTerritory": false
@@ -4760,6 +5408,9 @@
       -61.51889
     ],
     "flagEmoji": "🇹🇹",
+    "currency": "Trinidad and Tobago dollar",
+    "flagUrl": "data/flags/TT.svg",
+    "emblemUrl": "data/emblems/TT.png",
     "independent": true,
     "area": 5130,
     "isExtraTerritory": false
@@ -4782,6 +5433,9 @@
       10.16579
     ],
     "flagEmoji": "🇹🇳",
+    "currency": "Tunisian dinar",
+    "flagUrl": "data/flags/TN.svg",
+    "emblemUrl": "data/emblems/TN.png",
     "independent": true,
     "area": 163610,
     "isExtraTerritory": false
@@ -4804,6 +5458,9 @@
       32.85427
     ],
     "flagEmoji": "🇹🇷",
+    "currency": "Turkish lira",
+    "flagUrl": "data/flags/TR.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 783562,
     "isExtraTerritory": false
@@ -4826,6 +5483,9 @@
       58.38333
     ],
     "flagEmoji": "🇹🇲",
+    "currency": "Turkmenistan manat",
+    "flagUrl": "data/flags/TM.svg",
+    "emblemUrl": "data/emblems/TM.png",
     "independent": true,
     "area": 488100,
     "isExtraTerritory": false
@@ -4848,6 +5508,9 @@
       -71.14188
     ],
     "flagEmoji": "🇹🇨",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/TC.svg",
+    "emblemUrl": "data/emblems/TC.png",
     "independent": false,
     "area": 948,
     "isExtraTerritory": false
@@ -4870,6 +5533,9 @@
       32.58219
     ],
     "flagEmoji": "🇺🇬",
+    "currency": "Ugandan shilling",
+    "flagUrl": "data/flags/UG.svg",
+    "emblemUrl": "data/emblems/UG.png",
     "independent": true,
     "area": 241550,
     "isExtraTerritory": false
@@ -4892,6 +5558,9 @@
       30.5238
     ],
     "flagEmoji": "🇺🇦",
+    "currency": "Ukrainian hryvnia",
+    "flagUrl": "data/flags/UA.svg",
+    "emblemUrl": "data/emblems/UA.png",
     "independent": true,
     "area": 603500,
     "isExtraTerritory": false
@@ -4914,6 +5583,9 @@
       54.39696
     ],
     "flagEmoji": "🇦🇪",
+    "currency": "United Arab Emirates dirham",
+    "flagUrl": "data/flags/AE.svg",
+    "emblemUrl": "data/emblems/AE.png",
     "independent": true,
     "area": 83600,
     "isExtraTerritory": false
@@ -4936,6 +5608,9 @@
       -0.09184
     ],
     "flagEmoji": "🇬🇧",
+    "currency": "British pound",
+    "flagUrl": "data/flags/GB.svg",
+    "emblemUrl": "data/emblems/GB.png",
     "independent": true,
     "area": 242900,
     "isExtraTerritory": false
@@ -4958,6 +5633,9 @@
       -77.03637
     ],
     "flagEmoji": "🇺🇸",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/US.svg",
+    "emblemUrl": "data/emblems/US.png",
     "independent": true,
     "area": 9372610,
     "isExtraTerritory": false
@@ -4980,6 +5658,9 @@
       -64.9307
     ],
     "flagEmoji": "🇻🇮",
+    "currency": "United States dollar",
+    "flagUrl": "data/flags/VI.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 347,
     "isExtraTerritory": false
@@ -5002,6 +5683,9 @@
       -56.18816
     ],
     "flagEmoji": "🇺🇾",
+    "currency": "Uruguayan peso",
+    "flagUrl": "data/flags/UY.svg",
+    "emblemUrl": "data/emblems/UY.png",
     "independent": true,
     "area": 181034,
     "isExtraTerritory": false
@@ -5024,6 +5708,9 @@
       69.21627
     ],
     "flagEmoji": "🇺🇿",
+    "currency": "Uzbekistani soʻm",
+    "flagUrl": "data/flags/UZ.svg",
+    "emblemUrl": "data/emblems/UZ.png",
     "independent": true,
     "area": 447400,
     "isExtraTerritory": false
@@ -5046,6 +5733,9 @@
       168.31366
     ],
     "flagEmoji": "🇻🇺",
+    "currency": "Vanuatu vatu",
+    "flagUrl": "data/flags/VU.svg",
+    "emblemUrl": "data/emblems/VU.png",
     "independent": true,
     "area": 12189,
     "isExtraTerritory": false
@@ -5068,6 +5758,9 @@
       12.45414
     ],
     "flagEmoji": "🇻🇦",
+    "currency": "Euro",
+    "flagUrl": "data/flags/VA.svg",
+    "emblemUrl": null,
     "independent": true,
     "area": 0.44,
     "isExtraTerritory": false
@@ -5090,6 +5783,9 @@
       -66.87919
     ],
     "flagEmoji": "🇻🇪",
+    "currency": "Venezuelan bolívar soberano",
+    "flagUrl": "data/flags/VE.svg",
+    "emblemUrl": "data/emblems/VE.png",
     "independent": true,
     "area": 916445,
     "isExtraTerritory": false
@@ -5112,6 +5808,9 @@
       105.84117
     ],
     "flagEmoji": "🇻🇳",
+    "currency": "Vietnamese đồng",
+    "flagUrl": "data/flags/VN.svg",
+    "emblemUrl": "data/emblems/VN.png",
     "independent": true,
     "area": 331212,
     "isExtraTerritory": false
@@ -5134,6 +5833,9 @@
       -176.17453
     ],
     "flagEmoji": "🇼🇫",
+    "currency": "CFP franc",
+    "flagUrl": "data/flags/WF.svg",
+    "emblemUrl": null,
     "independent": false,
     "area": 142,
     "isExtraTerritory": false
@@ -5156,6 +5858,9 @@
       -13.18797
     ],
     "flagEmoji": "🇪🇭",
+    "currency": "Algerian dinar",
+    "flagUrl": "data/flags/EH.svg",
+    "emblemUrl": "data/emblems/EH.png",
     "independent": false,
     "area": 266000,
     "isExtraTerritory": false
@@ -5178,6 +5883,9 @@
       44.20646
     ],
     "flagEmoji": "🇾🇪",
+    "currency": "Yemeni rial",
+    "flagUrl": "data/flags/YE.svg",
+    "emblemUrl": "data/emblems/YE.png",
     "independent": true,
     "area": 527968,
     "isExtraTerritory": false
@@ -5200,6 +5908,9 @@
       28.28713
     ],
     "flagEmoji": "🇿🇲",
+    "currency": "Zambian kwacha",
+    "flagUrl": "data/flags/ZM.svg",
+    "emblemUrl": "data/emblems/ZM.png",
     "independent": true,
     "area": 752612,
     "isExtraTerritory": false
@@ -5222,6 +5933,9 @@
       31.05337
     ],
     "flagEmoji": "🇿🇼",
+    "currency": "Botswana pula",
+    "flagUrl": "data/flags/ZW.svg",
+    "emblemUrl": "data/emblems/ZW.png",
     "independent": true,
     "area": 390757,
     "isExtraTerritory": false

@@ -102,6 +102,7 @@ function showAnswerStep(container, config, goBack, onExit) {
 const answerKindLabels = {
   "text-guess": "Type it",
   "multiple-choice": "Multiple choice",
+  "picture-choice": "Pick the picture",
   "map-click": "Select region",
   "map-pin": "Drop a pin",
 };
@@ -121,7 +122,14 @@ function goToAnswerKindOrSkip(container, config, goBack, onExit) {
   if (kinds.length > 1) {
     showAnswerKindStep(container, config, goBack, onExit);
   } else {
-    goToRegionOrSkip(container, { ...config, answerKind: kinds[0] }, goBack, onExit);
+    // Only one kind, so there's no *choice* to show — but the kind itself
+    // can still need its own follow-up (picture-choice's option count,
+    // same as multiple-choice's — flag/emblem only ever declare this one
+    // kind, see attributes.js), so this still has to route through the
+    // same logic showAnswerKindStep's onPick does, not skip straight to
+    // goToRegionOrSkip the way "map-pin" (which never needs a follow-up
+    // when auto-selected) used to.
+    proceedWithAnswerKind(container, config, kinds[0], goBack, onExit);
   }
 }
 
@@ -132,20 +140,28 @@ function showAnswerKindStep(container, config, goBack, onExit) {
     labelFn: (k) => answerKindLabels[k] ?? k,
     onPick: (k) => {
       const stepBack = () => showAnswerKindStep(container, config, goBack, onExit);
-      if (k === "multiple-choice") {
-        showOptionCountStep(container, { ...config, answerKind: k }, stepBack, onExit);
-      } else if (k === "map-pin" && offersCapitalPinTarget(config)) {
-        showPinTargetStep(container, { ...config, answerKind: k }, stepBack, onExit);
-      } else if (k === "map-pin") {
-        // Only one sensible target, so don't ask — same rule as
-        // goToAnswerKindOrSkip applies to answer kinds themselves.
-        goToRegionOrSkip(container, { ...config, answerKind: k, pinTarget: "region" }, stepBack, onExit);
-      } else {
-        goToRegionOrSkip(container, { ...config, answerKind: k }, stepBack, onExit);
-      }
+      proceedWithAnswerKind(container, config, k, stepBack, onExit);
     },
     onBack: goBack,
   });
+}
+
+// Where to go once an answer kind is settled — shared between an explicit
+// pick (showAnswerKindStep) and an auto-selected single kind
+// (goToAnswerKindOrSkip); see its comment for why a single-kind attribute
+// still needs this rather than skipping straight past it.
+function proceedWithAnswerKind(container, config, k, goBack, onExit) {
+  if (k === "multiple-choice" || k === "picture-choice") {
+    showOptionCountStep(container, { ...config, answerKind: k }, goBack, onExit);
+  } else if (k === "map-pin" && offersCapitalPinTarget(config)) {
+    showPinTargetStep(container, { ...config, answerKind: k }, goBack, onExit);
+  } else if (k === "map-pin") {
+    // Only one sensible target, so don't ask — same rule as
+    // goToAnswerKindOrSkip applies to answer kinds themselves.
+    goToRegionOrSkip(container, { ...config, answerKind: k, pinTarget: "region" }, goBack, onExit);
+  } else {
+    goToRegionOrSkip(container, { ...config, answerKind: k }, goBack, onExit);
+  }
 }
 
 const OPTION_COUNTS = [2, 3, 4, 5, 6];

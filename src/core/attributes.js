@@ -64,6 +64,67 @@ export const attributes = {
     checkAnswer: (guessId, item) => guessId === item.id,
     formatAnswer: (item) => item.name,
   },
+  currency: {
+    key: "currency",
+    label: "Currency",
+    canBePrompt: true,
+    canBeAnswer: true,
+    promptKind: "text",
+    answerKinds: ["text-guess", "multiple-choice"],
+    getValue: (item) => item.currency,
+    checkAnswer: (guess, item) => normalizeText(guess) === normalizeText(item.currency),
+    formatAnswer: (item) => item.currency,
+  },
+  // The broad continent (world-countries' own `region` — "Europe",
+  // "Africa", "Americas", "Asia", "Oceania", "Antarctic"), not the finer
+  // `subregion` ("Western Europe" etc.) core/regions.js's own region
+  // *filter* step matches against — a distinct concept from that step
+  // despite the shared name: this is a quizzable fact about one item
+  // ("what continent is Peru in"), that step is which items are in play
+  // at all. Every item has one (unlike capital/currency/flag/emblem, no
+  // gaps to worry about), so it's the simplest attribute here: reuses
+  // text/text-guess/multiple-choice wholesale, same as currency.
+  region: {
+    key: "region",
+    label: "Region",
+    canBePrompt: true,
+    canBeAnswer: true,
+    promptKind: "text",
+    answerKinds: ["text-guess", "multiple-choice"],
+    getValue: (item) => item.region,
+    checkAnswer: (guess, item) => normalizeText(guess) === normalizeText(item.region),
+    formatAnswer: (item) => item.region,
+  },
+  // flag/emblem share everything but which URL field they read and their
+  // label — both are "show a picture, name (or pick) the country" facts,
+  // never typeable, so their only answerKind is "picture-choice" (a new
+  // image-grid input, inputs.js) rather than text-guess/multiple-choice.
+  // Correctness is checked by *item identity* (`guessId === item.id`),
+  // the same as "location" — not by the URL string — since the thing
+  // being asked is fundamentally "which country is this", regardless of
+  // which fact (shape, flag, emblem) was used to ask it.
+  flag: {
+    key: "flag",
+    label: "Flag",
+    canBePrompt: true,
+    canBeAnswer: true,
+    promptKind: "image",
+    answerKinds: ["picture-choice"],
+    getValue: (item) => item.flagUrl,
+    checkAnswer: (guessId, item) => guessId === item.id,
+    formatAnswer: (item) => item.name,
+  },
+  emblem: {
+    key: "emblem",
+    label: "Emblem",
+    canBePrompt: true,
+    canBeAnswer: true,
+    promptKind: "image",
+    answerKinds: ["picture-choice"],
+    getValue: (item) => item.emblemUrl,
+    checkAnswer: (guessId, item) => guessId === item.id,
+    formatAnswer: (item) => item.name,
+  },
 };
 
 export function listPromptAttributes() {

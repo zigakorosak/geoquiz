@@ -3,6 +3,113 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-28 — Region attribute added to Flags, Emblems, Currencies
+
+Follow-up: "region" (world-countries' own broad continent field — Europe/
+Africa/Americas/Asia/Oceania/Antarctic, not the finer `subregion` — a
+distinct concept from core/regions.js's own region *filter* step despite
+the shared name) added as a seventh attribute, reusing text/text-guess/
+multiple-choice wholesale like `currency` — every item has one, zero data
+gaps. Added to Flags/Emblems/Currencies' `attributeKeys` specifically
+(not Countries/Capitals), which — since a subject's attributeKeys is a
+set, not fixed pairs — offers every cross-pairing among each subject's
+three facts for free (Region<->Flag, Region<->Name, ...), not just
+Region<->Name.
+
+Worth flagging, not fixed: using Region as the *question* is meaningfully
+more ambiguous than any other attribute here — dozens of countries share
+a region, so "Europe, name this country" has no way to signal which
+specific one the round means, and a plausible-but-different guess reads
+as wrong. The same issue exists already for `currency` (Eurozone), just
+far less severe (usually near-unique, occasionally ~20-way shared vs.
+region's every-item-shares-with-dozens). Shipped anyway, per explicit
+request for both directions, distractor-dedup already handles the
+resulting heavy multiple-choice collisions without crashing (verified) —
+but a Region-as-question round is a knowingly easier/blunter one than the
+rest, not a bug to chase further unless it turns out to feel bad in play.
+
+Verified both directions across all three subjects (typed, multiple-
+choice including a deliberately heavy-collision case, picture-choice)
+plus a fast regression sweep of the existing paths. `npm run build`
+clean.
+
+## 2026-09-28 — three new subjects: Flags, Emblems, Currencies
+
+Requested: add Flags, Emblems, and Currencies (already-listed but
+`available: false` placeholders in subjects.js). Scoped up front: should
+flag/emblem ever be the *answer* (pick the right picture from several),
+not just the prompt — yes, which meant a genuinely new answer-input kind,
+not just new data behind existing widgets.
+
+**Currencies** turned out to need zero new UI: world-countries already
+carries `currencies` per country, and a currency name is just another
+string, so it reuses `text`/`text-guess`/`multiple-choice` exactly like
+`capital` does — the whole feature there was the data field and the
+subjects.js entry.
+
+**Flags/Emblems** needed real image assets neither of this project's
+existing data packages carry. `country-flag-icons` (MIT) covers flags
+100% and is small enough to copy as-is. Coat-of-arms images were harder:
+world-countries has never carried them at all (checked both the current
+and several older published versions), and the `coat-of-arms` npm package
+that does turned out to ship *massive* per-file SVGs — several hundred KB
+to just under 2MB each, one of which alone would outweigh the entire map
+topology. Rasterized each one at generate-time via `rsvg-convert` (this
+project's own visual-verification tool from earlier rounds, now a real
+generate-data.mjs dependency) down to a 240×240 PNG, shrinking every file
+to a few KB–tens of KB. Coverage is real but partial — 206 of 238
+countries have a source emblem (Cuba, Iran, Singapore, Türkiye, Tanzania,
+and ~30 smaller/less-recognized entries don't) — handled exactly like a
+missing `capital` already is: `emblemUrl: null`, excluded from Emblems
+rounds via the existing `isAskable` filter, no special-casing needed.
+
+New attributes `flag`/`emblem` (image prompt) and `currency` (text
+prompt/answer) in `attributes.js`; three `subjects.js` entries flipped
+from `available: false` to real `datasetKey`/`attributeKeys` pointing at
+the same `countries` dataset Countries/Capitals already share — no new
+fetch, every item already carries the fields. A new `"image"` prompt
+renderer and `"picture-choice"` answer renderer (an image-grid sibling of
+multiple choice, not a copy of it — see DESIGN.md's "Widget registries"
+for exactly why they had to be separate: multiple choice's correctness
+check and button lookup are keyed by *value*, which isn't meaningful for
+a flag/emblem URL; picture-choice keys by the option's own item id
+instead, the same way `location` does).
+
+Fixing this surfaced a real, previously-latent bug in multiple choice
+itself: distractor sampling drew from `dataset.items` by item identity
+only, with no check that two different items could produce the *same
+displayed value* — harmless for `name`/`capital` (no real collisions
+exist), but `currency` collides constantly (a whole Eurozone's worth of
+countries all answer "Euro"), which would have shown duplicate option
+buttons and silently mis-styled one of them at result time (the
+renderer's own `buttons` lookup is keyed by value, so a duplicate
+registration overwrites the first). Fixed by deduping the distractor
+pool by value before rendering — a no-op for the attributes that never
+collided, a real fix for the one that does constantly.
+
+The single-answerKind auto-select path (`goToAnswerKindOrSkip`, for any
+attribute that only ever declares one) used to skip straight past any
+kind-specific follow-up, which was fine while the only such attribute was
+`location`'s `map-pin` (no follow-up needed when auto-selected). `flag`/
+`emblem` declare only `"picture-choice"` — which, like multiple choice,
+*does* need one (the option-count step) — so this path had to learn to
+route through the same "does this kind need a follow-up" logic an
+explicit pick already did, not just skip everything. Refactored into a
+shared `proceedWithAnswerKind`, used by both the auto-select and
+explicit-pick paths.
+
+Verified: all three subjects in both directions (picture→name and
+name→picture for flags/emblems; both directions for currencies) across
+typed, multiple-choice, and picture-choice answer kinds; the option-count
+step now genuinely appears for auto-selected picture-choice; a rendered
+prompt image's `src` resolves to a real file on disk; the wizard's own
+region/sovereignty item counts already reflect the emblem coverage gap
+(204, not 238) *before* the game starts; a full multi-round Emblems game
+plays to the summary screen with sensible labels; a Eurozone-heavy
+Currencies multiple-choice round produces zero duplicate option values.
+The original 10-path gameplay regression suite (Countries/Capitals/US
+States) still green throughout. `npm run build` clean.
+
 ## 2026-09-27 — hover cue rewritten as JS/geometric, not CSS `:hover`
 
 Follow-up to the hover-cue round below: reported that the just-added

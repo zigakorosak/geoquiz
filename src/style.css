@@ -104,6 +104,33 @@ button:disabled {
   margin: 0 auto;
 }
 
+.picture-choice-options {
+  justify-content: center;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+/* flag/emblem's "picture-choice" answer (ui/inputs.js) — same button as
+   .menu-option everywhere else (so .menu-option--selected/--correct/
+   --wrong/--locked all apply unchanged), just sized as a fixed image slot
+   instead of a text label. One square-ish box shared by both flags (3:2)
+   and emblems (near-square) — object-fit: contain letterboxes whichever
+   one doesn't natively fill it rather than distorting it. */
+.menu-option--picture {
+  width: 5.5rem;
+  height: 5.5rem;
+  padding: 0.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-option--picture img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .menu-option--correct {
   background: var(--correct);
   border-color: var(--correct);
@@ -224,6 +251,18 @@ button:disabled {
   font-size: 2rem;
   font-weight: 700;
   text-align: center;
+}
+
+/* flag/emblem's prompt (see ui/prompts.js's "image" renderer). Bounded by
+   height, not width — a flag (3:2) and an emblem (near-square, often
+   circular/shield-shaped — see generate-data.mjs) end up very different
+   widths at the same height, and letting each keep its own natural
+   proportions (object-fit: contain) reads better than forcing one
+   fixed box shape onto both. */
+.prompt-image {
+  max-width: 100%;
+  max-height: 220px;
+  object-fit: contain;
 }
 
 .answer-area {

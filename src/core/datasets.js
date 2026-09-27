@@ -13,7 +13,7 @@ export const datasetMeta = {
     itemsUrl: `${import.meta.env?.BASE_URL ?? "/"}data/countries.json`,
     topologyUrl: `${import.meta.env?.BASE_URL ?? "/"}data/world-50m.json`,
     topologyObject: "countries",
-    attributeKeys: ["name", "location", "capital"],
+    attributeKeys: ["name", "location", "capital", "flag", "emblem", "currency", "region"],
     supportsRegionFilter: true,
     supportsSovereigntyFilter: true,
     // Country-id pairs whose *shared* border (not their whole outline —

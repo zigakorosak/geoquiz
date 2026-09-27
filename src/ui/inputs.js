@@ -58,9 +58,24 @@ const TOO_FAR_FROM_CAPITAL = "__too-far-from-capital__";
 const renderers = {
   "multiple-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
     const correctValue = attr.getValue(item);
-    const distractorPool = dataset.items.filter((i) => i !== item);
-    const distractorCount = Math.min((optionCount ?? 4) - 1, distractorPool.length);
-    const values = shuffle([correctValue, ...shuffle(distractorPool).slice(0, distractorCount).map((i) => attr.getValue(i))]);
+    // Deduplicated by *value*, not just by item: two different countries
+    // can share the exact same currency name (a whole Eurozone's worth all
+    // read "Euro") — sampling distractors by item alone would happily
+    // offer "Euro" twice, both a visually confusing duplicate option and,
+    // since `buttons` below is itself keyed by value, one silently
+    // unstyled at result time (whichever registered second would overwrite
+    // the first's entry). Same distinct-value pool as showResult's own
+    // `guess === value` / `correctValue === value` comparisons rely on.
+    const seenValues = new Set([correctValue]);
+    const distractorValues = [];
+    for (const candidate of shuffle(dataset.items.filter((i) => i !== item))) {
+      if (distractorValues.length >= (optionCount ?? 4) - 1) break;
+      const value = attr.getValue(candidate);
+      if (value == null || seenValues.has(value)) continue;
+      seenValues.add(value);
+      distractorValues.push(value);
+    }
+    const values = shuffle([correctValue, ...distractorValues]);
 
     const list = document.createElement("div");
     list.className = "menu-options multiple-choice-options";
@@ -111,6 +126,72 @@ const renderers = {
           b.classList.add("menu-option--locked");
           if (value === correctValue) b.classList.add("menu-option--correct");
           else if (value === guess) b.classList.add("menu-option--wrong");
+        }
+        feedback.textContent = correct ? "Correct!" : `Correct answer: ${attr.formatAnswer(item)}`;
+      },
+    };
+  },
+
+  // flag/emblem's answerKind (core/attributes.js) — the image-grid analog
+  // of "multiple-choice" above. Options are *items*, not raw values (a
+  // flag/emblem URL isn't something the player is choosing between in any
+  // meaningful sense — they're choosing a country, which happens to be
+  // pictured by it), so the guess reported is the picked option's own id,
+  // matching how "location"'s map-click already works. No value-collision
+  // risk here the way multiple-choice's text values have (see there): a
+  // real flag/emblem image is 1:1 with its country by construction, so
+  // distractors are sampled by item alone, same as "location" would be.
+  "picture-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
+    const distractorPool = shuffle(dataset.items.filter((i) => i !== item));
+    const distractorCount = Math.min((optionCount ?? 4) - 1, distractorPool.length);
+    const options = shuffle([item, ...distractorPool.slice(0, distractorCount)]);
+
+    const list = document.createElement("div");
+    list.className = "menu-options picture-choice-options";
+
+    // Same locked-not-disabled reasoning as multiple-choice above.
+    let selectedId = null;
+    let locked = false;
+    const buttons = new Map(); // item.id -> button
+    for (const option of options) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "menu-option menu-option--picture";
+      const img = document.createElement("img");
+      img.src = `${import.meta.env?.BASE_URL ?? "/"}${attr.getValue(option)}`;
+      img.alt = ""; // decorative — naming it would hand the answer to anyone using a screen reader
+      btn.appendChild(img);
+      btn.addEventListener("click", () => {
+        if (locked) return;
+        if (option.id === selectedId) {
+          onConfirm();
+          return;
+        }
+        selectedId = option.id;
+        for (const b of buttons.values()) b.classList.remove("menu-option--selected");
+        btn.classList.add("menu-option--selected");
+        onSelect(option.id);
+      });
+      buttons.set(option.id, btn);
+      list.appendChild(btn);
+    }
+    container.appendChild(list);
+
+    const feedback = document.createElement("div");
+    feedback.className = "answer-feedback";
+    feedbackContainer.appendChild(feedback);
+
+    return {
+      cleanup: () => {
+        list.remove();
+        feedback.remove();
+      },
+      showResult({ correct, item, guess }) {
+        locked = true;
+        for (const [id, b] of buttons) {
+          b.classList.add("menu-option--locked");
+          if (id === item.id) b.classList.add("menu-option--correct");
+          else if (id === guess) b.classList.add("menu-option--wrong");
         }
         feedback.textContent = correct ? "Correct!" : `Correct answer: ${attr.formatAnswer(item)}`;
       },

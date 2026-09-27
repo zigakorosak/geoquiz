@@ -159,16 +159,30 @@ Each attribute entry describes one quizzable fact about an item:
 | `checkAnswer(guess, item)` | correctness check |
 | `formatAnswer(item)` | human-readable value for feedback |
 
-Three attributes so far: `name` and `capital` (both text prompt; answerable
-by typed-guess, with accent/case/punctuation-insensitive matching, *or*
-multiple choice — `answerKinds: ["text-guess", "multiple-choice"]`) and
-`location` (map-highlight prompt / map-click *or* map-pin answer —
-`answerKinds: ["map-click", "map-pin"]`, see "Map"/"Widget registries"
-below). **Adding a new attribute** (e.g. `flag`) means adding one entry
-here — reusing `promptKind: "text"` / `answerKinds: ["text-guess"]` if a
-text widget is enough, or registering a new widget kind in
-`prompts.js`/`inputs.js` if not. The wizard, engine, and game screen need
-no changes.
+Six attributes: `name`, `capital`, and `currency` (all text prompt;
+answerable by typed-guess, with accent/case/punctuation-insensitive
+matching, *or* multiple choice — `answerKinds: ["text-guess",
+"multiple-choice"]`); `location` (map-highlight prompt / map-click *or*
+map-pin answer — `answerKinds: ["map-click", "map-pin"]`, see "Map"/
+"Widget registries" below); and `flag`/`emblem` (image prompt —
+`promptKind: "image"` — answerable only by `"picture-choice"`, an
+image-grid analog of multiple choice, see "Widget registries" below —
+there's no sensible way to *type* a flag, so text-guess/multiple-choice
+aren't offered). **Adding a new attribute** means adding one entry here —
+reusing an existing `promptKind`/`answerKinds` if an existing widget is
+enough (as `currency` did, reusing `text`/`text-guess`+`multiple-choice`
+wholesale — a currency name is just another string, no new UI needed at
+all), or registering a new widget kind in `prompts.js`/`inputs.js` if not
+(as `flag`/`emblem` did, adding `"image"`/`"picture-choice"`). The wizard,
+engine, and game screen need no changes either way.
+
+`flag`/`emblem` both check correctness by *item identity*
+(`checkAnswer: (guessId, item) => guessId === item.id`), not by their
+value (a URL string) — like `location`, not like `name`/`capital`/
+`currency` — since what's actually being asked is "which country is
+this", regardless of which fact (shape, flag, emblem) was used to ask it.
+`picture-choice` (inputs.js) reports the *option the player picked*, not
+its picture's URL, for exactly this reason.
 
 Not every item necessarily has a value for every attribute — a few
 countries have no recorded capital (Antarctica, Macau, Heard Island and
@@ -998,6 +1012,34 @@ than `optionCount - 1` (a tiny region playing 6-option multiple choice),
 it silently caps at however many distinct items are available rather than
 erroring or padding with anything fake.
 
+**Picture choice** (`inputs.js`'s `"picture-choice"` renderer, `flag`/
+`emblem`'s only `answerKind`) is multiple choice's image-grid sibling, not
+a copy of it: multiple choice's options are *values* (`attr.getValue`
+results — plain strings, compared/deduped/displayed as themselves), while
+picture choice's options are *items* — each rendered as an `<img
+src={attr.getValue(option)}>` inside a `.menu-option--picture` button
+(same base `.menu-option`/`--selected`/`--correct`/`--wrong`/`--locked`
+classes as text multiple choice, just a fixed image slot instead of a
+text label), with the reported guess being the picked *option's own id*.
+This distinction is why multiple choice couldn't just be parameterized to
+also handle pictures: its correctness check and its `buttons` lookup are
+both keyed by *value*, which is exactly what a flag/emblem URL isn't a
+meaningful thing to compare by (a country's URL is arbitrary; its
+identity is what matters — see "Attributes" above). Distractors are
+sampled by item alone (no value-collision risk the way multiple choice's
+text values have — see below), same as `location`'s map-click would be.
+
+Multiple choice's own distractor sampling *does* dedupe by value, and has
+to: any dataset with intrinsically many-to-one facts breaks otherwise
+(`currency`, prominently — most of the Eurozone answers "Euro", so
+naively sampling by item would readily draw two different countries with
+the identical currency name into the *same* round's options, both a
+visibly confusing duplicate button and, since the renderer's own
+`buttons` lookup is keyed by value, one silently unstyled at result time
+since the second registration overwrites the first). `name`/`capital`
+never actually collide this way, so the dedup is a no-op for them, but it
+runs unconditionally rather than special-casing which attribute needs it.
+
 **Pin drop** (`inputs.js`'s `"map-pin"` renderer, `location`'s second
 `answerKind`) is `map-click`'s opposite: instead of a discrete "which
 country did you click" target, the player drops a pin anywhere on a
@@ -1415,6 +1457,50 @@ topology.
 Re-run `npm run generate-data` after bumping either package, or to change
 `MAP_RESOLUTION` in the script (`110m` coarse / `50m` current / `10m` fine
 but ~3.6 MB).
+
+**Flags, emblems, currencies.** Two more devDependencies, both keyed by
+ISO 3166-1 alpha-2 (`cca2` — already on every record above):
+
+- **country-flag-icons** (MIT) — real flag SVGs, 265 entries (100%
+  coverage of this project's 238). Copied as-is into `public/data/flags/`
+  — already small (a few hundred bytes to ~1.5KB each), no processing
+  needed.
+- **coat-of-arms** (MIT) — national emblem/coat-of-arms SVGs, 211 entries
+  (~206 actually used, of 238 — real coverage gaps, not a bug: Cuba, Iran,
+  Singapore, Türkiye, Tanzania, and ~30 others have no entry in the source
+  package at all). These are NOT copied as-is: real, detailed heraldic
+  exports, several hundred KB to just under 2MB *each* — one alone would
+  outweigh the entire map topology. Each is rasterized once, at generate
+  time, to a fixed `EMBLEM_PX` (240×240) PNG via the system `rsvg-convert`
+  binary (librsvg — this project's own visual-verification tooling
+  already depended on it; regenerating `public/data/emblems/` is the first
+  thing that makes it a *required* dependency of this script, not merely a
+  development convenience) — shrinking every file to a few KB–tens of KB.
+  `rsvg-convert`'s default `preserveAspectRatio` fits each source's own
+  shape (shield, circle, whatever) *inside* the square canvas rather than
+  stretching it, so a non-square emblem just ends up letterboxed, not
+  distorted.
+- **currency** is plainer than either: world-countries' own `currencies`
+  field (keyed by ISO 4217 code, `{name, symbol}`) already has this data
+  for nearly every country — `primaryCurrencyName()` just takes the first
+  entry's name (a country can rarely list more than one; picking
+  consistently beats joining multiple names together for a fact meant to
+  have one clean answer).
+
+A country missing an asset gets `flagUrl`/`emblemUrl: null` — handled
+exactly like a missing `capital` already is (see "Attributes" above):
+excluded from that specific attribute's rounds via `isAskable`
+(gameWizard.js), rendered normally everywhere else. The generator logs
+exact coverage counts and every country missing an emblem, the same way
+it already logs missing `capitalLatLng`s, so a future upstream change
+that shrinks coverage further is visible immediately rather than
+silently shipping more `null`s. Kosovo (the hand-curated extra territory
+above) resolves flag/emblem/currency through this same path via its own
+`cca2`/`currencies` (both of which `world-countries` already has for it);
+Somaliland/Northern Cyprus don't (no `cca2` to key by) and are hand-set —
+Somaliland's own unrecognized shilling, Northern Cyprus using Turkey's
+lira — with `flagUrl`/`emblemUrl` left `null`, consistent with their
+existing `flagEmoji: null`.
 
 **US states** come from a separate script, `scripts/generate-us-states-data.mjs`
 (`npm run generate-us-states-data`), off the `us-atlas` package (ISC,
