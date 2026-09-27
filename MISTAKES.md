@@ -201,6 +201,63 @@ directly on the element under test, hit-testing is assumed, not verified —
 check structurally instead (does the clickable element exist in the right
 group?).
 
+### 11. Trusting a manual zoomBehavior.transform() call in a test script
+Called `zoomBehavior.transform(...)` directly to zoom a render script in
+on a target country. That triggers d3-zoom's *real* start/zoom/end
+gesture lifecycle (unlike the constructor's own `_suppressGestureHooks`
+dispatch), which engages frozen-zoom — the intended "zoom" never actually
+applied to the rendered geometry, only to a CSS `transform` on the `<svg>`
+that (a) needs 200ms to bake, which a short script never waits for, and
+(b) `rsvg-convert` doesn't reliably honor on the root svg element anyway.
+Spent real time analyzing a crop as "France and Switzerland" that turned
+out — confirmed only after cross-checking with `_findContainingId` — to
+be Chad and Sudan.
+
+**Rule:** in a test/render script, set the desired view via
+`initialTransform` on the constructor (applied through `_reflow`'s own
+suppressed dispatch), never via a post-construction `zoomBehavior
+.transform()` call — that path is gesture-shaped by design, and this
+project made zoom gestures deliberately expensive to fake.
+
+### 12. Eyeballing a thin stroke through a compressed raster
+Even with the zoom fixed, comparing a 1.5px colored stroke against a
+0.5px dark one — through PNG compression, `Read`-tool display scaling,
+and a busy coastline — was genuinely inconclusive by eye, in both
+directions, across several crops. Kept staring at pixels instead of
+switching approach sooner.
+
+**Rule:** when a fix is a *precedence/ordering* claim (this one: which
+DOM sibling paints last), don't stop at "does it look different" —
+compute the ordering directly (index among siblings, or whichever
+property the fix claims to change) and check it against every case that
+matters (here: all 238 countries, not just the one being stared at).
+Pixel comparison is for confirming *geometry* is right (shape, gaps,
+holes); z-order/precedence bugs are cheaper and more conclusive to prove
+structurally.
+
+### 13. No real browser in this environment — plan around it, don't fight it
+A hover cue built on plain CSS `:hover` was reported broken past a
+certain zoom level. `which`/flatpak/snap/a filesystem search all turned
+up no Chromium/Chrome/Firefox binary — genuinely nothing to drive, not
+just nothing already configured. jsdom can't fill the gap either (no
+real hit-testing — see #10). Spent real effort on structural elimination
+(every zoom-dependent code path, checked for exceptions/NaN/CSS
+overrides) before accepting the exact browser-internal cause was
+unprovable here, one useful signal survived: clicking the same elements
+kept working, only `:hover` broke — meaning whatever it was, was
+specific to continuous pseudo-class re-matching, not hit-testing in
+general.
+
+**Rule:** when a report needs a real browser to directly observe and
+none is available, don't keep spending turns theorizing toward a
+confirmation that can't happen here. Use whatever *does* distinguish the
+hypotheses (here: does clicking still work?) to point at the smallest
+robust fix, then replace the suspect mechanism with one already proven
+in this codebase (geometric containment, not DOM hit-testing — #9)
+rather than patching the CSS and hoping. Verify the replacement
+structurally instead (correctness at the reported zoom level, class
+toggling, coalescing, perf headroom) — all provable without a browser.
+
 ---
 
 ## Environment gotchas (recurring time sinks)

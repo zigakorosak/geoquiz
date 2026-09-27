@@ -3,6 +3,148 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-27 — hover cue rewritten as JS/geometric, not CSS `:hover`
+
+Follow-up to the hover-cue round below: reported that the just-added
+highlight "stops working when zoomed in" — consistently, past a
+certain zoom level, on *any* country, reversible by zooming back out.
+Two rounds of clarifying questions pinned this down precisely: not a
+one-time staleness (moving the mouse doesn't bring it back while still
+zoomed in), and — the key data point — plain clicking on those same
+countries kept working throughout, only the hover cue itself broke.
+
+No real browser is available in this environment (checked for Chromium/
+Chrome/Firefox via `which`, flatpak, snap, and a filesystem search —
+nothing), and jsdom has no genuine hit-testing (a known, previously-
+documented limitation — see MISTAKES.md), so this couldn't be directly
+observed. Extensive structural investigation (checked every zoom-
+dependent code path — hull re-padding, ghost culling, the frozen-zoom
+CSS transform, the overscan margin's viewBox/position math, gesture
+settle) turned up no exception, no NaN, and no CSS rule that changes
+behavior with zoom — a real gesture sequence up through k=50 at the new,
+larger map size settles cleanly every time. Given clicking (native
+"click" listeners on the very same path elements) kept working at the
+same zoom levels, the one thing left that's different is `:hover`
+itself — a continuously-*re-matched* pseudo-class against a repeatedly-
+transformed SVG path, as opposed to a single point-in-time event.
+
+Rather than keep chasing an unprovable browser-internal theory, replaced
+the mechanism outright with the same pattern this codebase already uses
+for exactly this class of problem (MISTAKES.md #9: prefer geometric
+containment over browser hit-testing where transforms/ghosts are
+involved) — the one already proven reliable for clicks landing on ghost
+copies and for pin-mode confirm. A `pointermove` listener on the
+(untransformed) wrapper computes the hovered id itself, geometrically
+(`_screenToLocalXY` + `_findContainingId` — the same math the click
+fallback already used, now extracted into a shared method), coalesced to
+at most once per animation frame regardless of how often pointermove
+fires. `.country--hovered` (CSS) replaces the old `:hover` rules
+entirely. This doesn't depend on the browser's own hit-testing at all —
+whatever the exact `:hover` quirk was, it can't reach this path. Bonus:
+ghost copies of a country now get the hover treatment too (a `<use>`
+mirrors its target's classes live), which the old per-element `:hover`
+never could, since ghosts are `pointer-events: none`.
+
+Verified structurally: hover resolves to the correct country at k=1 and
+at k=50 (cross-checked directly, not just visually); switching hover
+between two countries toggles classes correctly on both; leaving the map
+(`pointerleave`) and disabling clickability both clear it immediately
+rather than leaving it stuck; 20 rapid pointermoves within one frame
+trigger exactly one `_findContainingId` scan, not twenty; pin mode
+installs no listener at all (out of scope — borderless, no per-country
+hover target); worst-case scan latency (ocean, full linear scan) is
+~1.7ms, comfortably under a 16ms frame budget even before the rAF
+coalescing. Full 10-path gameplay suite, plus the wrap-seam pin-confirm
+and ghost-click regression checks from earlier rounds, all still green.
+`npm run build` clean.
+
+## 2026-09-27 — visible hover cue in region-select (map-click) mode
+
+Requested: some indication of which country the mouse is over, before
+it's clicked — similar blue to the selected state, but without a border.
+
+The hover rule already existed (`.world-map--clickable .country:hover`)
+but used `--accent-dim`, the same dark/desaturated blue that
+`.country--selected` itself used to use before the "better contrast"
+round switched it to `--accent` — `--accent-dim` reads as plain grey
+against the current (lightened) land fill, so the hover cue was barely
+there. Same fix here: `fill: var(--accent); fill-opacity: 0.35;` — a
+clearly-visible blue wash, lighter than selected's 0.55 so a hover never
+reads as an accidental selection, and no `stroke` at all, since a border
+belongs to an actual pick, not a preview. Applied the same swap to
+`.country-hitarea:hover` (the tiny/archipelago country assist regions,
+which are the only visible hover surface at all for a country too small
+to show a fill change on its own real shape).
+
+Verified with a static-render substitute for `:hover` (rsvg-convert has
+no notion of live mouse state, so `:hover` in the resolved stylesheet was
+swapped for a real class and applied directly to a country path) —
+confirms the intended look: a clear, lighter-than-selected blue wash,
+no border. Quick regression sweep of three map-click gameplay paths
+green, zero window errors. `npm run build` clean.
+
+## 2026-09-27 — highlighted-country border: some sides painted over by neighbors
+
+Reported: "not all sides of the selected country look the same, some
+look like they are missing (the light blue border)".
+
+Root cause: `feature()` gives every country an independent ring, so a
+shared border is drawn twice — once by each side — and SVG paints later
+DOM siblings over earlier ones. Country paths sit in plain dataset order,
+unrelated to adjacency, so a marked country's own colored stroke only
+wins on the sides whose neighbor happens to iterate earlier; the rest
+show the *neighbor's* ordinary border on top instead. `_mark` now
+re-inserts the marked path to right before `borderGroup` (the same
+insertion point the construction loop itself uses) on every call, making
+it unconditionally the *last* per-country path — so it wins on every
+side, not just the sides that happened to already win.
+
+This took several rounds of chasing a visual confirmation before landing
+on a reliable proof, worth recording since two separate methodology
+mistakes cost real time:
+
+- A manual `zoomBehavior.transform()` call in a test script to zoom in on
+  a rendering target triggers d3-zoom's real start/zoom/end gesture
+  lifecycle (unlike the constructor's own suppressed dispatch), which
+  engages frozen-zoom — a CSS `transform` on the `<svg>` element that
+  never gets baked in a short-lived script and that `rsvg-convert`
+  doesn't reliably honor regardless. The "zoomed-in" renders this
+  produced were actually at whatever the *default* framing gave, off by
+  a wide margin — one crop, trusted without checking, turned out to be
+  Chad and Sudan while I was analyzing it as France and Switzerland.
+  Fixed by passing `initialTransform` directly to the constructor
+  instead, which reflow applies through its own suppressed dispatch.
+- Even with the transform fixed, a 1.5px accent stroke vs a 0.5px dark
+  one is close enough, after PNG compression and display scaling, that
+  eyeballing rendered crops was genuinely inconclusive both ways —
+  several crops looked "the same" whether or not the fix was active.
+  The reliable proof turned out to be structural, not visual: compute
+  each neighbor's DOM index directly and check who wins. For France
+  specifically, pre-fix it already beat Germany/Switzerland/Italy/Spain/
+  Luxembourg/Monaco (already positioned late enough) but *lost* to
+  Belgium and Andorra — exactly the "some sides missing" symptom — and
+  post-fix it wins all eight. Swept all 238 playable countries through
+  `select()` and confirmed every one lands at exactly the position
+  immediately before `borderGroup`, unconditionally.
+
+Chasing this also surfaced a second, previously-latent bug in the same
+neighborhood: `featuresById`/`hitAreasById`/`hitClipsById` are each keyed
+by id with a plain `.set()`, unguarded — for the one real id collision in
+this dataset (Ashmore and Cartier Is. shares Australia's own "036"),
+whichever feature iterates *last* (the tiny islet) was silently
+overwriting Australia's own map entry. Every highlight/select/markResult
+for Australia was landing on the invisible islet; the mainland never
+changed appearance at all — a strictly worse case of the same "some
+sides/some marks look missing" complaint, just total rather than
+partial. Fixed the same way `_reflow`'s own hit-area pass already guards
+this exact collision: keep only the first feature's entry per id in each
+of the three maps; the per-path click listener stays unconditional on
+both features, since clicking either shape should still resolve to the
+id.
+
+Full 10-path end-to-end gameplay suite re-run green, zero window errors.
+`npm run build` clean.
+
 ## 2026-09-26 — zoom-out overscan margin: the shrinking-raster gap goes away
 
 Follow-up to the frozen-zoom round below: fast is fixed, but reported as

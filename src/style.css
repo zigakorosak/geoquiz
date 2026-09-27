@@ -374,8 +374,28 @@ button:disabled {
   pointer-events: none;
 }
 
-.world-map--clickable .country:not(.country--unplayable):not(.country--terrain):hover {
-  fill: var(--accent-dim);
+/* Hover cue, for both an ordinary country path and its assist hit-area
+   (see .country-hitarea below) — one rule, since WorldMap.js applies this
+   single class to whichever of the two is relevant, the same way
+   .country--selected/--correct/--wrong already do.
+   This used to be a plain `:hover` pseudo-class rule. Switched to a JS-
+   driven class (WorldMap.js tracks the hovered id itself, geometrically,
+   the same way clicks already resolve ghost/ocean targets) after native
+   `:hover` was reported to stop registering past a certain zoom level —
+   `:hover` depends on the browser's own hit-testing continuously
+   re-matching a *transformed* SVG path, which native click events on the
+   same elements didn't seem to share the same failure with, so this
+   sidesteps whatever that was rather than chasing it further.
+   --accent-dim (dark, desaturated blue) was tried here first and read as
+   plain grey against the current (lightened) land fill — barely a cue at
+   all, the same problem .country--selected had before switching to
+   --accent. This opacity (0.35) is lighter than selected's 0.55 so a
+   hover never reads as an accidental selection, and there's no stroke,
+   unlike .country--selected: hover is a preview, not a pick, and
+   shouldn't borrow the selected state's own border. */
+.country--hovered {
+  fill: var(--accent);
+  fill-opacity: 0.35;
 }
 
 .world-map--clickable .country:not(.country--unplayable):not(.country--terrain) {
@@ -393,11 +413,6 @@ button:disabled {
 
 .world-map--clickable .country-hitarea {
   cursor: pointer;
-}
-
-.world-map--clickable .country-hitarea:hover {
-  fill: var(--accent-dim);
-  opacity: 0.6;
 }
 
 .country--highlighted {

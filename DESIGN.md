@@ -824,6 +824,69 @@ enough to need one, the real shape is often too tiny to see any fill
 change on, so the hit-area is what actually shows the player their
 selection/result.
 
+**Hover cue (map-click mode).** `.country--hovered` is applied the same
+way, but not by `_mark` and not in response to a browser `:hover` match —
+a `pointermove` listener on the (untransformed) wrapper computes the
+hovered id itself, geometrically, via the same `_screenToLocalXY` +
+`_findContainingId` pair the fallback click handler already uses for
+ghost/ocean clicks (`_onPointerMoveForHover`/`_setHoveredId`), coalesced
+to at most once per animation frame via `requestAnimationFrame` — a
+pointermove stream can fire far more often than that, and re-running
+`_findContainingId`'s O(features) point-in-polygon scan between two calls
+landing in the same frame buys nothing. This replaced a plain `:hover`
+CSS rule after it was reported to stop registering past a certain zoom
+level, consistently, on every country, reversible by zooming back out —
+while plain `click` events on those same elements kept working
+throughout. No real browser was available to directly observe the
+`:hover` failure (see MISTAKES.md), so the fix doesn't pin down the exact
+mechanism; it sidesteps `:hover` (the one thing verified to differ from
+click handling) entirely instead, using the same "prefer geometric
+containment over browser hit-testing" pattern already established here
+for ghost clicks and pin-mode confirm. A side effect worth having anyway:
+ghost copies of a country now get the hover treatment too (a `<use>`
+mirrors its target's classes live), which per-element `:hover` never
+could, since ghosts are `pointer-events: none`.
+
+**Marked-country border occlusion.** `feature()` gives every country its
+own independent, closed ring — a shared border is duplicated, once per
+side, rather than stored once — and SVG paints later DOM siblings over
+earlier ones. Country paths sit in plain dataset order (`_reflow`'s
+`insertBefore(path, this.borderGroup)` loop), which has nothing to do
+with adjacency, so a marked country's own (thicker, colored) stroke only
+actually wins along the sides whose neighbor happens to iterate earlier
+in that order — the other sides show the *neighbor's* ordinary border
+painted on top instead, reading as a patchy or partially-missing
+highlight rather than a uniform one (reported directly: "not all sides
+of the selected country look the same, some look like they are
+missing"). `_mark` now re-inserts the marked path immediately before
+`this.borderGroup` — the same insertion point `_reflow`'s own construction
+loop uses — every time it applies a class, making it the *last* per-country
+path regardless of original order, so its stroke wins on every side
+unconditionally; disputed-border dashes in `borderGroup` still paint
+above it, unaffected. `insertBefore` on an already-attached node moves it
+rather than cloning it, and ghost `<use>` copies mirror `contentGroup`'s
+live DOM order automatically, so nothing further was needed for wrapped
+views. Verified structurally rather than visually (a compressed raster
+comparison of a 1.5px stroke was too close to call by eye): for all 238
+playable countries, `select(id)` now leaves that country's path at
+exactly the position immediately before `borderGroup`, and — concretely,
+the case that surfaced this — France paints over Germany, Switzerland,
+Italy, Spain, Luxembourg, and Monaco already (its position happened to be
+late enough), but *loses* to Belgium and Andorra pre-fix; after the fix
+it wins against all eight.
+
+Fixing this surfaced a second, previously-latent bug in the same area:
+`featuresById`/`hitAreasById`/`hitClipsById` are each keyed by id with a
+plain `.set()` — for the Ashmore/Australia id collision (see below),
+whichever feature iterates *last* (Ashmore, a tiny islet) silently
+overwrote Australia's own entry, so every highlight/select/mark for
+Australia was landing on the invisible islet — the mainland never
+changed appearance at all. Construction now keeps only the *first*
+feature's entry per id in each of those three maps (mirroring the
+`processedHitAreaIds` guard `_reflow` already had for the same
+collision); the per-path click listener stays unconditional on both
+features, since clicking either shape should still resolve to the id.
+
 **Disputed borders.** An optional `dashedBorders` (array of `[idA, idB]`
 country-id pairs, e.g. `[["688", "UNK"]]` for Serbia/Kosovo — see
 `datasets.js`) renders *just the shared frontier* between two countries as

@@ -356,6 +356,12 @@ export class WorldMap {
     this.objectKey = objectKey;
     this.onClick = null;
     this.clickEnabled = false;
+    // The currently-hovered id in map-click mode (see the "pointermove"
+    // listener below), or null. Not used in pin mode at all — pin mode is
+    // borderless with no per-country click targets to preview a hover
+    // over.
+    this._hoveredId = null;
+    this._hoverRafId = null; // rAF handle for the pending (coalesced) hover recompute
     // Borderless "drop a pin anywhere" mode: no per-country click targets
     // or hit-area assists (pointless — a click can land anywhere, not on
     // a discrete feature), a single whole-map click handler instead (see
@@ -660,7 +666,21 @@ export class WorldMap {
       // below is unconditionally non-pin-mode.
       if (playable) {
         path.dataset.id = f.id;
-        this.featuresById.set(f.id, path);
+        // A handful of ids are shared by two different features — Ashmore
+        // and Cartier Is. carries Australia's own "036" (see _reflow's
+        // hit-area pass, which guards the same collision for the same
+        // reason). `featuresById`/`hitAreasById`/`hitClipsById` each hold
+        // ONE entry per id — the canonical element `_mark`/`highlight`/
+        // `select` apply a class to — so without a first-wins guard here,
+        // whichever feature happens to iterate LAST silently wins the
+        // lookup. Ashmore comes after Australia in this dataset, so every
+        // highlight/select/correct/wrong mark for Australia was landing
+        // on the tiny, un-styled islet instead of the mainland: the
+        // mainland never got a fill or border change at all. The click
+        // listener below stays unconditional regardless — clicking either
+        // shape should still resolve to this id.
+        const isFirstForId = !this.featuresById.has(f.id);
+        if (isFirstForId) this.featuresById.set(f.id, path);
 
         path.addEventListener("click", () => {
           if (this.clickEnabled && this.onClick) this.onClick(f.id);
@@ -680,7 +700,7 @@ export class WorldMap {
           if (this.clickEnabled && this.onClick) this.onClick(f.id);
         });
         this.hitGroup.appendChild(hitArea);
-        this.hitAreasById.set(f.id, hitArea);
+        if (isFirstForId) this.hitAreasById.set(f.id, hitArea);
 
         // Lets two nearby assisted countries' hit-regions be clipped to
         // the Voronoi cell around each one's center (computed over every
@@ -695,7 +715,7 @@ export class WorldMap {
         const polygon = document.createElementNS(SVG_NS, "polygon");
         clipPath.appendChild(polygon);
         this.defs.appendChild(clipPath);
-        this.hitClipsById.set(f.id, { clipId, polygon });
+        if (isFirstForId) this.hitClipsById.set(f.id, { clipId, polygon });
       }
 
       this.contentGroup.insertBefore(path, this.borderGroup);
@@ -864,30 +884,8 @@ export class WorldMap {
       // to the <svg> itself — i.e. over a ghost copy or open ocean, since
       // home-copy paths/hit-areas have their own listeners and are hit
       // first — resolving the country geometrically, exactly like pin
-      // mode's containment lookup. Coordinate handling, three steps, each
-      // using the simplest, most broadly-reliable API for that one job:
-      //  1. `getBoundingClientRect()` gives the click's position relative
-      //     to the SVG's own top-left corner, in CSS px. `_reflow` always
-      //     sets `viewBox="0 0 clientWidth clientHeight"` to match the
-      //     SVG's own rendered size exactly (`.world-map` is `width/
-      //     height: 100%` of the same container `clientWidth`/
-      //     `clientHeight` come from), so viewBox scaling is always 1:1
-      //     here — CSS px *is* SVG user-space px, no further conversion
-      //     needed for that part.
-      //  2. `this.currentTransform.invert(...)` (d3-zoom's own tool for
-      //     exactly this) separately undoes the *home* copy's current
-      //     zoom/pan on top of that, landing back in the same
-      //     untransformed pixel space `this.projection` was fit to.
-      //  3. If wrapping is on, that (x, y) is only correct as-is when the
-      //     click actually landed on the home copy — one that visually
-      //     landed on a ghost (see the constructor) needs its x folded
-      //     back into the home copy's own [_homeLeft, _homeLeft +
-      //     _wrapPeriod) range first, since ghost content is a repeat of
-      //     the exact same geography one or more world-widths over.
-      //     Skipped whenever a click *did* land on the home copy — the
-      //     modulo is a no-op there — so this doesn't change anything for
-      //     the (far more common, and the only possible before this
-      //     feature existed) non-wrapped case.
+      // mode's containment lookup. Coordinate handling is `_screenToLocalXY`
+      // (below) — see it for the three-step breakdown.
       this.svg.addEventListener("click", (event) => {
         if (!this.clickEnabled) return;
         // In map-click mode, anything interactive on the home copy (a
@@ -897,18 +895,7 @@ export class WorldMap {
         // as the target. Pin mode's content is all pointer-events: none,
         // so every click arrives this way there regardless.
         if (!this.pinMode && event.target !== this.svg) return;
-        // The wrapper's rect, not the svg's: during frozen zoom the svg
-        // carries a CSS transform and its client rect moves with it,
-        // while the wrapper stays put at the viewport box these
-        // calculations are defined against.
-        const rect = this.viewportEl.getBoundingClientRect();
-        const sx = event.clientX - rect.left;
-        const sy = event.clientY - rect.top;
-        let [x, y] = this.currentTransform.invert([sx, sy]);
-        if (this.wrapEnabled && this._wrapPeriod) {
-          const left = this._homeLeft ?? 0;
-          x = (((x - left) % this._wrapPeriod) + this._wrapPeriod) % this._wrapPeriod + left;
-        }
+        const [x, y] = this._screenToLocalXY(event.clientX, event.clientY);
 
         // Re-clicking the pin that's already down confirms, instead of
         // re-dropping it where it already is — the pin-mode equivalent of
@@ -967,6 +954,22 @@ export class WorldMap {
           const id = this._findContainingId(lonlat[0], lonlat[1]);
           if (id && this.onClick) this.onClick(id);
         }
+      });
+    }
+
+    if (!this.pinMode) {
+      // Hover cue for map-click mode — see _onPointerMoveForHover for why
+      // this is a JS listener and not a `:hover` CSS rule. `pointerleave`
+      // (fires once when the pointer leaves the wrapper entirely, unlike
+      // `pointermove` which just stops) clears the cue instead of leaving
+      // it stuck on whatever was last hovered.
+      this.viewportEl.addEventListener("pointermove", (event) => this._onPointerMoveForHover(event));
+      this.viewportEl.addEventListener("pointerleave", () => {
+        if (this._hoverRafId !== null) {
+          cancelAnimationFrame(this._hoverRafId);
+          this._hoverRafId = null;
+        }
+        this._setHoveredId(null);
       });
     }
 
@@ -1408,6 +1411,94 @@ export class WorldMap {
     return null;
   }
 
+  // A screen-space (clientX, clientY) — straight from any mouse/pointer
+  // event — into the *local* (pre-zoom, pre-wrap-fold) coordinate space
+  // `this.projection` was fit to. Three steps, each the simplest,
+  // broadest-reliability API for that one job:
+  //  1. `getBoundingClientRect()` on the WRAPPER, not the svg: during
+  //     frozen zoom the svg itself carries a CSS transform and its own
+  //     client rect moves with it, while the wrapper stays put at the
+  //     viewport box these calculations are defined against. `_reflow`
+  //     always sets the svg's viewBox to exactly match clientWidth/
+  //     clientHeight (plus the fixed overscan margin, symmetric on every
+  //     side — see ZOOM_OVERSCAN_RATIO), so CSS px *is* SVG user-space
+  //     px, no further conversion needed for that part.
+  //  2. `this.currentTransform.invert(...)` (d3-zoom's own tool for
+  //     exactly this) undoes the *home* copy's current zoom/pan, landing
+  //     back in the untransformed pixel space `this.projection` was fit
+  //     to.
+  //  3. If wrapping is on, that (x, y) is only correct as-is when the
+  //     point actually falls on the home copy — one that visually lands
+  //     on a ghost (see the constructor) needs its x folded back into the
+  //     home copy's own [_homeLeft, _homeLeft + _wrapPeriod) range first,
+  //     since ghost content is a repeat of the exact same geography one
+  //     or more world-widths over. A no-op wherever the point *did* land
+  //     on the home copy, so this doesn't change anything for the (far
+  //     more common, and the only possible before wrapping existed)
+  //     non-wrapped case.
+  _screenToLocalXY(clientX, clientY) {
+    const rect = this.viewportEl.getBoundingClientRect();
+    const sx = clientX - rect.left;
+    const sy = clientY - rect.top;
+    let [x, y] = this.currentTransform.invert([sx, sy]);
+    if (this.wrapEnabled && this._wrapPeriod) {
+      const left = this._homeLeft ?? 0;
+      x = (((x - left) % this._wrapPeriod) + this._wrapPeriod) % this._wrapPeriod + left;
+    }
+    return [x, y];
+  }
+
+  // Map-click mode's hover cue. Deliberately NOT the obvious `:hover` CSS
+  // pseudo-class (that's what this replaced) — reported to stop
+  // registering past a certain zoom level, consistently, on every
+  // country, reversible by zooming back out, while plain "click" events
+  // on those same elements kept working throughout. Whatever the exact
+  // cause, native `:hover` matching against a repeatedly-transformed SVG
+  // path is the one thing that's different between the two, so this
+  // sidesteps it entirely: the hovered id is computed geometrically, the
+  // same way a ghost/ocean click already resolves (`_screenToLocalXY` +
+  // `_findContainingId`), driven by our own `pointermove` listener on the
+  // wrapper rather than the browser's continuous style-matching. A
+  // side benefit over the old CSS: it now also lights up the *ghost*
+  // copies of a country, not just the home copy, since every copy shares
+  // the same underlying id.
+  //
+  // Coalesced to at most once per animation frame — a pointermove stream
+  // can fire far more often than that, and every extra call would re-run
+  // `_findContainingId`'s O(features) point-in-polygon scan for no
+  // observable benefit between two calls that land in the same frame.
+  _onPointerMoveForHover(event) {
+    if (this._hoverRafId !== null) return; // already coalescing this frame
+    const { clientX, clientY } = event;
+    this._hoverRafId = requestAnimationFrame(() => {
+      this._hoverRafId = null;
+      if (!this.clickEnabled) {
+        this._setHoveredId(null);
+        return;
+      }
+      const [x, y] = this._screenToLocalXY(clientX, clientY);
+      const lonlat = this.projection.invert?.([x, y]);
+      const id =
+        lonlat && Number.isFinite(lonlat[0]) && Number.isFinite(lonlat[1])
+          ? this._findContainingId(lonlat[0], lonlat[1])
+          : null;
+      this._setHoveredId(id);
+    });
+  }
+
+  _setHoveredId(id) {
+    if (id === this._hoveredId) return;
+    if (this._hoveredId !== null) {
+      this.featuresById.get(this._hoveredId)?.classList.remove("country--hovered");
+      this.hitAreasById.get(this._hoveredId)?.classList.remove("country--hovered");
+    }
+    this._hoveredId = id;
+    if (id !== null) {
+      this.featuresById.get(id)?.classList.add("country--hovered");
+      this.hitAreasById.get(id)?.classList.add("country--hovered");
+    }
+  }
+
   // Projects a [lon, lat] whose longitude may deliberately sit outside
   // ±180° (a wrap-normalized point — see nearestPointOnSegmentKm and
   // revealCapitalDistance): the in-range part projects normally, and each
@@ -1662,6 +1753,12 @@ export class WorldMap {
     this.onClick = onClick ?? null;
     this._onPinConfirm = onPinConfirm ?? null;
     this.svg.classList.toggle("world-map--clickable", enabled);
+    // The map going non-interactive (a result was just confirmed) should
+    // drop any leftover hover cue immediately rather than leaving it
+    // stuck on whatever was last hovered — the next pointermove would
+    // clear it anyway (_onPointerMoveForHover checks clickEnabled), but
+    // that could be a while if the mouse doesn't move again first.
+    if (!enabled) this._setHoveredId(null);
   }
 
   highlight(id) {
@@ -1718,7 +1815,28 @@ export class WorldMap {
       return;
     }
     const path = this.featuresById.get(id);
-    if (path) path.classList.add(className);
+    if (path) {
+      path.classList.add(className);
+      // `feature()` gives every country its own closed ring, independently
+      // duplicating whatever border it shares with each neighbor — so a
+      // shared edge is drawn twice, once by each side, and SVG paints
+      // later siblings over earlier ones. Country paths sit in plain
+      // dataset order (see _reflow's `insertBefore(path, this.borderGroup)`
+      // loop), unrelated to adjacency, so a highlighted country's own
+      // (thicker, colored) stroke only actually WINS along the sides whose
+      // neighbor happens to come earlier in that order — the other sides
+      // show the neighbor's ordinary thin border painted on top instead,
+      // reading as a patchy/missing highlight rather than a uniform one.
+      // Moving the marked path to right before `borderGroup` — the same
+      // insertion point _reflow itself uses — makes it the LAST of the
+      // per-country paths, so its stroke wins on every side regardless of
+      // original order; disputed-border dashes in `borderGroup` still
+      // paint above it, unaffected. `insertBefore` on an already-attached
+      // node moves it rather than cloning it, so no duplicate is created,
+      // and ghost `<use>` copies mirror `contentGroup`'s live DOM order
+      // automatically — nothing further needed for them.
+      this.contentGroup.insertBefore(path, this.borderGroup);
+    }
     const hitArea = this.hitAreasById.get(id);
     if (hitArea) hitArea.classList.add(className);
   }
@@ -1734,6 +1852,7 @@ export class WorldMap {
 
   destroy() {
     clearTimeout(this._settleTimer);
+    if (this._hoverRafId !== null) cancelAnimationFrame(this._hoverRafId);
     this._resizeObserver.disconnect();
     this._selection.on(".zoom", null);
     this.viewportEl.remove();
