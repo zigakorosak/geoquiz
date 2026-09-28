@@ -159,9 +159,9 @@ Each attribute entry describes one quizzable fact about an item:
 | `checkAnswer(guess, item)` | correctness check |
 | `formatAnswer(item)` | human-readable value for feedback |
 
-Six attributes: `name`, `capital`, and `currency` (all text prompt;
-answerable by typed-guess, with accent/case/punctuation-insensitive
-matching, *or* multiple choice — `answerKinds: ["text-guess",
+Seven attributes: `name`, `capital`, `currency`, and `region` (all text
+prompt; answerable by typed-guess, with accent/case/punctuation-
+insensitive matching, *or* multiple choice — `answerKinds: ["text-guess",
 "multiple-choice"]`); `location` (map-highlight prompt / map-click *or*
 map-pin answer — `answerKinds: ["map-click", "map-pin"]`, see "Map"/
 "Widget registries" below); and `flag`/`emblem` (image prompt —
@@ -170,19 +170,58 @@ image-grid analog of multiple choice, see "Widget registries" below —
 there's no sensible way to *type* a flag, so text-guess/multiple-choice
 aren't offered). **Adding a new attribute** means adding one entry here —
 reusing an existing `promptKind`/`answerKinds` if an existing widget is
-enough (as `currency` did, reusing `text`/`text-guess`+`multiple-choice`
-wholesale — a currency name is just another string, no new UI needed at
-all), or registering a new widget kind in `prompts.js`/`inputs.js` if not
-(as `flag`/`emblem` did, adding `"image"`/`"picture-choice"`). The wizard,
+enough (as `currency`/`region` did, reusing `text`/`text-guess`+
+`multiple-choice` wholesale — a plain string, no new UI needed at all),
+or registering a new widget kind in `prompts.js`/`inputs.js` if not (as
+`flag`/`emblem` did, adding `"image"`/`"picture-choice"`). The wizard,
 engine, and game screen need no changes either way.
 
 `flag`/`emblem` both check correctness by *item identity*
 (`checkAnswer: (guessId, item) => guessId === item.id`), not by their
 value (a URL string) — like `location`, not like `name`/`capital`/
-`currency` — since what's actually being asked is "which country is
-this", regardless of which fact (shape, flag, emblem) was used to ask it.
-`picture-choice` (inputs.js) reports the *option the player picked*, not
-its picture's URL, for exactly this reason.
+`currency`/`region` — since what's actually being asked is "which country
+is this", regardless of which fact (shape, flag, emblem) was used to ask
+it. `picture-choice` (inputs.js) reports the *option the player picked*,
+not its picture's URL, for exactly this reason.
+
+**`region` and the picture-choice attributes don't pair.** A question
+attribute's value doesn't have to identify one specific item for *every*
+answer to make sense of it — only for whichever answer it's actually
+paired with. `region` only has 6 values across 238 countries (Africa
+alone covers 58), so it can't identify a specific country — "Europe, pick
+its flag" has no well-defined correct picture, and neither does "Europe,
+pick its emblem." But "Europe, name a country here" (typed or multiple
+choice) and "Europe, click it on the map" (see `map-region-click` below)
+are both fine, coarser questions that were never claiming to identify one
+country in the first place — same value, different expectation from the
+answer. The first attempt at fixing this made `region` itself
+`canBePrompt: false`, which overcorrected: it removed the broken pairing
+by removing every pairing, name/typed included, that never had a
+problem. The actual fix is `gameWizard.js`'s `answerAttributesFor`
+excluding specifically `flag`/`emblem` as answers to a `region` question
+(`INCOMPATIBLE_ANSWER_PAIRS`, a small set of `"question:answer"` string
+pairs) — narrower than a per-attribute flag, since the incompatibility is
+about the *pairing*, not either attribute alone.
+
+**`map-region-click`** (`region`'s third `answerKind`, alongside
+text-guess/multiple-choice) is `location`'s `map-click` widget with a
+coarser *checker*, not a different picker: same real per-country click
+targets, same select-then-reclick-to-confirm interaction, but the guess
+reported is the clicked country's own `region` (via `attr.getValue` on
+the clicked item, looked up from `dataset.items`) instead of its id — so
+clicking *any* country in the right continent counts, not only the
+round's own specific one, and `region`'s existing `checkAnswer` (a plain
+string comparison, same as text-guess/multiple-choice already use) needs
+no changes to handle it. The reveal reuses `WorldMap.markResult(guessId,
+correctId)`'s existing id-equality coloring with a choice of arguments
+that makes it do the right thing for a *region* match instead of an
+*item* match: `markResult(clickedId, clickedId)` when correct marks only
+what was actually clicked, in the correct color (equal ids → no "wrong"
+mark fires); `markResult(clickedId, item.id)` when wrong marks the click
+red *and* additionally reveals the round's own specific target country in
+green — one concrete example of what would have counted, not the only
+one, which the feedback text says explicitly (a single highlighted
+country can't visually represent "any of Europe's 52" by itself).
 
 Not every item necessarily has a value for every attribute — a few
 countries have no recorded capital (Antarctica, Macau, Heard Island and
@@ -1322,6 +1361,24 @@ previously-picked `"map-pin"` back down to `"map-click"` at the point of
 switching, rather than letting an already-made "identity" answer kind
 choice carry through to a dataset it doesn't apply to.
 
+`datasetSwitchSupportsCurrentAttrs` (`showSubRegionStep`'s `disabledFn`)
+is the same idea applied to `flag`/`emblem`/`currency`/`region`: US
+states carry none of them (`generate-us-states-data.mjs`'s schema is just
+`{id, name, capital}`), so a question/answer pair chosen under Flags/
+Emblems/Currencies — always including at least one of those four, since
+each of those subjects' `attributeKeys` is just `name` plus one such fact
+— would leave every state failing `isAskable`, an empty round pool, and
+`QuizSession.currentItem` `undefined`. That reached `startGame`'s generic
+try/catch and showed "Could not load game data" — not wrong exactly (the
+*session* did fail to start), but actively misleading, since the data
+loaded fine and the real cause (zero askable items) was invisible a step
+earlier, exactly where a disabled option would have explained it instead.
+Checked statically against `datasetMeta["us-states"].attributeKeys`
+(datasets.js) — both already known at that point in the wizard, so unlike
+`regionCount`'s own zero-count guard (which needs the *target* dataset's
+items loaded, and deliberately doesn't load anything just to compute a
+label — see its own comment), this needs no fetch to decide.
+
 After a result, the option buttons (and the text-guess `<input>`) go
 visually inert via a `locked`/`readOnly` flag their own handlers check,
 *not* the native `disabled` attribute/property — see the round-state-
@@ -1458,34 +1515,49 @@ Re-run `npm run generate-data` after bumping either package, or to change
 `MAP_RESOLUTION` in the script (`110m` coarse / `50m` current / `10m` fine
 but ~3.6 MB).
 
-**Flags, emblems, currencies.** Two more devDependencies, both keyed by
-ISO 3166-1 alpha-2 (`cca2` — already on every record above):
+**Flags, emblems, currencies.** One more devDependency (`coat-of-arms`,
+MIT) supplies *both* images, each keyed by ISO 3166-1 alpha-2 (`cca2` —
+already on every record above; its flags folder is keyed lowercase, its
+coats folder uppercase — the only asymmetry between the two):
 
-- **country-flag-icons** (MIT) — real flag SVGs, 265 entries (100%
-  coverage of this project's 238). Copied as-is into `public/data/flags/`
-  — already small (a few hundred bytes to ~1.5KB each), no processing
-  needed.
-- **coat-of-arms** (MIT) — national emblem/coat-of-arms SVGs, 211 entries
-  (~206 actually used, of 238 — real coverage gaps, not a bug: Cuba, Iran,
-  Singapore, Türkiye, Tanzania, and ~30 others have no entry in the source
-  package at all). These are NOT copied as-is: real, detailed heraldic
-  exports, several hundred KB to just under 2MB *each* — one alone would
-  outweigh the entire map topology. Each is rasterized once, at generate
-  time, to a fixed `EMBLEM_PX` (240×240) PNG via the system `rsvg-convert`
-  binary (librsvg — this project's own visual-verification tooling
-  already depended on it; regenerating `public/data/emblems/` is the first
-  thing that makes it a *required* dependency of this script, not merely a
-  development convenience) — shrinking every file to a few KB–tens of KB.
-  `rsvg-convert`'s default `preserveAspectRatio` fits each source's own
-  shape (shield, circle, whatever) *inside* the square canvas rather than
-  stretching it, so a non-square emblem just ends up letterboxed, not
-  distorted.
+- **Flags** — `coat-of-arms`'s own `dist/flags/4x3/`, 271 entries (236
+  used, of 238 — missing only Somaliland/Northern Cyprus, which have no
+  `cca2` at all to key by). This *replaced* an earlier flag source,
+  `country-flag-icons` — dropped after its flags turned out to be
+  simplified/inaccurate for anything with real detail: Mexico's coat of
+  arms (eagle, cactus, serpent) reduced to a vague blob, Brazil's globe
+  missing its stars and "ORDEM E PROGRESSO" motto entirely. Fine for a
+  small UI icon; wrong for a quiz where the actual design is the point.
+  Verified the replacement directly (rasterized and looked, not assumed)
+  against several flags with real detail to check — Mexico's eagle,
+  Brazil's stars and motto, Nepal's actual double-pennant shape (not
+  squished into a rectangle), Turkmenistan's carpet stripe, Saudi
+  Arabia's calligraphy and sword — all correct.
+- **Emblems** — the same package's `dist/coats/`, 211 entries (~206
+  used, of 238 — real coverage gaps, not a bug: Cuba, Iran, Singapore,
+  Türkiye, Tanzania, and ~30 others have no entry in the source package
+  at all).
 - **currency** is plainer than either: world-countries' own `currencies`
   field (keyed by ISO 4217 code, `{name, symbol}`) already has this data
   for nearly every country — `primaryCurrencyName()` just takes the first
   entry's name (a country can rarely list more than one; picking
   consistently beats joining multiple names together for a fact meant to
   have one clean answer).
+
+Neither image is shipped as-is: both are real, detailed SVGs — flags up
+to ~180KB, emblems up to just under 2MB *each* (one alone would outweigh
+the entire map topology) — so each is rasterized once, at generate time,
+to a fixed-size PNG (`FLAG_PX` 320×240, matching flags' own 4:3
+convention; `EMBLEM_PX` 240×240, matching emblems' typical shield/
+circular shape) via the system `rsvg-convert` binary (librsvg — this
+project's own visual-verification tooling already depended on it;
+regenerating `public/data/flags+emblems/` is what makes it a *required*
+dependency of this script, not merely a development convenience) —
+shrinking every file to a few KB–tens of KB. `rsvg-convert`'s default
+`preserveAspectRatio` fits each source's own shape *inside* its box
+rather than stretching it, so neither box needs to exactly match its
+image's real proportions — a non-square emblem, or Nepal's non-
+rectangular flag, just ends up letterboxed within it, not distorted.
 
 A country missing an asset gets `flagUrl`/`emblemUrl: null` — handled
 exactly like a missing `capital` already is (see "Attributes" above):

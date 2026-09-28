@@ -303,6 +303,73 @@ const renderers = {
     };
   },
 
+  // `region`'s map-based answer (attributes.js) — map-click's country
+  // *picker* with a region-scale *checker*: click any country, and the
+  // guess reported is that country's own region (via `attr.getValue`, the
+  // same field this attribute's text-guess/multiple-choice guesses are
+  // already compared against) rather than the clicked country's id — so
+  // clicking any country in the right continent counts as correct, not
+  // only one specific one, and `checkAnswer` needs no changes at all to
+  // handle that: it was always a plain string comparison.
+  //
+  // The reveal reuses `markResult(guessId, correctId)` with a choice of
+  // arguments that makes its id-equality coloring do the right thing for
+  // a *region* match instead of an *item* match: passing the clicked id
+  // for both arguments when correct marks only what was actually clicked,
+  // in the "correct" color; passing the clicked id against the target's
+  // own id when wrong marks the click "wrong" and additionally reveals
+  // the target's own specific country as one concrete example of what
+  // *would* have been right — not the only one, which the feedback text
+  // says explicitly, since a single highlighted country can't represent
+  // "any of Europe's 52 countries" by itself.
+  "map-region-click": (
+    container,
+    { item, dataset, attr, focusIds, playableIds, initialTransform, onSelect, onConfirm, feedbackContainer }
+  ) => {
+    const map = new WorldMap(container, {
+      topology: dataset.topology,
+      objectKey: dataset.topologyObject,
+      focusIds,
+      playableIds,
+      dashedBorders: dataset.dashedBorders,
+      projection: dataset.projection,
+      initialTransform,
+    });
+    const byId = new Map(dataset.items.map((i) => [i.id, i]));
+    let selectedId = null;
+    map.setClickable(true, (id) => {
+      if (id === selectedId) {
+        onConfirm();
+        return;
+      }
+      selectedId = id;
+      map.select(id);
+      onSelect(attr.getValue(byId.get(id)));
+    });
+
+    const feedback = document.createElement("div");
+    feedback.className = "answer-feedback";
+    feedbackContainer.appendChild(feedback);
+
+    return {
+      cleanup: () => {
+        map.destroy();
+        feedback.remove();
+      },
+      getTransform: () => map.getTransform(),
+      showResult({ correct }) {
+        map.setClickable(false, null);
+        map.markResult(selectedId, correct ? selectedId : item.id);
+        const clicked = byId.get(selectedId);
+        if (correct) {
+          feedback.textContent = `Correct! (${clicked?.name} is in ${attr.formatAnswer(item)})`;
+        } else {
+          feedback.textContent = `Correct answer: ${attr.formatAnswer(item)} (e.g. ${item.name}) — you picked ${clicked?.name ?? "an unrecognized area"}, in ${clicked ? attr.getValue(clicked) : "no region"}`;
+        }
+      },
+    };
+  },
+
   // Borderless map: the player drops a pin anywhere rather than clicking a
   // discrete country shape. `pinTarget` (gameWizard.js's follow-up step,
   // "region" or "capital" — defaulting to "region" if ever omitted) decides

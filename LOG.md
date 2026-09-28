@@ -3,6 +3,152 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-28 — corrected the Region fix: it was too broad, and missing a piece
+
+Pushed back on the previous round's fix, correctly: "region can be a
+question, that wasn't the problem." It overcorrected — making `region`
+`canBePrompt: false` fixed the one broken pairing (Region question, pick
+a *flag* for it — no well-defined correct picture) by removing every
+pairing, including the ones that were never broken (Region, name a
+country here — a perfectly fine coarser question).
+
+Fixed at the actual point of the problem instead: `gameWizard.js`'s
+`answerAttributesFor` now excludes specifically `flag`/`emblem` as
+answers to a `region` question (a small `INCOMPATIBLE_ANSWER_PAIRS` set
+of `"question:answer"` pairs, not a per-attribute flag — the
+incompatibility is about the *pairing*, region paired with a picture
+attribute, not either one alone), and `region.canBePrompt` reverted to
+`true`.
+
+Also requested directly: "if I choose flag [question] then region
+[answer], there should be an option to choose the region on a map."
+Added `map-region-click`, a new answerKind for `region` — `location`'s
+existing `map-click` widget (real per-country click targets, the same
+select-then-reclick-to-confirm interaction) with a coarser *checker*
+instead of a different picker: the guess reported is the clicked
+country's own region, not its id, so any country in the right continent
+counts — `region`'s existing string-comparison `checkAnswer` needed no
+changes at all to handle it. The reveal is the more interesting part: it
+reuses `WorldMap.markResult`'s existing id-equality coloring by choosing
+its two arguments carefully rather than adding new WorldMap API —
+`markResult(clickedId, clickedId)` when correct (equal ids, so only the
+actual click gets marked, in the correct color), `markResult(clickedId,
+item.id)` when wrong (marks the click red and additionally reveals the
+round's own specific target green, as one concrete example of what
+would've counted — the feedback text is explicit that it's not the only
+one, since a single highlighted country can't represent "any of Europe's
+52" by itself).
+
+Verified: Region is offered as a question again; Region-as-question
+correctly excludes Flag/Emblem from the answer list while still offering
+Name; Flag/Emblem-as-question now offers "Click its region" alongside
+the existing text/multiple-choice answer kinds; clicking a *different*
+same-region country scores correct with clear feedback naming which
+country was clicked and confirming its region; clicking a wrong-region
+country scores wrong with the target correctly revealed green and the
+click revealed red; the full regression suite, including both new
+map-region-click paths, green throughout. `npm run build` clean.
+
+## 2026-09-28 — Region made answer-only; US-States dataset-switch crash fixed
+
+Reported: picking Flags → Region as the question offered "Name" and
+"Flag" as answers, which doesn't make sense (asked to also check for
+other such inconsistencies). It didn't make sense because the underlying
+problem was already known and previously flagged as an accepted
+trade-off when Region shipped — this report was that trade-off actually
+showing up in play, just via the picture-based answer, which makes the
+brokenness obvious in a way the text answer's version of the same issue
+doesn't (a plausible-but-wrong typed guess just reads as "you got it
+wrong"; a grid of flags with no way to know which one is "correct" reads
+as broken).
+
+Root cause, generalized: a *question* attribute's value has to identify
+the round's specific item well enough that answering it means something.
+`region` fails this categorically — only 6 values partition all 238
+countries (Africa alone covers 58), so *every* region-as-question round
+collides, not just some (contrast `currency`, which collides too but each
+currency still maps to a bounded handful — Euro, the worst case, is 31 of
+238; still prompt-capable, on the theory that most currencies are close
+to unique and this is a real but occasional trade-off, not a
+by-construction one). Fixed at the attribute level: `region` is now
+`canBePrompt: false` — offered only as an answer, where "France — what
+region is it in" has exactly one correct value, the same as any other
+fact about a well-identified item. Checked every other attribute for the
+same class of problem before considering this done: `capital` has exactly
+one real collision across 234 countries (Kingston — Jamaica and Norfolk
+Island), `name`/`flag`/`emblem`/`location` are all definitionally 1:1 —
+none of them need the same fix.
+
+The broader "check for other such inconsistencies" sweep also caught a
+real, separate bug the new subjects exposed: navigating Flags/Emblems/
+Currencies → America → US States crashed (`Cannot read properties of
+undefined (reading 'flagUrl')`, caught by `startGame`'s own try/catch, so
+it surfaced as a misleading "Could not load game data" rather than a hard
+crash — but still broken). US states carry no flag/emblem/currency/region
+data at all, and every question/answer pair reachable from those three
+subjects includes at least one of those four facts (each subject's
+`attributeKeys` is just `name` plus one), so the dataset swap always
+produced a zero-item round pool. The existing zero-count guard on that
+step couldn't catch it — it deliberately returns `null` (not zero) for
+any dataset-switch option, since there's no *count* to compute without
+loading a dataset it doesn't load. Added a second, static check
+(`datasetSwitchSupportsCurrentAttrs`) instead: does the target dataset's
+own declared `attributeKeys` actually include the chosen question and
+answer? Needs no fetch — both sides are already known at that point in
+the wizard. US States now shows up correctly disabled from Flags/Emblems/
+Currencies, while the legitimate Capitals → America → US States path
+(capital + location, both supported) is unaffected — verified explicitly,
+not just inferred.
+
+Verified: Region no longer appears as a question option anywhere; still
+appears as an answer; a Flag-question round now offers Name/Region as
+answers instead of the nonsensical Name/Flag; US States is disabled
+(not merely hidden — the player can see it's there and unavailable) from
+all three new subjects and still enabled from Capitals; the full
+regression suite green throughout. `npm run build` clean.
+
+## 2026-09-28 — flags weren't accurate: swapped the source, not just a fix
+
+Reported: the flags weren't done correctly, use accurate PNGs instead.
+Checked by rasterizing and actually looking (per this project's own
+playbook) rather than assuming the reported problem was something small —
+`country-flag-icons` (the original source) turned out to be a genuinely
+*simplified* icon set, not a bug in how it was being used: Mexico's coat
+of arms (eagle standing on a cactus eating a serpent) rendered as an
+unrecognizable blob, Brazil's globe was missing its stars and "ORDEM E
+PROGRESSO" motto entirely. Fine for a small UI icon (a language switcher,
+say); wrong for a quiz where the flag's actual design is the whole point.
+
+Replaced the source outright rather than patching around it: the
+`coat-of-arms` package (already a dependency, for emblems) turns out to
+ship its own flag SVGs too (`dist/flags/4x3/`, lowercase cca2 — the only
+naming difference from its `dist/coats/`), and they're the real, detailed
+designs — verified directly on the same countries that exposed the
+problem (Mexico's eagle, Brazil's stars and motto) plus a few more with
+real edge-case shapes (Nepal's actual non-rectangular double-pennant
+outline, not squished into a rectangle; Turkmenistan's carpet-pattern
+stripe; Saudi Arabia's calligraphy and sword) — all correct. Coverage is
+unchanged (236/238, same two extra-territory gaps as before).
+
+Per the explicit "accurate PNGs" ask, flags now get the same treatment
+emblems already needed for the same underlying reason (their own sources
+are real, occasionally huge SVGs — flags run up to ~180KB, easily enough
+detail to matter): rasterized at generate time via `rsvg-convert` to a
+320×240 PNG (4:3, flags' own natural aspect ratio, so a normal
+rectangular flag fills the box with no wasted letterboxing — emblems keep
+their existing square 240×240, matching their own typical shield/
+circular shape). `country-flag-icons` dropped entirely (uninstalled, no
+longer referenced) — one source (`coat-of-arms`) now covers both images
+instead of two.
+
+No application code changed at all — `getValue`/`<img src>` never cared
+about file extension, only `generate-data.mjs`'s asset resolution did.
+Verified: the actual generated Mexico flag PNG (read directly, not just
+"file exists"), a prompt image's `src` resolving to a real file on disk,
+picture-choice's image `src`s likewise, and the full regression suite
+(original paths plus Flags/Emblems/Currencies/Region in both directions)
+green. `npm run build` clean.
+
 ## 2026-09-28 — Region attribute added to Flags, Emblems, Currencies
 
 Follow-up: "region" (world-countries' own broad continent field — Europe/

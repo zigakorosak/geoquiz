@@ -82,15 +82,38 @@ export const attributes = {
   // despite the shared name: this is a quizzable fact about one item
   // ("what continent is Peru in"), that step is which items are in play
   // at all. Every item has one (unlike capital/currency/flag/emblem, no
-  // gaps to worry about), so it's the simplest attribute here: reuses
+  // gaps to worry about), so its widgets are the simplest here: reuses
   // text/text-guess/multiple-choice wholesale, same as currency.
+  //
+  // A question attribute's value doesn't have to pin down one exact item
+  // for every possible *answer* to make sense of it — it only has to for
+  // whichever answer is actually paired with it. Region genuinely doesn't
+  // identify one country (only 6 values shared across all 238 — Africa
+  // alone covers 58), so "Europe — pick its flag" has no well-defined
+  // correct picture and "Europe — pick its capital" has no well-defined
+  // correct one either; but "Europe — name a country here" (typed/
+  // multiple-choice) or "Europe — click it on the map" are both perfectly
+  // fine, coarser-grained questions that were never claiming to identify
+  // a specific country in the first place. So the fix isn't disallowing
+  // region as a question (tried that; overcorrected — it disallowed the
+  // fine pairings along with the broken one) — it's `gameWizard.js`'s
+  // `answerAttributesFor` excluding specifically `flag`/`emblem` as
+  // *answers* to a `region` question, leaving every other pairing (in
+  // both directions) alone.
   region: {
     key: "region",
     label: "Region",
     canBePrompt: true,
     canBeAnswer: true,
     promptKind: "text",
-    answerKinds: ["text-guess", "multiple-choice"],
+    // "map-region-click" (inputs.js) is location's map-click widget with a
+    // coarser correctness check: click any country, and it's right iff
+    // *that country's own region* matches the target's — not "the same
+    // country", the way map-click's location check works. Reports the
+    // clicked country's region string via onSelect, so it reuses this
+    // attribute's own checkAnswer unchanged (string comparison, exactly
+    // like text-guess/multiple-choice's guesses already go through).
+    answerKinds: ["text-guess", "multiple-choice", "map-region-click"],
     getValue: (item) => item.region,
     checkAnswer: (guess, item) => normalizeText(guess) === normalizeText(item.region),
     formatAnswer: (item) => item.region,

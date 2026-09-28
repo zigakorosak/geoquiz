@@ -34,9 +34,18 @@ function promptAttributesFor(config) {
   return resolveAttributes(config.subject.attributeKeys ?? config.meta.attributeKeys).filter((a) => a.canBePrompt);
 }
 
+// "question:answer" pairs excluded despite both individually being valid
+// prompt/answer attributes — narrower than a per-attribute flag, since the
+// problem is specific to the *pairing*, not either attribute alone: a
+// `region` question is perfectly fine paired with a typed guess or the map
+// (see attributes.js's own comment), just not with flag/emblem's
+// picture-choice, which has no well-defined "correct" picture when the
+// question doesn't identify one specific country.
+const INCOMPATIBLE_ANSWER_PAIRS = new Set(["region:flag", "region:emblem"]);
+
 function answerAttributesFor(config, excludeKey) {
   return resolveAttributes(config.subject.attributeKeys ?? config.meta.attributeKeys).filter(
-    (a) => a.canBeAnswer && a.key !== excludeKey
+    (a) => a.canBeAnswer && a.key !== excludeKey && !INCOMPATIBLE_ANSWER_PAIRS.has(`${excludeKey}:${a.key}`)
   );
 }
 
@@ -105,6 +114,12 @@ const answerKindLabels = {
   "picture-choice": "Pick the picture",
   "map-click": "Select region",
   "map-pin": "Drop a pin",
+  // Deliberately not "Select region" too (map-click's own label, just
+  // above) — that's for clicking a specific *country*; this is for
+  // clicking anywhere in the right *continent*, a coarser answer only
+  // `region` itself offers, and the two need visibly different labels so
+  // picking between them (when both somehow appear) isn't confusing.
+  "map-region-click": "Click its region",
 };
 
 function availableAnswerKinds(config) {
@@ -243,6 +258,29 @@ function withCount(label, count) {
   return count == null ? label : `${label} (${count})`;
 }
 
+// A dataset-switch option (only "US States", America's Caribbean sibling)
+// isn't just a different region of the same facts — it's a genuinely
+// different dataset whose items may not carry the attribute(s) already
+// chosen (US states have no flag/emblem/currency/region at all — see
+// generate-us-states-data.mjs's minimal {id, name, capital} schema).
+// `regionCount()` can't catch this itself — it deliberately returns
+// `null` (not counted, so its own zero-count guard never fires) for any
+// `datasetKey` option, since there's no shared count to compute against
+// items from a dataset that hasn't been loaded yet. This checks the
+// target dataset's own declared `attributeKeys` (datasets.js) instead —
+// no loading needed, both are already known. Unsupported means every
+// item would fail `isAskable` and the round pool would end up empty;
+// without this, that surfaced as `startGame`'s generic "Could not load
+// game data" screen — technically true (the *session* failed to start)
+// but actively misleading, since the data loaded fine and the real
+// problem (zero askable items) was invisible a step earlier, right where
+// a disabled option would have explained it.
+function datasetSwitchSupportsCurrentAttrs(config, region) {
+  if (!region.datasetKey) return true;
+  const targetKeys = datasetMeta[region.datasetKey]?.attributeKeys ?? [];
+  return targetKeys.includes(config.questionAttr.key) && targetKeys.includes(config.answerAttr.key);
+}
+
 function showLoadError(container, onExit) {
   renderChoiceScreen(container, {
     title: "Could not load game data.",
@@ -309,9 +347,11 @@ function showSubRegionStep(container, config, goBack, onExit) {
     title: `Choose a ${config.regionParent.label} region`,
     options: config.regionParent.children,
     labelFn: (r) => withCount(r.label, regionCount(config, r)),
-    // Same zero-count guard as showRegionStep. A dataset-switch entry
-    // (US States) has a null count, and null !== 0, so it stays enabled.
-    disabledFn: (r) => regionCount(config, r) === 0,
+    // Same zero-count guard as showRegionStep, plus a second check
+    // specifically for dataset-switch entries (US States) — see
+    // datasetSwitchSupportsCurrentAttrs for why regionCount's own
+    // zero-count guard can't cover that case by itself.
+    disabledFn: (r) => regionCount(config, r) === 0 || !datasetSwitchSupportsCurrentAttrs(config, r),
     onPick: (r) => {
       const stepBack = () => showSubRegionStep(container, config, goBack, onExit);
       if (r.datasetKey) {
