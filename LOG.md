@@ -3,6 +3,34 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-28 — Confirm/Next button moved into the header
+
+Requested: move it to the top middle, between the timer and Back to
+Menu — it used to sit below the prompt/answer/feedback stack, separated
+from the round's other meta-controls (progress, score, timer, exit) by
+the whole map. Moved the same element (`game.js` — no behavior changed,
+just where it's appended: `header.append(progress, score, timerEl,
+actionButton, exitButton)` instead of at the end of `root`), so its
+existing relabel-in-place (Confirm → Next), disabled-until-selected, and
+"click anywhere else advances" logic all carry over unchanged.
+
+Positioned via two independent `margin-left: auto` declarations (one on
+`.game-header .action-button`, the existing one on `.exit-button`) rather
+than a hardcoded position — flexbox splits leftover row space evenly
+across every auto margin present, so the two land roughly centered in
+the gap after progress/score/timer, with Back to Menu still pinned to
+the far right, and the layout adapts to different button-label widths on
+its own instead of needing separate breakpoints.
+
+Verified: DOM order is progress → score → timer → action-button →
+exit-button, with no leftover action-button at the old root-level spot;
+Confirm/Next still relabels and disables/enables correctly from its new
+position; clicking elsewhere in the header (not the button itself) still
+advances past a result, confirming `actionButton.contains(e.target)`
+still works nested one level deeper; full regression suite (map-click,
+pin, picture-choice, text, and the map-region-click path) green. `npm
+run build` clean.
+
 ## 2026-09-28 — corrected the Region fix: it was too broad, and missing a piece
 
 Pushed back on the previous round's fix, correctly: "region can be a

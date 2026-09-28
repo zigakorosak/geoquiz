@@ -73,6 +73,15 @@ export function renderGame(
   const timerEl = document.createElement("span");
   timerEl.className = "game-timer";
 
+  // Sits between the timer and Back to Menu (not down with the prompt/
+  // answer/feedback stack, where it used to live) — the round's own
+  // "advance" control read as belonging with the rest of the round's
+  // meta-controls once there was more than one thing up there, not
+  // separated from them by the whole prompt+map.
+  const actionButton = document.createElement("button");
+  actionButton.type = "button";
+  actionButton.className = "action-button";
+
   const exitButton = document.createElement("button");
   exitButton.type = "button";
   exitButton.className = "exit-button";
@@ -85,7 +94,7 @@ export function renderGame(
     onExit();
   });
 
-  header.append(progress, score, timerEl, exitButton);
+  header.append(progress, score, timerEl, actionButton, exitButton);
 
   const promptArea = document.createElement("div");
   promptArea.className = "prompt-area";
@@ -100,11 +109,7 @@ export function renderGame(
   const feedbackArea = document.createElement("div");
   feedbackArea.className = "feedback-area";
 
-  const actionButton = document.createElement("button");
-  actionButton.type = "button";
-  actionButton.className = "action-button";
-
-  root.append(header, promptArea, answerArea, feedbackArea, actionButton);
+  root.append(header, promptArea, answerArea, feedbackArea);
   container.appendChild(root);
 
   let cleanupPrompt = null;

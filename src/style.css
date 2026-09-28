@@ -234,6 +234,19 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
+/* Sits between the timer and Back to Menu. Both this and .exit-button
+   below carry their own `margin-left: auto` — flexbox splits leftover
+   row space evenly across every auto margin present, so the two ends up
+   roughly centered in the gap after the progress/score/timer cluster,
+   with Back to Menu still pinned to the far right, rather than either
+   one needing a hardcoded position. */
+.game-header .action-button {
+  margin-left: auto;
+  padding: 0.4em 1.4em;
+  min-width: 0;
+  font-size: 0.9rem;
+}
+
 .game-header .exit-button {
   margin-left: auto;
   font-weight: 400;
