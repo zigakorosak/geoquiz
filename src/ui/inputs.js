@@ -55,6 +55,8 @@ const CAPITAL_CORRECT_RADIUS_KM = 50;
 // pin-specific logic of its own.
 const TOO_FAR_FROM_CAPITAL = "__too-far-from-capital__";
 
+let textGuessInstanceCounter = 0;
+
 const renderers = {
   "multiple-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
     const correctValue = attr.getValue(item);
@@ -202,12 +204,23 @@ const renderers = {
     const form = document.createElement("form");
     form.className = "answer-text-form";
 
-    const listId = "answer-options";
+    // Instance-scoped id (not a static string) — the only hardcoded DOM id
+    // in the widget layer otherwise, and WorldMap.js already namespaces
+    // all of its own ids per instance for the same reason.
+    const listId = `answer-options-${textGuessInstanceCounter++}`;
     const datalist = document.createElement("datalist");
     datalist.id = listId;
+    // Deduplicated by value: many items share one value for some
+    // attributes (a whole Eurozone's worth of "Euro"; six region names
+    // across ~235 countries), and one <option> per *item* filled the
+    // autocomplete dropdown with dozens of identical entries.
+    const seenValues = new Set();
     for (const item of dataset.items) {
+      const value = attr.getValue(item);
+      if (value == null || seenValues.has(value)) continue;
+      seenValues.add(value);
       const option = document.createElement("option");
-      option.value = attr.getValue(item);
+      option.value = value;
       datalist.appendChild(option);
     }
 

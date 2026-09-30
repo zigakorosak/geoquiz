@@ -200,28 +200,6 @@
     "isExtraTerritory": false
   },
   {
-    "id": "010",
-    "cca2": "AQ",
-    "cca3": "ATA",
-    "name": "Antarctica",
-    "officialName": "Antarctica",
-    "capital": null,
-    "region": "Antarctic",
-    "subregion": "",
-    "latlng": [
-      -90,
-      0
-    ],
-    "capitalLatLng": null,
-    "flagEmoji": "🇦🇶",
-    "currency": null,
-    "flagUrl": "data/flags/AQ.png",
-    "emblemUrl": null,
-    "independent": false,
-    "area": 14000000,
-    "isExtraTerritory": false
-  },
-  {
     "id": "028",
     "cca2": "AG",
     "cca3": "ATG",
@@ -4434,7 +4412,7 @@
     ],
     "flagEmoji": "🇸🇭",
     "currency": "Pound sterling",
-    "flagUrl": "data/flags/SH.png",
+    "flagUrl": null,
     "emblemUrl": "data/emblems/SH.png",
     "independent": false,
     "area": 394,

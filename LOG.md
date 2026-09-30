@@ -3,6 +3,251 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-09-30 — Restart button in the game header
+
+Requested: a restart control up top next to Back to Menu that starts the
+exact same game over. `game.js` adds a Restart button between the
+Confirm/Next action button and Back to Menu — it cleans up the current
+round (timer, prompt, answer widget) and re-calls `renderGame` with the
+complete original config, i.e. exactly what the summary screen's Play
+Again already does, just reachable mid-game. Fresh session, fresh
+shuffle, score/timer reset; every wizard choice (subject, attributes,
+answer kind, option count, pin target, region, keep-zoom) carried
+through unchanged.
+
+Styling reuses `.exit-button`, with one addition (`style.css`): that
+class carries `margin-left: auto`, and two auto margins would have let
+flexbox split the leftover header space *between* the pair, pushing them
+apart — a `.restart-button + .exit-button { margin-left: 0 }` override
+keeps Back to Menu directly next to Restart (Restart's own auto margin
+does the pushing for both). Verified via jsdom: button order, and a
+mid-game restart landing on Round 1 / Score 0 in the same mode without
+exiting to the menu.
+
+## 2026-09-30 — page never scrolls; map full-bleed to left/right/bottom
+
+Requested: no scrolling anywhere, and the map should reach the screen's
+left, right, and bottom edges on any display. Two structural causes of
+scroll existed: `#app` used `min-height: 100vh` (grow-to-content, so
+anything taller than the screen scrolled the page) and the map areas
+carried fixed px floors (`min-height: 640px`/`480px` on
+`.world-viewport`, `.answer-area--map`, `.prompt-area--map`,
+`.explore-area`) that forced overflow on any screen shorter than the
+floor plus chrome.
+
+`style.css` changes: `#app` is now a hard viewport cap (`height: 100dvh`
+— dvh, not vh, so mobile browser chrome doesn't cause exactly-one-
+chrome-height of overflow — plus `overflow: hidden`); every map px floor
+became `min-height: 0`, so the map is simply whatever space remains;
+`.game-screen` lost its `max-width: 1600px` ceiling and side/bottom
+padding (the map now spans the full window width and touches the
+bottom), with the header carrying its own side padding instead. Screens
+whose content is intrinsically fixed-size got internal-scroll safety
+valves for pathologically short windows (`.menu-screen` and
+`.game-summary`: `max-height: 100%` + `overflow-y: auto`), and
+`.prompt-image`'s cap became viewport-aware (`min(180px, 22vh)`) so a
+flag round's options/feedback still fit under the hard cap on short
+screens. `npm run build` clean; layout verified by reasoning through
+every screen's flex chain (jsdom has no real layout to measure).
+
+## 2026-09-30 — audit fixes applied; Antarctica removed from the game
+
+Follow-up to the full-codebase audit: every flagged item fixed, plus
+Antarctica removed entirely (requested — it isn't a country: no
+government, no capital, and its "flag" is the unofficial True South
+design).
+
+- **Antarctica excluded** (`generate-data.mjs`, `EXCLUDED_CCN3`): dropped
+  from `countries.json` (238 → 237 items) and its `AQ.png` flag deleted.
+  Its topology shape stays in the map — with no item carrying id "010"
+  it renders muted and unplayable automatically, same as any other
+  non-playable shape. Verified: not clickable in a World game.
+- **Capital-pin scoring guard** (`gameWizard.js` `isAskable`): items
+  missing `capitalLatLng` are now excluded from capital-scored pin games
+  (and their step counts), so a future data gap surfaces as an excluded
+  item rather than the map-pin widget silently falling back to
+  region-style scoring. No effect on today's data (every capital has
+  coordinates).
+- **Datalist dedupe + instance-scoped id** (`inputs.js` text-guess): the
+  autocomplete list previously held one option per *item* — "Europe" 52
+  times in a Region game, "Euro" across the whole Eurozone. Now
+  deduplicated by value; the static `"answer-options"` id also became
+  per-instance, matching WorldMap's own id namespacing.
+- **"Select region" renamed to "Click it on the map"** (`gameWizard.js`):
+  the old map-click label collided with the Region attribute's own
+  vocabulary next to "Click its region".
+- **Redundant `stopTimer()` removed from `goNext`** (`game.js`): the
+  timer is already stopped at confirm; the second call briefly rewrote
+  the timer display with post-result idle time.
+- **Dead zero-size guard fixed** (`WorldMap.js` `_reflow`): `clientWidth
+  || 800` made the `width === 0` early-return unreachable; now a zero-
+  size container genuinely bails (the ResizeObserver re-runs reflow when
+  it gets real dimensions) instead of laying out against a made-up
+  800×500.
+- **Dead exports removed**: `getSovereignty`, `listDatasetMeta`,
+  `listPromptAttributes`/`listAnswerAttributes`, and the `normalizeText`
+  re-export — none had any callers.
+- **Map min-height unified** (`style.css`): `.explore-area` 720px →
+  640px, matching `.answer-area--map` and `.world-viewport`.
+
+Verified with a 12-check jsdom regression run (wizard flows with the new
+label, capital-pin step, datalist dedupe, wrong-answer/next-round path,
+Antarctica absent and unclickable); `npm run build` clean. DESIGN.md
+counts updated 238 → 237.
+
+## 2026-09-28 — audited every flag; one was wrong (Saint Helena)
+
+Requested: go through every flag and check it actually corresponds to its
+country. Rendered all 236 into labeled contact sheets (ImageMagick
+`montage`, 24 per sheet, gray background so near-white stripes — Bulgaria,
+Costa Rica — don't visually vanish against a white page) and checked each
+by eye against the real flag.
+
+One mismatch: Saint Helena, Ascension and Tristan da Cunha was showing a
+plain Union Jack, not its own real flag (a Blue Ensign with a shield
+charge on the fly). Root cause was upstream, in the `coat-of-arms`
+package itself (`generate-data.mjs`'s flag source) — its `sh.svg` is
+byte-identical to `gb.svg` (the UK) except for the `id` attribute,
+i.e. mislabeled at the source, not something this app's own lookup logic
+got wrong. Confirmed it was the *only* such case by hashing every flag
+SVG in the package (normalizing the `id` attribute first) and grouping
+matches: the other duplicate-hash groups found this way are all
+legitimate — France's territories (`bl`/`gf`/`gp`/`mf`/`pm`/`re`/`wf`/`yt`)
+really do fly France's own flag, and Heard Island and McDonald Islands
+really does fly Australia's — only `gb`/`sh` was actually wrong.
+
+Fixed in `generate-data.mjs`: `resolveFlagAndEmblem` now skips `sh.svg`
+via a small `MISLABELED_FLAG_CODES` set, leaving `flagUrl: null` for that
+one entry — the same "leave null rather than guessed" policy already
+applied to any other field with no reliable source (see the file's own
+header comment), rather than hand-drawing a substitute shield of
+uncertain accuracy. `country-flag-icons` (the flag source dropped
+earlier, see the "flags weren't accurate" entry below) is no longer
+installed, so there's nothing else local to fall back to for this one
+territory. `npm run generate-data` re-run; net effect is a one-line
+diff in `countries.json` (`flagUrl` → `null` for SH) and one stale PNG
+removed — every other flag confirmed correct, nothing else changed.
+
+## 2026-09-28 — feedback message moved above the map, for map-based answers
+
+Requested: put the correct/wrong message somewhere above the map. When
+the answer widget is a map (map-click/map-pin/map-region-click), it fills
+all available height on its own — `.round-area`'s centering (see the
+"flag prompt shrunk" entry below) only has an effect when *nothing*
+inside it is flex-growing, so a map answer leaves no free space for it to
+work with. Feedback, a sibling placed after the answer widget in the DOM,
+landed off the bottom of the screen in that case, invisible without
+scrolling right after the player had just clicked somewhere near the top
+of a tall map.
+
+`game.js` now appends `feedbackArea` before `answerArea` specifically
+when `isAnswerMap` (prompt, feedback, map — instead of prompt, map,
+feedback); every other pairing (text/button answers, where centering
+already keeps the small cluster together) is unchanged. Verified via a
+full `renderGame` run: DOM order for a map-region-click answer is now
+`[prompt-area, feedback-area, answer-area--map]`, feedback text populates
+correctly there after confirm, and a non-map answer's order
+(`[prompt-area, answer-area, feedback-area]`) is untouched.
+
+## 2026-09-28 — Region-as-answer made World-only: region filters were quizzing on their own filter
+
+Reported: "in flag mode I can choose any region and it says I am correct."
+Every hypothesis about the `checkAnswer`/scoring logic itself (multiple-
+choice, text-guess, map-region-click, all three, in both filtered and
+unfiltered games) came back scoring correctly under direct testing — the
+bug wasn't there. A full file-by-file audit (attributes.js, inputs.js,
+engine.js, gameWizard.js, game.js, WorldMap.js's click dispatch) found
+nothing wrong with any of them either.
+
+The actual cause: the region *filters* (`core/regions.js`) narrow the
+playable set by matching `item.region`/`item.subregion` — the exact same
+field the `region` *attribute* (attributes.js) quizzes on. Filter to
+"Europe" and ask Region-as-the-answer, and virtually every playable
+country already carries `region: "Europe"` (only Georgia/Türkiye, folded
+in via `EUROPE_ONLY`, carry the native `"Asia"` value instead — 2 out of
+53) — so almost any guess reads back as correct. Confirmed directly: a
+Europe-filtered Flags→Region game via map-region-click scored 15/15
+random map clicks "Correct!". Every other leaf region (Africa's two
+splits, all three America splits, Oceania) has *zero* such exceptions —
+fully degenerate, not just skewed. This was never a scoring bug — every
+`checkAnswer` was, and still is, a strict comparison — it's that the
+filter and the attribute were two views of the same field, so no
+per-guess check could ever tell a "wrong" region-filtered guess apart
+from a right one.
+
+No per-option threshold fixes this (Asia's own 2-value split already
+showed a "just disable if fully degenerate" rule wouldn't have caught
+Europe's near-degenerate 2/53 case either). Fixed at the root instead:
+`gameWizard.js`'s `goToRegionOrSkip` now skips the "Choose a map" step
+entirely — forcing World — whenever `region` is the question or the
+answer attribute for this round, the same "this step doesn't apply here"
+pattern already used for datasets that don't support region filtering at
+all. Region can still be asked about (Flags/Emblems/Currencies→Region or
+Region→Name), just never inside a filter that would make asking it
+meaningless.
+
+Verified: driving the actual wizard (jsdom clicks through `gameWizard.js`,
+not just calling functions directly) — picking Region as question or
+answer now jumps straight from the answer-kind step to sovereignty,
+skipping "Choose a map" entirely; a control run (Flags, Name→Flag, no
+region attribute involved) still shows "Choose a map" exactly as before.
+
+## 2026-09-28 — flag prompt shrunk; feedback no longer stranded at the bottom
+
+Requested: smaller flag image, and the correct/wrong message positioned
+near the flag instead of far below it — asked to think through the best
+UX, not just patch the specific complaint.
+
+The actual cause wasn't really about the flag or the feedback message
+individually — `.answer-area` (the widget slot) has always had an
+unconditional `flex: 1`, meaning it claims *all* leftover vertical space
+on a tall screen regardless of how small its own content is. That's
+exactly right when it holds a map (the whole point of an earlier "make
+the map bigger" round), and invisible when it holds a map every other
+subject ever paired with something small (an assist hit-area click, a
+pin). Flags/Emblems/Currencies (and Region) were the first subjects
+where *neither* side is ever a map for their most natural pairing (show
+a flag, type the name) — so a one-line text input sat centered inside a
+gigantic mostly-empty box, and the feedback line — a sibling *below* that
+box, not inside it — landed at the very bottom of the screen, visibly far
+from the flag the player had just been looking at near the top.
+
+Fixed structurally rather than by moving the feedback element around:
+wrapped prompt/answer/feedback in a new `.round-area`, made *it* the
+flex-growing piece (not `.answer-area` directly), and let it
+`justify-content: center` its three children as one group whenever
+neither side is a map — determined per-game (not per-round; the
+attribute pair is fixed for a whole session) via `isPromptMap`/
+`isAnswerMap` in `game.js`, driving `--map` modifier classes that opt
+`.prompt-area`/`.answer-area` into their own `flex: 1` only when they
+actually hold one. When a map *is* present it still fills the round-area
+exactly as before; when neither is, the whole small cluster (flag, text
+input or button row, feedback line) sits centered together, any extra
+screen height distributed symmetrically around the group instead of
+stuck between two specific pieces of it. `.prompt-image`'s own max-height
+also dropped 220px → 180px, the explicitly requested "slightly smaller."
+
+Auditing every prompt/answer combination for the same class of problem
+surfaced one more, already-existing case: "Location shown on the map,
+type the capital" (Capitals' own map-highlight-as-question pairing) had
+the *map* — not the small text answer — stuck at its own floor height,
+because the old unconditional flex:1 lived only on `.answer-area`, never
+on `.prompt-area`. The new `prompt-area--map` modifier fixes this too,
+for free, since it's driven by the same `questionAttr.promptKind`
+check regardless of which subject triggered it.
+
+One real regression caught before it shipped: `mapExplore.js`'s free-
+explore screen reuses the `.answer-area` class for its own (always-a-map)
+content but has no prompt/answer split to opt into `--map` with — moving
+the unconditional `flex: 1` off the base class would have silently
+un-grown it. Given `.explore-area` of its own instead.
+
+Verified: `--map` classes toggle correctly across every prompt/answer
+combination in the app (map-highlight-as-question, map-click/map-pin/
+map-region-click-as-answer, and every all-text pairing correctly getting
+neither); map-explore still mounts and grows to fill the screen; the full
+gameplay regression suite green throughout. `npm run build` clean.
+
 ## 2026-09-28 — Confirm/Next button moved into the header
 
 Requested: move it to the top middle, between the timer and Back to

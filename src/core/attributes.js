@@ -150,16 +150,6 @@ export const attributes = {
   },
 };
 
-export function listPromptAttributes() {
-  return Object.values(attributes).filter((a) => a.canBePrompt);
-}
-
-export function listAnswerAttributes(excludeKey) {
-  return Object.values(attributes).filter((a) => a.canBeAnswer && a.key !== excludeKey);
-}
-
 export function resolveAttributes(keys) {
   return keys.map((key) => attributes[key]);
 }
-
-export { normalizeText };

@@ -81,10 +81,6 @@ function cachedFetch(cache, key, url) {
   return cache.get(key);
 }
 
-export function listDatasetMeta() {
-  return Object.values(datasetMeta);
-}
-
 // The lightweight half: just the quizzable items. What the wizard's
 // region/sovereignty steps await for their counts.
 export function loadItems(key) {

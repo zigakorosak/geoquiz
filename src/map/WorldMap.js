@@ -1002,9 +1002,12 @@ export class WorldMap {
     // layout below starts from real inner transforms, not a stale base
     // plus a CSS delta.
     this._bakeFrozenZoom();
-    const width = this.container.clientWidth || 800;
-    const height = this.container.clientHeight || 500;
-    if (width === 0 || height === 0) return;
+    // A zero-size container (display:none, mid-teardown) has nothing to
+    // lay out against — bail rather than fitting the projection to a
+    // made-up size and caching it as _lastSize.
+    if (!this.container.clientWidth || !this.container.clientHeight) return;
+    const width = this.container.clientWidth;
+    const height = this.container.clientHeight;
     const sizeChanged = this._lastSize && (this._lastSize.width !== width || this._lastSize.height !== height);
     if (resetZoom === undefined) resetZoom = Boolean(sizeChanged);
     this._lastSize = { width, height };

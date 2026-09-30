@@ -187,7 +187,7 @@ not its picture's URL, for exactly this reason.
 **`region` and the picture-choice attributes don't pair.** A question
 attribute's value doesn't have to identify one specific item for *every*
 answer to make sense of it — only for whichever answer it's actually
-paired with. `region` only has 6 values across 238 countries (Africa
+paired with. `region` only has 6 values across 237 countries (Africa
 alone covers 58), so it can't identify a specific country — "Europe, pick
 its flag" has no well-defined correct picture, and neither does "Europe,
 pick its emblem." But "Europe, name a country here" (typed or multiple
@@ -223,8 +223,28 @@ green — one concrete example of what would have counted, not the only
 one, which the feedback text says explicitly (a single highlighted
 country can't visually represent "any of Europe's 52" by itself).
 
+**`region` can only be asked inside a World game.** The region *filters*
+(`core/regions.js`) narrow the playable set by matching the exact same
+`item.region`/`item.subregion` fields `region`'s own `checkAnswer`
+compares against — so filtering to, say, Europe and then asking `region`
+as the answer makes the quiz self-defeating: virtually every playable
+country already carries `region: "Europe"` (bar a couple of named
+cultural exceptions — see "Regions" below), so nearly any guess reads
+back as correct, with no per-guess check able to tell a wrong
+region-filtered guess apart from a right one (verified directly: a
+Europe-filtered Flags→Region game scored 15/15 random map clicks
+"correct"). Not a scoring bug — `checkAnswer` stays a plain strict
+comparison — the filter and the attribute were just two views of the same
+field. Fixed in `gameWizard.js`'s `goToRegionOrSkip`: whenever `region` is
+this round's question *or* answer attribute, the "Choose a map" step is
+skipped entirely and World is forced, the same "this step doesn't apply
+here" pattern already used for datasets with no region filter at all
+(`regionAttrInPlay`). `region` paired with anything else (`name`,
+`flag`/`emblem`/`currency` as the question) is unaffected and still
+offers the full region picker.
+
 Not every item necessarily has a value for every attribute — a few
-countries have no recorded capital (Antarctica, Macau, Heard Island and
+countries have no recorded capital (Macau, Heard Island and
 McDonald Islands), and District of Columbia has no state capital of its
 own (a federal district, not a state). `gameWizard.js`'s `isAskable(item,
 questionAttr, answerAttr)` filters these out of the actual playable item
@@ -400,7 +420,7 @@ Rico, Bermuda, Hong Kong, ...) *and* for Somaliland/Northern Cyprus, and
 them in one principled filter instead of two overlapping concepts. (The
 data generator still tags the three hand-curated entries with
 `isExtraTerritory: true`, but purely as provenance metadata now — nothing
-in the app reads it for filtering.) 238 items total, 193 of them
+in the app reads it for filtering.) 237 items total (Antarctica is excluded outright by the generator — not a country, no government or real flag; its map shape stays, muted and unplayable), 193 of them
 `independent === true` — close to the commonly-cited ~195 sovereign
 states, a reasonable sanity check that the field means what it's expected
 to.
@@ -1012,8 +1032,9 @@ Answer widgets render their post-confirm feedback *text* into a separate
 `ctx.feedbackContainer` rather than their own `container` — `container`
 may hold a full-size map (`answer-area` is a flex row centered on that
 map), and a text line sharing that row with the map would fight it for
-space. `game.js` provides a dedicated `.feedback-area` slot between the
-answer area and the action button and clears it each round. Every widget
+space. `game.js` provides a dedicated `.feedback-area` slot right after
+the answer area (the action button itself lives up in the header now —
+see "Round state machine" below) and clears it each round. Every widget
 says "Correct!" on a right answer; on wrong, text-guess and multiple-
 choice show the correct answer (the player's own wrong guess is still
 visible — in the disabled input for text-guess, highlighted red among the
@@ -1431,6 +1452,46 @@ the first place.
 The end-of-game summary shows total and average time alongside the score
 and per-round breakdown.
 
+**Layout**: `.game-screen` is `header` + `.round-area` (prompt, answer,
+feedback) — the action button moved into the header (between the timer
+and Back to Menu, positioned via two independent `margin-left: auto`
+declarations that split the row's leftover space) so it reads as one of
+the round's meta-controls rather than something separated from
+progress/score/timer by the whole prompt+map. `.round-area` exists
+specifically to keep prompt/answer/feedback grouped as *one visual unit*
+regardless of how tall the screen is: it's the flex-growing child (not
+`.answer-area` directly, the way it used to be), with `justify-content:
+center` centering its three children as a group whenever none of them is
+itself flex-growing. That "whenever" is real, not incidental — exactly
+one of `.prompt-area`/`.answer-area` gets its own `flex: 1` via a
+`--map` modifier class (`isPromptMap`/`isAnswerMap` in `game.js`,
+checking `questionAttr.promptKind === "map-highlight"` / a `map`-prefixed
+`resolvedAnswerKind`), and only when a map is actually on that side —
+question and answer are always different attributes, so at most one side
+is ever a map. When one is, it fills the round-area on its own and
+`justify-content: center` becomes moot, same as before; when neither is
+(most Flags/Emblems/Currencies/Region rounds), nothing flex-grows and the
+whole small cluster centers together instead of `.answer-area` alone
+claiming the full remaining screen height regardless of how little it
+actually contained. That specific gap was reported directly: a small
+answer widget (one text input) sitting far above a feedback line that had
+landed at the very bottom of a tall screen, both visibly distant from the
+flag prompt just above them — `.answer-area`'s flex:1 had always
+consumed 100% of the leftover space no matter its own content's size,
+pushing every *sibling* below it (`.feedback-area`) down with it, and
+this pairing (an image prompt + a small text/picture answer, neither a
+map) had simply never come up before Flags/Emblems/Currencies existed —
+every earlier subject either paired a map with something small (and
+wanted exactly this "big map, small sibling" split) or paired two small
+things where the resulting sparseness went unnoticed. `WorldMap`'s own
+`.world-viewport` already carries its own internal `min-height`, so the
+`--map` modifiers' own floors (480px prompt-side, 640px answer-side) are
+close to redundant there — kept anyway so a map doesn't rely solely on
+that inner rule to stay big. `mapExplore.js` reuses `.answer-area` too
+but has no prompt/answer split to be conditional about (the whole screen
+is always a map) — `.explore-area` carries its own unconditional
+`flex: 1` rather than needing a `--map` class.
+
 ## Data
 
 Generated by `scripts/generate-data.mjs` (`npm run generate-data`) from
@@ -1520,21 +1581,37 @@ MIT) supplies *both* images, each keyed by ISO 3166-1 alpha-2 (`cca2` —
 already on every record above; its flags folder is keyed lowercase, its
 coats folder uppercase — the only asymmetry between the two):
 
-- **Flags** — `coat-of-arms`'s own `dist/flags/4x3/`, 271 entries (236
-  used, of 238 — missing only Somaliland/Northern Cyprus, which have no
-  `cca2` at all to key by). This *replaced* an earlier flag source,
-  `country-flag-icons` — dropped after its flags turned out to be
-  simplified/inaccurate for anything with real detail: Mexico's coat of
-  arms (eagle, cactus, serpent) reduced to a vague blob, Brazil's globe
-  missing its stars and "ORDEM E PROGRESSO" motto entirely. Fine for a
-  small UI icon; wrong for a quiz where the actual design is the point.
-  Verified the replacement directly (rasterized and looked, not assumed)
-  against several flags with real detail to check — Mexico's eagle,
-  Brazil's stars and motto, Nepal's actual double-pennant shape (not
-  squished into a rectangle), Turkmenistan's carpet stripe, Saudi
-  Arabia's calligraphy and sword — all correct.
+- **Flags** — `coat-of-arms`'s own `dist/flags/4x3/`, 271 entries (235
+  used, of 237 — missing Somaliland/Northern Cyprus, which have no `cca2`
+  at all to key by, plus Saint Helena, Ascension and Tristan da Cunha,
+  below). This *replaced* an earlier flag source, `country-flag-icons` —
+  dropped after its flags turned out to be simplified/inaccurate for
+  anything with real detail: Mexico's coat of arms (eagle, cactus,
+  serpent) reduced to a vague blob, Brazil's globe missing its stars and
+  "ORDEM E PROGRESSO" motto entirely. Fine for a small UI icon; wrong for
+  a quiz where the actual design is the point. Verified the replacement
+  directly (rasterized and looked, not assumed) against several flags
+  with real detail to check — Mexico's eagle, Brazil's stars and motto,
+  Nepal's actual double-pennant shape (not squished into a rectangle),
+  Turkmenistan's carpet stripe, Saudi Arabia's calligraphy and sword —
+  all correct. Later audited exhaustively (all 236 then-used flags,
+  rendered as labeled contact sheets and checked by eye): one more
+  mistake turned up, upstream in the package itself rather than in this
+  script's lookup — `sh.svg` (Saint Helena) is byte-identical to `gb.svg`
+  (the UK) but for its `id` attribute, i.e. a plain Union Jack mislabeled
+  as this territory's own (real: a Blue Ensign with a shield charge on
+  the fly). Confirmed the only such case by hashing every flag in the
+  package with `id` normalized out and grouping matches — the other
+  duplicate-hash groups it turned up (France's territories, Heard Island
+  and McDonald Islands/Australia) are legitimately identical, not bugs.
+  `generate-data.mjs`'s `MISLABELED_FLAG_CODES` now excludes `SH`
+  specifically, leaving `flagUrl: null` there (same "leave null rather
+  than guessed" policy as any other unreliable field) rather than
+  hand-drawing a substitute of uncertain accuracy — `country-flag-icons`,
+  the dropped source above, is no longer installed, so there's nothing
+  else local to fall back to for just this one territory.
 - **Emblems** — the same package's `dist/coats/`, 211 entries (~206
-  used, of 238 — real coverage gaps, not a bug: Cuba, Iran, Singapore,
+  used, of 237 — real coverage gaps, not a bug: Cuba, Iran, Singapore,
   Türkiye, Tanzania, and ~30 others have no entry in the source package
   at all).
 - **currency** is plainer than either: world-countries' own `currencies`
@@ -1630,7 +1707,7 @@ us-states.json` + `us-states-topology.json`.
   don't, since neither tiles into a seamless loop.
 - Per-round timer, total/average time shown in the end-of-game summary.
 - A game always covers every item currently in play (all of the chosen
-  region, or all 235/238 in World mode) — no fixed round count.
+  region, or all ~234/237 in World mode) — no fixed round count.
 - Map (free-explore): the whole world, every item clickable including
   extra territories, click a country to see its name — no quiz mechanics.
 

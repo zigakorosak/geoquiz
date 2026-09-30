@@ -82,6 +82,26 @@ export function renderGame(
   actionButton.type = "button";
   actionButton.className = "action-button";
 
+  // Same full config the game was started with — a restart is exactly the
+  // summary screen's Play Again (fresh session, fresh shuffle), just
+  // reachable mid-game without finishing first. Everything the wizard
+  // chose is carried through; only the round pool/score/timer reset.
+  const restartButton = document.createElement("button");
+  restartButton.type = "button";
+  restartButton.className = "exit-button restart-button";
+  restartButton.textContent = "Restart";
+  restartButton.addEventListener("click", () => {
+    active = false;
+    stopTimer();
+    cleanupPrompt?.cleanup();
+    answerWidget?.cleanup();
+    renderGame(
+      container,
+      { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount, pinTarget },
+      onExit
+    );
+  });
+
   const exitButton = document.createElement("button");
   exitButton.type = "button";
   exitButton.className = "exit-button";
@@ -94,7 +114,7 @@ export function renderGame(
     onExit();
   });
 
-  header.append(progress, score, timerEl, actionButton, exitButton);
+  header.append(progress, score, timerEl, actionButton, restartButton, exitButton);
 
   const promptArea = document.createElement("div");
   promptArea.className = "prompt-area";
@@ -109,7 +129,46 @@ export function renderGame(
   const feedbackArea = document.createElement("div");
   feedbackArea.className = "feedback-area";
 
-  root.append(header, promptArea, answerArea, feedbackArea);
+  // Whichever side (prompt or answer — never both; question and answer
+  // are always different attributes, and only one map-oriented attribute
+  // can be chosen per side) is a real WorldMap gets to flex-grow and fill
+  // the available height, exactly as before. The other three elements
+  // (and, when NEITHER side is a map — most Flags/Emblems/Currencies/
+  // Region rounds — all of prompt+answer+feedback) size to their own
+  // content instead of each individually stretching to fill the screen.
+  // `.round-area`'s own `justify-content: center` is what then keeps that
+  // whole small cluster grouped together, any extra vertical space
+  // distributed symmetrically around it rather than specifically wedged
+  // in between the answer widget and the feedback line below it — which
+  // is exactly where it used to end up: answerArea's flex:1 filled the
+  // entire remaining screen height regardless of how small its actual
+  // content was (a single text input, a few multiple-choice buttons), so
+  // the feedback line — a sibling *below* that now-enormous box, not
+  // inside it — landed at the very bottom of the screen, visibly far from
+  // the flag/text the player was just looking at.
+  const isPromptMap = questionAttr.promptKind === "map-highlight";
+  const isAnswerMap = resolvedAnswerKind.startsWith("map");
+  promptArea.classList.toggle("prompt-area--map", isPromptMap);
+  answerArea.classList.toggle("answer-area--map", isAnswerMap);
+
+  const roundArea = document.createElement("div");
+  roundArea.className = "round-area";
+  // Feedback normally sits below the answer widget — fine when that
+  // widget is small (a text input, a button row), where .round-area's own
+  // centering keeps the whole cluster grouped together. When the answer
+  // IS the map (map-click/map-pin/map-region-click), it fills all
+  // available height on its own, leaving nothing for centering to work
+  // with — feedback below it would land off the bottom of the screen,
+  // out of view without scrolling, right after the player just clicked
+  // somewhere near the top of a tall map. Placed before the map instead
+  // so it's immediately visible, in the same spot every round.
+  if (isAnswerMap) {
+    roundArea.append(promptArea, feedbackArea, answerArea);
+  } else {
+    roundArea.append(promptArea, answerArea, feedbackArea);
+  }
+
+  root.append(header, roundArea);
   container.appendChild(root);
 
   let cleanupPrompt = null;
@@ -211,7 +270,8 @@ export function renderGame(
   }
 
   function goNext() {
-    stopTimer();
+    // The timer was already stopped when the result was confirmed
+    // (attemptConfirm) — goNext only ever runs in the "result" phase.
     cleanupRoundDom();
     if (session.advance()) {
       startRound();

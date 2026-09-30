@@ -20,18 +20,25 @@
 //                      rasterized and looked — Mexico's eagle, Brazil's
 //                      stars and "ORDEM E PROGRESSO", Nepal's actual
 //                      double-pennant shape, Turkmenistan's carpet
-//                      stripe, Saudi Arabia's calligraphy, all correct),
-//                      at the cost of being real, occasionally large SVGs
-//                      (up to ~180KB) — rasterized via the system
-//                      `rsvg-convert` binary (librsvg — this project's
-//                      own visual-verification tooling already relied on
-//                      it; regenerating public/data/flags+emblems/ is what
-//                      makes it a *required* dependency of this script,
-//                      not merely a development convenience) down to a
-//                      fixed-size PNG, the same treatment emblems already
-//                      needed for the same reason (their own sources run
-//                      up to ~1.9MB each). Coverage: flags 236/238,
-//                      emblems ~206/238 — a country missing either gets
+//                      stripe, Saudi Arabia's calligraphy, all correct —
+//                      an exhaustive later audit of every flag then in use
+//                      found exactly one more mistake, this time upstream
+//                      in the package itself: `sh.svg` (Saint Helena) is
+//                      byte-identical to `gb.svg` (the UK) but for its
+//                      `id`, a plain Union Jack mislabeled as this
+//                      territory's own distinct flag. See
+//                      MISLABELED_FLAG_CODES below), at the cost of being
+//                      real, occasionally large SVGs (up to ~180KB) —
+//                      rasterized via the system `rsvg-convert` binary
+//                      (librsvg — this project's own visual-verification
+//                      tooling already relied on it; regenerating
+//                      public/data/flags+emblems/ is what makes it a
+//                      *required* dependency of this script, not merely a
+//                      development convenience) down to a fixed-size PNG,
+//                      the same treatment emblems already needed for the
+//                      same reason (their own sources run up to ~1.9MB
+//                      each). Coverage: flags 235/238, emblems ~206/238 —
+//                      a country missing either gets
 //                      `flagUrl`/`emblemUrl: null`, handled the same way a
 //                      missing `capital` already is: excluded from that
 //                      attribute's rounds via isAskable (gameWizard.js),
@@ -168,12 +175,28 @@ function rasterize(svgSrc, pngOut, [w, h]) {
 // either the source package doesn't cover. Both are rasterized — real,
 // detailed SVGs, up to ~180KB (flags) / ~1.9MB (emblems), far too heavy
 // to ship per-round as-is.
+// coat-of-arms' own flag SVGs, verified one by one (rasterized + visually
+// checked against the real thing): every entry matched, except this one —
+// `sh.svg` (Saint Helena, Ascension and Tristan da Cunha) is byte-identical
+// to `gb.svg` (the UK) but for its `id` attribute, i.e. upstream mislabeled
+// a plain Union Jack as this territory's own flag (a distinct design: a
+// Blue Ensign with a shield charge on the fly). No other flag in the
+// package has this problem — `au`/`hm` and the various French-territory
+// codes sharing a file with `fr` are legitimately identical (those
+// territories really do fly Australia's/France's own flag, unlike this
+// one). Same "leave null rather than guessed" policy as any other field
+// with no reliable value (see the header comment) — country-flag-icons,
+// the original flag source, is no longer installed (see FLAG_SVG_DIR's own
+// comment) so there's nothing else local to fall back to, and hand-drawing
+// the real shield here risks trading one inaccurate flag for another.
+const MISLABELED_FLAG_CODES = new Set(["SH"]);
+
 function resolveFlagAndEmblem(cca2) {
   if (!cca2) return { flagUrl: null, emblemUrl: null };
 
   const flagSrc = path.join(FLAG_SVG_DIR, `${cca2.toLowerCase()}.svg`);
   let flagUrl = null;
-  if (existsSync(flagSrc)) {
+  if (existsSync(flagSrc) && !MISLABELED_FLAG_CODES.has(cca2)) {
     rasterize(flagSrc, path.join(flagsOutDir, `${cca2}.png`), FLAG_PX);
     flagUrl = `data/flags/${cca2}.png`;
   }
@@ -312,8 +335,16 @@ for (const geom of geometries) {
 // shape on the map, keyed by id = ccn3 (matches the topojson feature id),
 // plus the hand-curated extra territories above (isExtraTerritory: true,
 // opt-in at play time — see core/datasets.js / core/continents.js usage).
+// Antarctica (ccn3 "010") is excluded from the game outright: it isn't a
+// country (no government, no capital, no real flag — the "True South" flag
+// world-countries ships is unofficial), so quizzing on it never made
+// sense. Its topology shape stays in the map data — with no item carrying
+// its id it renders muted and unplayable, same as any other non-playable
+// shape.
+const EXCLUDED_CCN3 = new Set(["010"]);
+
 const gameCountries = countries
-  .filter((c) => mapIds.has(c.ccn3))
+  .filter((c) => mapIds.has(c.ccn3) && !EXCLUDED_CCN3.has(c.ccn3))
   .map((c) => ({
     id: c.ccn3,
     cca2: c.cca2,

@@ -13,7 +13,3 @@ export const sovereigntyOptions = [
   { key: "all", label: "All", match: () => true },
   { key: "sovereign", label: "All Sovereign", match: (item) => item.independent === true },
 ];
-
-export function getSovereignty(key) {
-  return sovereigntyOptions.find((s) => s.key === key) ?? sovereigntyOptions[0];
-}

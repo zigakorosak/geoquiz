@@ -50,7 +50,7 @@ function answerAttributesFor(config, excludeKey) {
 }
 
 // Not every item necessarily has a value for every attribute (a few
-// countries have no recorded capital — Antarctica, Macau, ...; District
+// countries have no recorded capital — Macau, Heard Island, ...; District
 // of Columbia has no state capital of its own, being a federal district
 // rather than a state) — an item missing a value for the chosen question
 // or answer attribute isn't a fair round to include. Applied to the final
@@ -59,8 +59,18 @@ function answerAttributesFor(config, excludeKey) {
 // — never to `regionItems` itself (used for the map's initial framing in
 // game.js), so an excluded item still renders muted and still counts
 // toward where the view opens, the same as a sovereignty-excluded one.
-function isAskable(item, questionAttr, answerAttr) {
-  return questionAttr.getValue(item) != null && answerAttr.getValue(item) != null;
+function isAskable(item, questionAttr, answerAttr, pinTarget) {
+  if (questionAttr.getValue(item) == null || answerAttr.getValue(item) == null) return false;
+  // Capital-scored pin drops additionally need the capital's own
+  // coordinates — without them the "map-pin" widget's capital branch
+  // (inputs.js) can't fire and would silently fall back to region-style
+  // scoring, changing what the player is being tested on with no
+  // indication. Today's data has capitalLatLng for every item with a
+  // capital, so this is insurance against a future dataset breaking that
+  // guarantee, kept here so the mismatch surfaces as an excluded item
+  // (and its count), never as silently different scoring.
+  if (pinTarget === "capital" && !item.capitalLatLng) return false;
+  return true;
 }
 
 export function startGameWizard(container, onExit) {
@@ -112,13 +122,14 @@ const answerKindLabels = {
   "text-guess": "Type it",
   "multiple-choice": "Multiple choice",
   "picture-choice": "Pick the picture",
-  "map-click": "Select region",
+  // "Click it on the map", not the old "Select region" — since the Region
+  // *attribute* exists, a label with "region" in it for clicking a
+  // specific country read as if it were the region-scale answer below.
+  "map-click": "Click it on the map",
   "map-pin": "Drop a pin",
-  // Deliberately not "Select region" too (map-click's own label, just
-  // above) — that's for clicking a specific *country*; this is for
-  // clicking anywhere in the right *continent*, a coarser answer only
-  // `region` itself offers, and the two need visibly different labels so
-  // picking between them (when both somehow appear) isn't confusing.
+  // Visibly distinct from map-click's label above: that's for clicking a
+  // specific *country*; this is for clicking anywhere in the right
+  // *continent*, a coarser answer only `region` itself offers.
   "map-region-click": "Click its region",
 };
 
@@ -251,7 +262,7 @@ function regionCount(config, region) {
     ? items.filter((item) => region.children.some((c) => c.match?.(item)))
     : null;
   if (!matched) return null;
-  return matched.filter((item) => isAskable(item, config.questionAttr, config.answerAttr)).length;
+  return matched.filter((item) => isAskable(item, config.questionAttr, config.answerAttr, config.pinTarget)).length;
 }
 
 function withCount(label, count) {
@@ -291,8 +302,26 @@ function showLoadError(container, onExit) {
   });
 }
 
+// Whether this round's question or answer is the `region` attribute
+// itself. The region *filters* (core/regions.js) narrow the map by
+// matching the exact same `item.region`/`item.subregion` fields the
+// `region` attribute quizzes on — so pairing them is either trivial (as
+// the answer: filtered to "Europe", essentially every playable country
+// already IS "Europe", so almost any guess reads as correct — verified
+// directly: a Europe-filtered Flags→Region game scored 15/15 random map
+// clicks "correct") or pointless (as the question: every round would show
+// the filter's own one value). Unlike the zero-count guards elsewhere in
+// this file (regionCount, isAskable), this isn't a case of a *few* items
+// slipping through — it's the filter and the attribute both keying off
+// the same field, so no per-option threshold fixes it; the only real fix
+// is to not let the two combine at all.
+function regionAttrInPlay(config) {
+  return config.questionAttr.key === "region" || config.answerAttr.key === "region";
+}
+
 async function goToRegionOrSkip(container, config, goBack, onExit) {
-  if (!config.meta.supportsRegionFilter && !config.meta.supportsSovereigntyFilter) {
+  const skipRegionStep = !config.meta.supportsRegionFilter || regionAttrInPlay(config);
+  if (skipRegionStep && !config.meta.supportsSovereigntyFilter) {
     goToSovereigntyOrSkip(container, { ...config, region: getRegion("world") }, goBack, onExit);
     return;
   }
@@ -312,10 +341,10 @@ async function goToRegionOrSkip(container, config, goBack, onExit) {
     return;
   }
   const nextConfig = { ...config, loadedItems };
-  if (config.meta.supportsRegionFilter) {
-    showRegionStep(container, nextConfig, goBack, onExit);
-  } else {
+  if (skipRegionStep) {
     goToSovereigntyOrSkip(container, { ...nextConfig, region: getRegion("world") }, goBack, onExit);
+  } else {
+    showRegionStep(container, nextConfig, goBack, onExit);
   }
 }
 
@@ -399,7 +428,7 @@ function goToSovereigntyOrSkip(container, config, goBack, onExit) {
 
 function showSovereigntyStep(container, config, goBack, onExit) {
   const countFor = (s) =>
-    config.regionItems.filter(s.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr)).length;
+    config.regionItems.filter(s.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr, config.pinTarget)).length;
   renderChoiceScreen(container, {
     title: "All countries, or sovereign states only?",
     options: sovereigntyOptions,
@@ -428,7 +457,7 @@ async function startGame(container, config, onExit) {
     // excluded one does.
     const dataset = {
       ...loaded,
-      items: regionItems.filter(config.sovereignty.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr)),
+      items: regionItems.filter(config.sovereignty.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr, config.pinTarget)),
     };
     const settings = loadSettings();
     renderGame(
