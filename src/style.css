@@ -271,13 +271,13 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-/* Sits between the timer and the Restart / Back to Menu pair. Both this
+/* Sits between the timer and the Restart / Back / Home trio. Both this
    and .exit-button
    below carry their own `margin-left: auto` — flexbox splits leftover
-   row space evenly across every auto margin present, so the two ends up
+   row space evenly across every auto margin present, so this ends up
    roughly centered in the gap after the progress/score/timer cluster,
-   with Back to Menu still pinned to the far right, rather than either
-   one needing a hardcoded position. */
+   with the button trio still pinned to the far right, rather than any
+   of them needing a hardcoded position. */
 .game-header .action-button {
   margin-left: auto;
   padding: 0.4em 1.4em;
@@ -291,13 +291,13 @@ button:disabled {
   font-size: 0.9rem;
 }
 
-/* Restart sits directly next to Back to Menu (the header's 1rem gap
-   between them, nothing more): it shares .exit-button's styling but the
-   auto margin above belongs on the leftmost of the two, i.e. on Restart
-   itself — Back to Menu then just follows it. Without this override both
-   would carry an auto margin and flexbox would split the leftover space
-   between them, pushing the pair apart. */
-.game-header .restart-button + .exit-button {
+/* Restart / Back / Home sit together at the far right (the header's 1rem
+   gap between them, nothing more): all three share .exit-button's styling
+   but the auto margin above belongs only on the leftmost of the trio,
+   i.e. on Restart itself — Back and Home then just follow it. Without
+   this override every one would carry an auto margin and flexbox would
+   split the leftover space between them, pushing the trio apart. */
+.game-header .exit-button + .exit-button {
   margin-left: 0;
 }
 
