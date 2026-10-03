@@ -41,12 +41,25 @@ export class QuizSession {
 
   submitAnswer(rawGuess) {
     const item = this.currentItem;
-    const correct = this.answerAttr.checkAnswer(rawGuess, item);
+    // A question value doesn't always pin down one item: region ("Europe")
+    // and currency ("Euro" across the whole Eurozone) are shared by many.
+    // The player only ever saw the question *value*, so any item consistent
+    // with it is a fair target — a guess is correct if it checks out
+    // against ANY such item, not only the one that happened to be sampled.
+    // For an identifying question (name, flag, location, ...) the
+    // consistent set is just [item] and this reduces to the plain check.
+    const questionValue = this.questionAttr.getValue(item);
+    const consistent = this.dataset.items.filter((i) => this.questionAttr.getValue(i) === questionValue);
+    const correct = consistent.some((c) => this.answerAttr.checkAnswer(rawGuess, c));
     const result = {
       item,
       guess: rawGuess,
       correct,
       correctValue: this.answerAttr.formatAnswer(item),
+      // More than one item fits the shown question value — feedback that
+      // names `correctValue` should present it as an example ("e.g. ..."),
+      // not as the single right answer.
+      ambiguous: consistent.length > 1,
     };
     if (correct) this.score++;
     this.history.push(result);

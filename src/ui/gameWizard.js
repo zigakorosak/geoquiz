@@ -59,7 +59,7 @@ function answerAttributesFor(config, excludeKey) {
 // — never to `regionItems` itself (used for the map's initial framing in
 // game.js), so an excluded item still renders muted and still counts
 // toward where the view opens, the same as a sovereignty-excluded one.
-function isAskable(item, questionAttr, answerAttr, pinTarget) {
+function isAskable(item, { questionAttr, answerAttr, pinTarget }) {
   if (questionAttr.getValue(item) == null || answerAttr.getValue(item) == null) return false;
   // Capital-scored pin drops additionally need the capital's own
   // coordinates — without them the "map-pin" widget's capital branch
@@ -262,7 +262,7 @@ function regionCount(config, region) {
     ? items.filter((item) => region.children.some((c) => c.match?.(item)))
     : null;
   if (!matched) return null;
-  return matched.filter((item) => isAskable(item, config.questionAttr, config.answerAttr, config.pinTarget)).length;
+  return matched.filter((item) => isAskable(item, config)).length;
 }
 
 function withCount(label, count) {
@@ -428,7 +428,7 @@ function goToSovereigntyOrSkip(container, config, goBack, onExit) {
 
 function showSovereigntyStep(container, config, goBack, onExit) {
   const countFor = (s) =>
-    config.regionItems.filter(s.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr, config.pinTarget)).length;
+    config.regionItems.filter(s.match).filter((item) => isAskable(item, config)).length;
   renderChoiceScreen(container, {
     title: "All countries, or sovereign states only?",
     options: sovereigntyOptions,
@@ -457,7 +457,7 @@ async function startGame(container, config, onExit) {
     // excluded one does.
     const dataset = {
       ...loaded,
-      items: regionItems.filter(config.sovereignty.match).filter((item) => isAskable(item, config.questionAttr, config.answerAttr, config.pinTarget)),
+      items: regionItems.filter(config.sovereignty.match).filter((item) => isAskable(item, config)),
     };
     const settings = loadSettings();
     renderGame(

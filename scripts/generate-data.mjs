@@ -37,7 +37,7 @@
 //                      development convenience) down to a fixed-size PNG,
 //                      the same treatment emblems already needed for the
 //                      same reason (their own sources run up to ~1.9MB
-//                      each). Coverage: flags 235/238, emblems ~206/238 —
+//                      each). Coverage: flags 231/234, emblems 203/234 —
 //                      a country missing either gets
 //                      `flagUrl`/`emblemUrl: null`, handled the same way a
 //                      missing `capital` already is: excluded from that
@@ -126,6 +126,15 @@ function findCapitalLatLng(name, cca2, capital) {
 function primaryCurrencyName(currencies) {
   return Object.values(currencies ?? {})[0]?.name ?? null;
 }
+
+// world-countries lists no currency at all for a few countries that simply
+// use another state's — keyed by `name.common`, checked before its own
+// `currencies` field so it wins even if upstream later adds a record.
+// Heard Island (uninhabited, no economy) is deliberately NOT here: leaving
+// its currency null keeps it out of Currencies rounds, which is correct.
+const CURRENCY_OVERRIDES = {
+  Micronesia: "United States dollar", // uses USD; world-countries ships an empty `currencies`
+};
 
 const MAP_RESOLUTION = "50m"; // one of: 110m (coarse), 50m (medium), 10m (fine, large)
 // Target raster dimensions for flags/emblems. rsvg-convert's default
@@ -333,18 +342,22 @@ for (const geom of geometries) {
 
 // Game dataset: one record per country that has both attribute data AND a
 // shape on the map, keyed by id = ccn3 (matches the topojson feature id),
-// plus the hand-curated extra territories above (isExtraTerritory: true,
-// opt-in at play time — see core/datasets.js / core/continents.js usage).
-// Antarctica (ccn3 "010") is excluded from the game outright: it isn't a
-// country (no government, no capital, no real flag — the "True South" flag
-// world-countries ships is unofficial), so quizzing on it never made
-// sense. Its topology shape stays in the map data — with no item carrying
-// its id it renders muted and unplayable, same as any other non-playable
-// shape.
-const EXCLUDED_CCN3 = new Set(["010"]);
+// plus the hand-curated extra territories above (isExtraTerritory: true —
+// in play unless the sovereignty filter excludes them, see
+// core/sovereignty.js; none has `independent: true`).
+// Everything world-countries files under region "Antarctic" is excluded
+// from the game outright: Antarctica itself (ccn3 "010" — not a country:
+// no government, no capital, no real flag) and the handful of uninhabited
+// sub-Antarctic territories grouped with it (Bouvet Island, Heard Island,
+// the French Southern Territories, South Georgia). None is a sensible
+// quiz target, and keeping them playable forced every Region round to
+// treat "Antarctic" as a live answer value. Their topology shapes stay in
+// the map data — with no item carrying their ids they render muted and
+// unplayable, there purely so the world map looks right.
+const EXCLUDED_REGION = "Antarctic";
 
 const gameCountries = countries
-  .filter((c) => mapIds.has(c.ccn3) && !EXCLUDED_CCN3.has(c.ccn3))
+  .filter((c) => mapIds.has(c.ccn3) && c.region !== EXCLUDED_REGION)
   .map((c) => ({
     id: c.ccn3,
     cca2: c.cca2,
@@ -357,7 +370,7 @@ const gameCountries = countries
     latlng: c.latlng,
     capitalLatLng: findCapitalLatLng(c.name.common, c.cca2, c.capital?.[0] ?? null),
     flagEmoji: c.flag,
-    currency: primaryCurrencyName(c.currencies),
+    currency: CURRENCY_OVERRIDES[c.name.common] ?? primaryCurrencyName(c.currencies),
     ...resolveFlagAndEmblem(c.cca2),
     independent: c.independent,
     area: c.area,

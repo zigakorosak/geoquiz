@@ -1009,7 +1009,20 @@ export class WorldMap {
     const width = this.container.clientWidth;
     const height = this.container.clientHeight;
     const sizeChanged = this._lastSize && (this._lastSize.width !== width || this._lastSize.height !== height);
-    if (resetZoom === undefined) resetZoom = Boolean(sizeChanged);
+    // Only a *genuine* resize (window resize, orientation change) resets
+    // the zoom to the default framing. Two resize flavors must NOT: on
+    // tablets/phones the browser chrome (URL bar, toolbars) retracts the
+    // moment a pan/pinch starts, and the app's 100dvh root tracks that —
+    // so the container's HEIGHT jitters mid-gesture through no intent of
+    // the user's. Resetting on those made "zoom in, then pan" snap the
+    // map back out. A height-only change is that chrome signature (every
+    // real resize — window drag, rotation — moves width too); and any
+    // resize arriving while a gesture is live is likewise jitter, since
+    // the user can't be resizing the window mid-drag.
+    if (resetZoom === undefined) {
+      const widthChanged = this._lastSize && this._lastSize.width !== width;
+      resetZoom = Boolean(sizeChanged) && widthChanged && !this._gestureActive;
+    }
     this._lastSize = { width, height };
 
     // The svg's own rendered box is bigger than the wrapper's window by

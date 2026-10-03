@@ -73,7 +73,7 @@ export function renderGame(
   const timerEl = document.createElement("span");
   timerEl.className = "game-timer";
 
-  // Sits between the timer and Back to Menu (not down with the prompt/
+  // Sits between the timer and Restart/Back to Menu (not down with the prompt/
   // answer/feedback stack, where it used to live) — the round's own
   // "advance" control read as belonging with the rest of the round's
   // meta-controls once there was more than one thing up there, not
@@ -228,6 +228,11 @@ export function renderGame(
     answerWidget = renderAnswerInput(answerArea, resolvedAnswerKind, {
       item,
       attr: answerAttr,
+      // The choice widgets (multiple-choice / picture-choice) need the
+      // question attribute too: a distractor consistent with the shown
+      // question value (another "Europe" country, another Euro user) would
+      // be a second correct option — see the exclusion in inputs.js.
+      questionAttr,
       dataset,
       focusIds,
       playableIds,

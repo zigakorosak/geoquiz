@@ -58,8 +58,15 @@ const TOO_FAR_FROM_CAPITAL = "__too-far-from-capital__";
 let textGuessInstanceCounter = 0;
 
 const renderers = {
-  "multiple-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
+  "multiple-choice": (container, { item, dataset, attr, questionAttr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
     const correctValue = attr.getValue(item);
+    // A non-identifying question value (region "Europe", currency "Euro")
+    // is consistent with many items, and the engine (QuizSession) accepts
+    // an answer matching ANY of them — so no item consistent with the
+    // shown question value may appear as a distractor, or the round would
+    // offer several "correct" options while styling only one as such.
+    // For an identifying question this excludes nothing beyond the target.
+    const questionValue = questionAttr?.getValue(item);
     // Deduplicated by *value*, not just by item: two different countries
     // can share the exact same currency name (a whole Eurozone's worth all
     // read "Euro") — sampling distractors by item alone would happily
@@ -74,6 +81,7 @@ const renderers = {
       if (distractorValues.length >= (optionCount ?? 4) - 1) break;
       const value = attr.getValue(candidate);
       if (value == null || seenValues.has(value)) continue;
+      if (questionAttr && questionAttr.getValue(candidate) === questionValue) continue;
       seenValues.add(value);
       distractorValues.push(value);
     }
@@ -122,14 +130,14 @@ const renderers = {
         list.remove();
         feedback.remove();
       },
-      showResult({ correct, item, guess }) {
+      showResult({ correct, item, guess, ambiguous }) {
         locked = true;
         for (const [value, b] of buttons) {
           b.classList.add("menu-option--locked");
           if (value === correctValue) b.classList.add("menu-option--correct");
           else if (value === guess) b.classList.add("menu-option--wrong");
         }
-        feedback.textContent = correct ? "Correct!" : `Correct answer: ${attr.formatAnswer(item)}`;
+        feedback.textContent = correct ? "Correct!" : `Correct answer: ${ambiguous ? "e.g. " : ""}${attr.formatAnswer(item)}`;
       },
     };
   },
@@ -143,8 +151,15 @@ const renderers = {
   // risk here the way multiple-choice's text values have (see there): a
   // real flag/emblem image is 1:1 with its country by construction, so
   // distractors are sampled by item alone, same as "location" would be.
-  "picture-choice": (container, { item, dataset, attr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
-    const distractorPool = shuffle(dataset.items.filter((i) => i !== item));
+  "picture-choice": (container, { item, dataset, attr, questionAttr, optionCount, onSelect, onConfirm, feedbackContainer }) => {
+    // Same consistent-with-the-question exclusion as multiple-choice above
+    // (today every pairing that reaches picture-choice has an identifying
+    // question, so this excludes nothing — kept so a future non-identifying
+    // pairing can't silently offer two "correct" pictures).
+    const questionValue = questionAttr?.getValue(item);
+    const distractorPool = shuffle(
+      dataset.items.filter((i) => i !== item && !(questionAttr && questionAttr.getValue(i) === questionValue))
+    );
     const distractorCount = Math.min((optionCount ?? 4) - 1, distractorPool.length);
     const options = shuffle([item, ...distractorPool.slice(0, distractorCount)]);
 
@@ -188,14 +203,14 @@ const renderers = {
         list.remove();
         feedback.remove();
       },
-      showResult({ correct, item, guess }) {
+      showResult({ correct, item, guess, ambiguous }) {
         locked = true;
         for (const [id, b] of buttons) {
           b.classList.add("menu-option--locked");
           if (id === item.id) b.classList.add("menu-option--correct");
           else if (id === guess) b.classList.add("menu-option--wrong");
         }
-        feedback.textContent = correct ? "Correct!" : `Correct answer: ${attr.formatAnswer(item)}`;
+        feedback.textContent = correct ? "Correct!" : `Correct answer: ${ambiguous ? "e.g. " : ""}${attr.formatAnswer(item)}`;
       },
     };
   },
@@ -255,7 +270,7 @@ const renderers = {
         form.remove();
         feedback.remove();
       },
-      showResult({ correct, item }) {
+      showResult({ correct, item, ambiguous }) {
         // readOnly, not disabled — a disabled input never dispatches a
         // click event, which would swallow "click anywhere advances" for
         // anyone who clicks directly on the input afterward (see the
@@ -264,7 +279,7 @@ const renderers = {
         input.classList.add(correct ? "input--correct" : "input--wrong");
         feedback.textContent = correct
           ? "Correct!"
-          : `Correct answer: ${attr.formatAnswer(item)}`;
+          : `Correct answer: ${ambiguous ? "e.g. " : ""}${attr.formatAnswer(item)}`;
       },
     };
   },
@@ -303,14 +318,21 @@ const renderers = {
         feedback.remove();
       },
       getTransform: () => map.getTransform(),
-      showResult({ guess, item, correct }) {
+      showResult({ guess, item, correct, ambiguous }) {
         map.setClickable(false, null);
-        map.markResult(guess, attr.getValue(item));
+        // A non-identifying question ("Europe — click a country there")
+        // can be answered correctly by clicking an item other than the
+        // sampled one (see QuizSession's consistent-set check) — mark the
+        // country actually clicked as correct in that case, rather than
+        // painting it wrong and revealing the sampled one as if the guess
+        // had missed. For an identifying question, correct implies
+        // guess === the target's own id, so this changes nothing there.
+        map.markResult(guess, correct ? guess : attr.getValue(item));
         if (correct) {
           feedback.textContent = "Correct!";
         } else {
           const guessedName = dataset.items.find((i) => i.id === guess)?.name ?? "an unrecognized area";
-          feedback.textContent = `You picked ${guessedName} — correct answer: ${attr.formatAnswer(item)}`;
+          feedback.textContent = `You picked ${guessedName} — correct answer: ${ambiguous ? "e.g. " : ""}${attr.formatAnswer(item)}`;
         }
       },
     };

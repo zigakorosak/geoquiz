@@ -1800,31 +1800,6 @@
     "isExtraTerritory": false
   },
   {
-    "id": "260",
-    "cca2": "TF",
-    "cca3": "ATF",
-    "name": "French Southern and Antarctic Lands",
-    "officialName": "Territory of the French Southern and Antarctic Lands",
-    "capital": "Port-aux-Français",
-    "region": "Antarctic",
-    "subregion": "",
-    "latlng": [
-      -49.25,
-      69.167
-    ],
-    "capitalLatLng": [
-      -49.34916,
-      70.21937
-    ],
-    "flagEmoji": "🇹🇫",
-    "currency": "Euro",
-    "flagUrl": "data/flags/TF.png",
-    "emblemUrl": null,
-    "independent": false,
-    "area": 7747,
-    "isExtraTerritory": false
-  },
-  {
     "id": "266",
     "cca2": "GA",
     "cca3": "GAB",
@@ -2197,28 +2172,6 @@
     "emblemUrl": "data/emblems/HT.png",
     "independent": true,
     "area": 27750,
-    "isExtraTerritory": false
-  },
-  {
-    "id": "334",
-    "cca2": "HM",
-    "cca3": "HMD",
-    "name": "Heard Island and McDonald Islands",
-    "officialName": "Heard Island and McDonald Islands",
-    "capital": null,
-    "region": "Antarctic",
-    "subregion": "",
-    "latlng": [
-      -53.1,
-      72.51666666
-    ],
-    "capitalLatLng": null,
-    "flagEmoji": "🇭🇲",
-    "currency": null,
-    "flagUrl": "data/flags/HM.png",
-    "emblemUrl": null,
-    "independent": false,
-    "area": 412,
     "isExtraTerritory": false
   },
   {
@@ -3311,7 +3264,7 @@
       158.16109
     ],
     "flagEmoji": "🇫🇲",
-    "currency": null,
+    "currency": "United States dollar",
     "flagUrl": "data/flags/FM.png",
     "emblemUrl": null,
     "independent": true,
@@ -4941,31 +4894,6 @@
     "emblemUrl": "data/emblems/ZA.png",
     "independent": true,
     "area": 1221037,
-    "isExtraTerritory": false
-  },
-  {
-    "id": "239",
-    "cca2": "GS",
-    "cca3": "SGS",
-    "name": "South Georgia",
-    "officialName": "South Georgia and the South Sandwich Islands",
-    "capital": "King Edward Point",
-    "region": "Antarctic",
-    "subregion": "",
-    "latlng": [
-      -54.5,
-      -37
-    ],
-    "capitalLatLng": [
-      -54.28111,
-      -36.5092
-    ],
-    "flagEmoji": "🇬🇸",
-    "currency": "Saint Helena pound",
-    "flagUrl": "data/flags/GS.png",
-    "emblemUrl": "data/emblems/GS.png",
-    "independent": false,
-    "area": 3903,
     "isExtraTerritory": false
   },
   {

@@ -76,7 +76,9 @@ export const attributes = {
     formatAnswer: (item) => item.currency,
   },
   // The broad continent (world-countries' own `region` — "Europe",
-  // "Africa", "Americas", "Asia", "Oceania", "Antarctic"), not the finer
+  // "Africa", "Americas", "Asia", "Oceania" — "Antarctic" never occurs in
+  // the shipped data: everything filed under it is excluded outright at
+  // generation, see generate-data.mjs's EXCLUDED_REGION), not the finer
   // `subregion` ("Western Europe" etc.) core/regions.js's own region
   // *filter* step matches against — a distinct concept from that step
   // despite the shared name: this is a quizzable fact about one item
@@ -88,7 +90,7 @@ export const attributes = {
   // A question attribute's value doesn't have to pin down one exact item
   // for every possible *answer* to make sense of it — it only has to for
   // whichever answer is actually paired with it. Region genuinely doesn't
-  // identify one country (only 6 values shared across all 238 — Africa
+  // identify one country (only 5 values shared across all 234 — Africa
   // alone covers 58), so "Europe — pick its flag" has no well-defined
   // correct picture and "Europe — pick its capital" has no well-defined
   // correct one either; but "Europe — name a country here" (typed/
@@ -96,10 +98,16 @@ export const attributes = {
   // fine, coarser-grained questions that were never claiming to identify
   // a specific country in the first place. So the fix isn't disallowing
   // region as a question (tried that; overcorrected — it disallowed the
-  // fine pairings along with the broken one) — it's `gameWizard.js`'s
-  // `answerAttributesFor` excluding specifically `flag`/`emblem` as
-  // *answers* to a `region` question, leaving every other pairing (in
-  // both directions) alone.
+  // fine pairings along with the broken one). It's two pieces:
+  // `gameWizard.js`'s `answerAttributesFor` excludes specifically `flag`/
+  // `emblem` as *answers* to a `region` question, and QuizSession
+  // (core/engine.js) actually implements the coarse semantics for the
+  // pairings that remain — a guess is accepted when it's a right answer
+  // for ANY item consistent with the shown question value, not only the
+  // one the engine happened to sample (naming any European country
+  // counts for "Europe", not just the hidden pick), with the choice
+  // widgets (inputs.js) excluding consistent items from their distractor
+  // pools so a round never shows two "correct" options.
   region: {
     key: "region",
     label: "Region",

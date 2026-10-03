@@ -260,7 +260,8 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-/* Sits between the timer and Back to Menu. Both this and .exit-button
+/* Sits between the timer and the Restart / Back to Menu pair. Both this
+   and .exit-button
    below carry their own `margin-left: auto` — flexbox splits leftover
    row space evenly across every auto margin present, so the two ends up
    roughly centered in the gap after the progress/score/timer cluster,
