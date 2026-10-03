@@ -34,6 +34,11 @@ html,
 body {
   margin: 0;
   height: 100%;
+  overflow: hidden;
+  /* No scroll chaining out of internal scrollers (.menu-screen,
+     .game-summary) into the document — part of keeping the browser
+     convinced the page itself never scrolls (see #app below). */
+  overscroll-behavior: none;
   background: var(--bg);
   color: var(--text);
 }
@@ -42,12 +47,18 @@ body {
    exceed the screen (a map, a long menu, the summary list) either flexes
    to the remaining space (maps — see .round-area and friends) or scrolls
    *internally* (.menu-screen, .game-summary), so the browser scrollbar
-   never appears on any screen size. 100dvh over 100vh where supported:
-   on mobile, 100vh includes the retracting browser chrome and would
-   overflow by exactly that chrome's height. */
+   never appears on any screen size.
+
+   position:fixed + inset:0 rather than height:100dvh: both fill the
+   screen, but dvh *changes value* as a mobile browser's URL bar
+   retracts/expands, which resized the map container mid-pan and (worse)
+   the gesture reaching the browser as "page scroll" is what retracted
+   the bar in the first place. A fixed-position root with a
+   non-scrollable document gives mobile browsers no scroll to react to,
+   so the bar stays put and the viewport size stays stable while playing. */
 #app {
-  height: 100vh;
-  height: 100dvh;
+  position: fixed;
+  inset: 0;
   overflow: hidden;
   display: flex;
   flex-direction: column;
