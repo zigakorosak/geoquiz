@@ -422,7 +422,7 @@ function goToSovereigntyOrSkip(container, config, goBack, onExit) {
     const regionItems = config.loadedItems.filter(config.region.match);
     showSovereigntyStep(container, { ...config, regionItems }, goBack, onExit);
   } else {
-    startGame(container, { ...config, sovereignty: sovereigntyOptions[0] }, onExit);
+    startGame(container, { ...config, sovereignty: sovereigntyOptions[0] }, goBack, onExit);
   }
 }
 
@@ -436,12 +436,18 @@ function showSovereigntyStep(container, config, goBack, onExit) {
     // Same zero-count guard as the region steps — an empty pool would
     // crash the round screen.
     disabledFn: (s) => countFor(s) === 0,
-    onPick: (s) => startGame(container, { ...config, sovereignty: s }, onExit),
+    onPick: (s) =>
+      startGame(
+        container,
+        { ...config, sovereignty: s },
+        () => showSovereigntyStep(container, config, goBack, onExit),
+        onExit
+      ),
     onBack: goBack,
   });
 }
 
-async function startGame(container, config, onExit) {
+async function startGame(container, config, goBack, onExit) {
   container.innerHTML = '<div class="menu-screen wizard-screen"><h1>Loading…</h1></div>';
   try {
     // This is where the map topology actually downloads (the wizard only
@@ -473,6 +479,10 @@ async function startGame(container, config, onExit) {
         answerOptionCount: config.optionCount,
         pinTarget: config.pinTarget,
       },
+      // The game header's Back button: returns to the wizard step the
+      // player actually launched from (sovereignty picker when it was
+      // shown, otherwise whatever preceded this skip-through).
+      goBack,
       onExit
     );
   } catch (err) {

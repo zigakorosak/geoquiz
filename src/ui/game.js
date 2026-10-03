@@ -15,6 +15,7 @@ import { renderAnswerInput } from "./inputs.js";
 export function renderGame(
   container,
   { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount, pinTarget },
+  onBack,
   onExit
 ) {
   const session = new QuizSession({ dataset, questionAttr, answerAttr });
@@ -73,7 +74,7 @@ export function renderGame(
   const timerEl = document.createElement("span");
   timerEl.className = "game-timer";
 
-  // Sits between the timer and Restart/Back to Menu (not down with the prompt/
+  // Sits between the timer and Restart/Back/Home (not down with the prompt/
   // answer/feedback stack, where it used to live) — the round's own
   // "advance" control read as belonging with the rest of the round's
   // meta-controls once there was more than one thing up there, not
@@ -98,14 +99,31 @@ export function renderGame(
     renderGame(
       container,
       { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount, pinTarget },
+      onBack,
       onExit
     );
+  });
+
+  // Tears down the live round exactly like Home below, then hands control
+  // to the wizard step the game was launched from (`onBack` — the last
+  // choice screen shown before Loading, so the player lands back on e.g.
+  // the continent picker with every earlier pick intact).
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.className = "exit-button";
+  backButton.textContent = "Back";
+  backButton.addEventListener("click", () => {
+    active = false;
+    stopTimer();
+    cleanupPrompt?.cleanup();
+    answerWidget?.cleanup();
+    onBack();
   });
 
   const exitButton = document.createElement("button");
   exitButton.type = "button";
   exitButton.className = "exit-button";
-  exitButton.textContent = "Back to Menu";
+  exitButton.textContent = "Home";
   exitButton.addEventListener("click", () => {
     active = false;
     stopTimer();
@@ -114,7 +132,7 @@ export function renderGame(
     onExit();
   });
 
-  header.append(progress, score, timerEl, actionButton, restartButton, exitButton);
+  header.append(progress, score, timerEl, actionButton, restartButton, backButton, exitButton);
 
   const promptArea = document.createElement("div");
   promptArea.className = "prompt-area";
@@ -350,13 +368,14 @@ export function renderGame(
         // once missing, so a Capital-scored pin game replayed as
         // Region-scored).
         { dataset, regionItems, region, keepZoom, questionAttr, answerAttr, answerKind, answerOptionCount, pinTarget },
+        onBack,
         onExit
       )
     );
 
     const menuButton = document.createElement("button");
     menuButton.type = "button";
-    menuButton.textContent = "Back to Menu";
+    menuButton.textContent = "Home";
     menuButton.addEventListener("click", onExit);
 
     summary.append(heading, scoreLine, timeLine, list, playAgain, menuButton);
