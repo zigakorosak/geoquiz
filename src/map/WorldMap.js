@@ -103,6 +103,21 @@ const HULL_BBOX_CAP = 150;
 // Maldives atolls barely 2.6px apart) ends up comfortably tappable
 // instead of just "sized to its own coastline".
 const HULL_PADDING = 3;
+// When a tap lands on one country's real land but inside another's assist
+// hull (see _resolveIdAt), the hull owner wins only if the tap is within
+// this many screen px of its own territory — generous enough to cover the
+// hull padding plus a finger's imprecision on a subpixel microstate, small
+// enough that a sprawling archipelago hull can't swallow clicks landing
+// squarely on a neighbor's ground.
+const ASSIST_WIN_PX = 10;
+// ...and only while the owner is genuinely hard to hit: once its hull
+// renders larger than this on screen (Denmark zoomed to a regional view),
+// the country is a comfortable target in its own right and real land wins
+// the arbitration outright — a tap on the German side of the Flensburg
+// border should not go to a 100px-tall Denmark just because Denmark's
+// gap-fill hull still overlaps the coast there. A still-small-on-screen
+// Liechtenstein or Monaco keeps the win against their big neighbors.
+const ASSIST_OWNER_MAX_PX = 48;
 // How far (as a fraction of one full world-width, in current screen px)
 // the "home" copy is allowed to drift off-register before wrapping snaps
 // it back by exactly one world-width — see _wrapTransform. Kept well
@@ -696,8 +711,15 @@ export class WorldMap {
         const hitArea = document.createElementNS(SVG_NS, "polygon");
         hitArea.setAttribute("class", "country-hitarea");
         hitArea.style.display = "none"; // shown only if the shape qualifies, in _reflow
-        hitArea.addEventListener("click", () => {
-          if (this.clickEnabled && this.onClick) this.onClick(f.id);
+        hitArea.addEventListener("click", (event) => {
+          if (!this.clickEnabled || !this.onClick) return;
+          // Not unconditionally this hull's own id: the hull renders
+          // above every country path, so it also intercepts clicks that
+          // actually landed on a neighbor's real land inside its span —
+          // defer to the shared point-resolution rule (see _resolveIdAt
+          // for the full arbitration story).
+          const [x, y] = this._screenToLocalXY(event.clientX, event.clientY);
+          this.onClick(this._resolveIdAt(x, y) ?? f.id);
         });
         this.hitGroup.appendChild(hitArea);
         if (isFirstForId) this.hitAreasById.set(f.id, hitArea);
@@ -949,9 +971,10 @@ export class WorldMap {
           if (this.onClick) this.onClick(lonlat[0], lonlat[1], this._findContainingId(lonlat[0], lonlat[1]));
         } else {
           // Ghost-country click (map-click mode): report the same id the
-          // home path's own listener would have. Ocean/terrain resolves to
-          // null — not a selection, so nothing fires.
-          const id = this._findContainingId(lonlat[0], lonlat[1]);
+          // home path's own listeners would have — hull assists included
+          // (see _resolveIdAt). Ocean/terrain resolves to null — not a
+          // selection, so nothing fires.
+          const id = this._resolveIdAt(x, y);
           if (id && this.onClick) this.onClick(id);
         }
       });
@@ -1427,6 +1450,114 @@ export class WorldMap {
     return null;
   }
 
+  // The geometric counterpart of the assist hit-areas, for clicks/hover
+  // that are resolved by coordinates rather than by the browser's own
+  // element hit-testing — i.e. anything landing on a GHOST copy (ghosts
+  // are pointer-events: none wholesale, and carry no hull elements of
+  // their own — the hulls are home-copy only). Without this, a microstate
+  // displayed via a ghost (Singapore in Asia's own default framing, most
+  // of Oceania near the antimeridian) silently had NO tap assist and no
+  // hover cue: `_findContainingId` is exact point-in-polygon on the real
+  // geometry, which for a ~1px island is an impossible target.
+  //
+  // (x, y) is base projected px, already wrap-folded into the home copy's
+  // range by _screenToLocalXY — exactly the space the hit-area polygons'
+  // own `points` live in, so this reads those live attributes (padded for
+  // the current zoom by _reflow/_onGestureSettle, clipped to the Voronoi
+  // cell) rather than recomputing any geometry: by construction it
+  // resolves identically to the browser hit-testing the hull element on
+  // the home copy. Hulls are clipped to disjoint Voronoi cells, so at
+  // most one can match — first hit wins.
+  _findAssistIdAt(x, y) {
+    const parse = (s) => s.trim().split(/\s+/).map((p) => p.split(",").map(Number));
+    for (const id of this._hullBaseById.keys()) {
+      const hitArea = this.hitAreasById.get(id);
+      if (!hitArea || hitArea.style.display === "none") continue;
+      const pts = hitArea.getAttribute("points");
+      if (!pts || !pointInRing(x, y, parse(pts))) continue;
+      const cell = this.hitClipsById.get(id)?.polygon?.getAttribute("points");
+      if (cell && !pointInRing(x, y, parse(cell))) continue;
+      return id;
+    }
+    return null;
+  }
+
+  // Minimum distance, in *screen* px at the current zoom, from base
+  // projected point (x, y) to any vertex of feature `f`'s outline. Only
+  // used to arbitrate tap-assist conflicts (see _resolveIdAt), where the
+  // candidates are microstates/archipelagos with short, densely-sampled
+  // coastlines, so vertex distance is an accurate enough stand-in for
+  // true edge distance. Early-exits as soon as `withinPx` is beaten.
+  _screenDistToFeaturePx(x, y, f, withinPx) {
+    const k = this.currentTransform?.k || 1;
+    const limit = withinPx / k; // compare in base units
+    let best = Infinity;
+    const scanRing = (ring) => {
+      for (const pt of ring) {
+        const p = this.projection(pt);
+        if (!p) continue;
+        const d = Math.hypot(p[0] - x, p[1] - y);
+        if (d < best) best = d;
+        if (best <= limit) return true;
+      }
+      return false;
+    };
+    const geom = f.geometry;
+    if (!geom) return Infinity;
+    const polys = geom.type === "Polygon" ? [geom.coordinates] : geom.type === "MultiPolygon" ? geom.coordinates : [];
+    for (const poly of polys) {
+      for (const ring of poly) if (scanRing(ring)) return best * k;
+    }
+    return best * k;
+  }
+
+  // One resolution rule for every coordinate-based click/hover path, and
+  // the arbiter the hull elements' own click listeners defer to: given a
+  // base projected point, which playable country is that tap *for*?
+  //
+  //  - Exact containment and the assist hull agree (or only one claims
+  //    the point): easy, take it. A hull claim over open ocean is the
+  //    assist doing its job (archipelago gap-fill, microstate padding).
+  //  - Both claim it and disagree — the point sits on one country's real
+  //    land but inside another's assist hull. Hulls render above every
+  //    path and their Voronoi clip only bounds them at the midline
+  //    between feature *centers*, never at real borders, so this overlap
+  //    is common (Denmark's gap-fill hull reaches real German coast,
+  //    Bahrain's padding touches Qatar). The hull owner wins only when
+  //    the tap is effectively *on* its own territory — within
+  //    ASSIST_WIN_PX on screen, covering the padding that makes a
+  //    subpixel Monaco/Singapore tappable over their big neighbors'
+  //    adjacent soil — and the real land wins everywhere else, so a
+  //    sprawling hull can never swallow clicks landing squarely on a
+  //    neighbor's own ground.
+  _resolveIdAt(x, y) {
+    const lonlat = this.projection.invert?.([x, y]);
+    const containing =
+      lonlat && Number.isFinite(lonlat[0]) && Number.isFinite(lonlat[1])
+        ? this._findContainingId(lonlat[0], lonlat[1])
+        : null;
+    const assistId = this._findAssistIdAt(x, y);
+    if (!assistId || assistId === containing) return containing ?? assistId;
+    if (!containing) return assistId;
+    // Size gate (see ASSIST_OWNER_MAX_PX): measured on the unpadded hull
+    // base, the same geometry the on-screen hull is built from.
+    const base = this._hullBaseById.get(assistId);
+    if (base) {
+      const k = this.currentTransform?.k || 1;
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for (const [px, py] of base.points) {
+        if (px < minX) minX = px;
+        if (px > maxX) maxX = px;
+        if (py < minY) minY = py;
+        if (py > maxY) maxY = py;
+      }
+      if (Math.max(maxX - minX, maxY - minY) * k > ASSIST_OWNER_MAX_PX) return containing;
+    }
+    const f = this._geometryById.get(assistId);
+    if (f && this._screenDistToFeaturePx(x, y, f, ASSIST_WIN_PX) <= ASSIST_WIN_PX) return assistId;
+    return containing;
+  }
+
   // A screen-space (clientX, clientY) — straight from any mouse/pointer
   // event — into the *local* (pre-zoom, pre-wrap-fold) coordinate space
   // `this.projection` was fit to. Three steps, each the simplest,
@@ -1493,12 +1624,10 @@ export class WorldMap {
         return;
       }
       const [x, y] = this._screenToLocalXY(clientX, clientY);
-      const lonlat = this.projection.invert?.([x, y]);
-      const id =
-        lonlat && Number.isFinite(lonlat[0]) && Number.isFinite(lonlat[1])
-          ? this._findContainingId(lonlat[0], lonlat[1])
-          : null;
-      this._setHoveredId(id);
+      // The exact same resolution rule as every click path (_resolveIdAt),
+      // so the hover cue lights up precisely the country a click at this
+      // point would select — ghost copies and hull assists included.
+      this._setHoveredId(this._resolveIdAt(x, y));
     });
   }
 

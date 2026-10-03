@@ -318,3 +318,23 @@ say "deleted after, per usual".)
   couple of degenerate hairline artifacts that need filtering.
 - **Region ≠ crop** (since the one-map refactor). Regions are `focusIds`
   (framing) + `playableIds` (muting). Don't reintroduce cropping.
+
+### Browser-drive the real map for hit-testing bugs (Oct 2026)
+"Can't select Singapore in region mode" was *not* mode-specific — jsdom
+measurements of hulls/areas all looked fine and theorizing about the
+region widget went nowhere. Ground truth came from Playwright
+(devDependency now) driving the real app: the visible Singapore was a
+*ghost copy*, and ghost clicks resolved geometrically with no hull
+assist. Two sub-lessons:
+- When sweep-testing clicks across all countries, bbox centers and
+  "first grid point inside fill" both land on border pixels and produce
+  dozens of false FAILs (plus antimeridian features where isPointInFill
+  over the bogus full-width bbox lies). Use the deepest-inside grid
+  point, and re-verify survivors zoomed-in at real coordinates before
+  believing any of them.
+- The hull hit-areas render above all country paths and their Voronoi
+  clip bounds them at center midlines, not real borders — browser
+  hit-testing therefore let Denmark's hull steal clicks on German soil
+  long before this round. Any future hit-area change must keep DOM
+  hit-testing and WorldMap._resolveIdAt agreeing, since ghosts use only
+  the latter.
