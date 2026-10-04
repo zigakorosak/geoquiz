@@ -102,14 +102,26 @@ const HULL_BBOX_CAP = 150;
 // centroid by this many px, so even a naturally tiny/compact hull (two
 // Maldives atolls barely 2.6px apart) ends up comfortably tappable
 // instead of just "sized to its own coastline".
-const HULL_PADDING = 3;
+// 8, up from the original 3: 3px was calibrated against a mouse cursor,
+// and on a tablet a finger tap that misses a 16px-wide Kuwait by 5px into
+// the gulf got nothing at all. Generous ocean-side padding is safe — the
+// Voronoi cell clip still stops one hull from reaching into another
+// assisted country's half, and _resolveIdAt's arbitration already hands
+// taps that land on a real neighbor's soil back to that neighbor unless
+// the owner is a genuinely tiny target.
+const HULL_PADDING = 8;
 // When a tap lands on one country's real land but inside another's assist
 // hull (see _resolveIdAt), the hull owner wins only if the tap is within
 // this many screen px of its own territory — generous enough to cover the
 // hull padding plus a finger's imprecision on a subpixel microstate, small
 // enough that a sprawling archipelago hull can't swallow clicks landing
 // squarely on a neighbor's ground.
-const ASSIST_WIN_PX = 10;
+// 7 ≈ realistic tap slop. Larger values were tried and leaked at world
+// zoom, where whole countries are fingertip-sized: with 10, a tap on
+// mainland France could lose to Jersey's hull, and Guatemala to Belize's,
+// because at k=1 "within 10px of the microstate" covers the entire
+// neighborhood.
+const ASSIST_WIN_PX = 7;
 // ...and only while the owner is genuinely hard to hit: once its hull
 // renders larger than this on screen (Denmark zoomed to a regional view),
 // the country is a comfortable target in its own right and real land wins

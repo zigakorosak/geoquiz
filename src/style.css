@@ -271,13 +271,12 @@ button:disabled {
   font-variant-numeric: tabular-nums;
 }
 
-/* Sits between the timer and the Restart / Back / Home trio. Both this
-   and .exit-button
-   below carry their own `margin-left: auto` — flexbox splits leftover
-   row space evenly across every auto margin present, so this ends up
-   roughly centered in the gap after the progress/score/timer cluster,
-   with the button trio still pinned to the far right, rather than any
-   of them needing a hardcoded position. */
+/* Sits between the timer and the hamburger menu. Both this and
+   .game-menu below carry their own `margin-left: auto` — flexbox splits
+   leftover row space evenly across every auto margin present, so this
+   ends up roughly centered in the gap after the progress/score/timer
+   cluster, with the menu still pinned to the far right, rather than
+   either needing a hardcoded position. */
 .game-header .action-button {
   margin-left: auto;
   padding: 0.4em 1.4em;
@@ -286,19 +285,44 @@ button:disabled {
 }
 
 .game-header .exit-button {
-  margin-left: auto;
   font-weight: 400;
   font-size: 0.9rem;
 }
 
-/* Restart / Back / Home sit together at the far right (the header's 1rem
-   gap between them, nothing more): all three share .exit-button's styling
-   but the auto margin above belongs only on the leftmost of the trio,
-   i.e. on Restart itself — Back and Home then just follow it. Without
-   this override every one would carry an auto margin and flexbox would
-   split the leftover space between them, pushing the trio apart. */
-.game-header .exit-button + .exit-button {
-  margin-left: 0;
+/* Hamburger menu holding Restart / Back / Home. The wrapper is the
+   positioning context for the dropdown, pinned to the header's right. */
+.game-header .game-menu {
+  margin-left: auto;
+  position: relative;
+}
+
+.game-menu-toggle {
+  padding: 0.4em 0.9em;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+/* Drops down right-aligned under the toggle, floating above the map
+   (hence the z-index — the map area starts directly below the header). */
+.game-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  z-index: 20;
+  min-width: 8.5rem;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+}
+
+.game-menu-dropdown button {
+  white-space: nowrap;
+  text-align: left;
 }
 
 /* Groups the round's actual content — prompt, answer, feedback — as one
