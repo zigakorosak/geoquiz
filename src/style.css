@@ -304,6 +304,14 @@ button:disabled {
 
 /* Drops down right-aligned under the toggle, floating above the map
    (hence the z-index — the map area starts directly below the header). */
+/* The closed state is the `hidden` attribute (game.js toggles it) — but
+   an explicit `display` on the class beats [hidden]'s UA default of
+   display:none, so without this rule the dropdown rendered permanently
+   open. */
+.game-menu-dropdown[hidden] {
+  display: none;
+}
+
 .game-menu-dropdown {
   position: absolute;
   right: 0;

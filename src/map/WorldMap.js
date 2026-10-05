@@ -188,6 +188,15 @@ const GESTURE_SETTLE_MS = 200;
 // wider Pass-1 layout at settle) — 0.75 was chosen as comfortably past
 // any realistic single wheel/pinch burst without the raster ballooning.
 const ZOOM_OVERSCAN_RATIO = 0.75;
+// Frozen-zoom re-bake bounds (see the "zoom" handler): how far a single
+// frozen gesture's CSS scale may drift from its gesture-start raster
+// before the scene is repainted mid-gesture and the freeze restarts from
+// the fresh pixels. The shrink bound sits comfortably inside the ~2.5×
+// zoom-out the overscan margin above actually covers — past it the
+// raster visibly dwindles toward a blank viewport; the grow bound caps
+// how blurry a zoom-in may get between repaints.
+const FROZEN_REBAKE_SHRINK = 0.5;
+const FROZEN_REBAKE_GROW = 3;
 // The dropped-pin marker's on-screen radius (px), held constant regardless
 // of zoom level — see the "zoom" handler below, which counter-scales the
 // SVG `r` attribute against the current transform's scale so the pin
@@ -827,7 +836,20 @@ export class WorldMap {
         // Pure pans (k unchanged, and no freeze already in progress) stay
         // on the live path below: they repaint, which was measured as
         // acceptable, and in exchange never show edge gaps.
-        if (this._gestureActive && (this._frozenBase !== null || t.k !== this.currentTransform.k)) {
+        //
+        // EXCEPT in pin mode, where pans freeze too: the scene there is
+        // one giant merged landmass path, so a live pan re-rasterizes the
+        // whole world's coastline every tick — the browser can't cull an
+        // off-screen *part* of a single path the way it culls whole
+        // country paths on the bordered map. That repaint was measured
+        // fine for the bordered map and visibly laggy for pin mode on
+        // tablets. A frozen pan is a pure CSS translate of the raster —
+        // no blur at all — and the translation re-bake bound below keeps
+        // the raster's edge from ever scrolling into view.
+        if (
+          this._gestureActive &&
+          (this._frozenBase !== null || t.k !== this.currentTransform.k || this.pinMode)
+        ) {
           if (this._frozenBase === null) {
             this._frozenBase = this.currentTransform;
             this.viewportEl.classList.add("world-viewport--zooming");
@@ -835,6 +857,36 @@ export class WorldMap {
           this.currentTransform = t;
           const b = this._frozenBase;
           const scale = t.k / b.k;
+          // The raster only contains what was on screen (plus the
+          // overscan margin, budgeted for about a 2.5× zoom-out) at the
+          // moment the freeze began. A long fast gesture blows through
+          // that budget — scaled down far enough, the raster becomes a
+          // postage stamp in an otherwise blank viewport ("the map
+          // disappears"), and scaled up far enough it's all blur. So when
+          // a single frozen gesture drifts past these bounds, bake and
+          // immediately re-freeze from the freshly painted scene: one
+          // full repaint per ~2× of zoom factor instead of one per tick,
+          // and the viewport never empties out.
+          // The same re-bake guard for translation: how far the frozen
+          // raster's content has shifted on screen since the freeze
+          // began. Past ~90% of the overscan margin, the raster's own
+          // edge is about to scroll into the viewport as blank — repaint
+          // and restart the freeze instead. (Mostly relevant for pin
+          // mode's frozen pans; a zoom-centered gesture rarely
+          // translates this far before a scale bound trips first.)
+          const shiftX = Math.abs(t.x - scale * b.x);
+          const shiftY = Math.abs(t.y - scale * b.y);
+          if (
+            scale < FROZEN_REBAKE_SHRINK ||
+            scale > FROZEN_REBAKE_GROW ||
+            shiftX > this._overscanX * 0.9 ||
+            shiftY > this._overscanY * 0.9
+          ) {
+            this._bakeFrozenZoom();
+            this._frozenBase = this.currentTransform;
+            this.viewportEl.classList.add("world-viewport--zooming");
+            return;
+          }
           // The svg's own box is now bigger than the wrapper's window —
           // it's positioned at (-marginX, -marginY) so its *content* still
           // lines up with the wrapper exactly at rest (see _reflow) — so a
