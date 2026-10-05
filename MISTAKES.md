@@ -338,3 +338,33 @@ assist. Two sub-lessons:
   long before this round. Any future hit-area change must keep DOM
   hit-testing and WorldMap._resolveIdAt agreeing, since ghosts use only
   the latter.
+
+### "Can't select X" — pin down WHICH mode before measuring (Oct 2026)
+"Can't choose Monaco in region select mode": a long round of map-click /
+region-click probes (wheel, touch, pinch, live site) all showed Monaco
+selecting fine. The likely real mode was drop-a-pin scored by Region,
+which resolves by exact polygon containment with no assist at all.
+Probe pitfalls hit along the way, each producing fake failures:
+- In-game taps with a decoy that missed land (off-screen or ocean) made
+  the next tap a re-click → confirm → advance cycle ("-,-,492" pattern).
+  Use a click recorder (patch `WorldMap.prototype.setClickable` on the
+  module URL the app actually loaded — vite adds `?t=`), or a decoy
+  computed to sit on a neighbor's fill.
+- Synthetic clicks round to whole px; at k=1 one px ≈ 33 km, so pin
+  tests must zoom in first.
+The same sweep surfaced a real, older bug: lon/lat point-in-polygon on
+antimeridian-crossing rings (Russia, Fiji) treated them as globe-wide
+latitude bands — pins/ghost clicks/hover in N Canada, Norway, Finland,
+Iceland, Greenland → Russia; N Australia → Fiji. Fixed by unwrapping
+such rings (`unwrapRing` in WorldMap.js).
+- Follow-up: the actual Monaco complaint was desktop — "hover shows it,
+  click does nothing". Cause: d3-zoom's default `clickDistance(0)`
+  swallowed any click with ≥1px of mouse drift. Every earlier probe used
+  perfectly still synthetic clicks, so none could see it. When testing
+  clicks, ALWAYS include a jittered press (down → move 1–3px → up).
+- Second follow-up: still broken for the user because they use FIREFOX
+  (the only browser on this machine) and every probe ran Chromium.
+  Firefox reports clicks on ghost <use> content with the <use> as
+  event.target; the svg listener's `target === svg` guard dropped them.
+  Lesson: on a "still broken" report, ask/verify the user's browser and
+  test in it — `npx playwright install firefox` works here.

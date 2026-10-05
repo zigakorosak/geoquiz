@@ -45,6 +45,14 @@ function haversineKmLatLon([lat1, lon1], [lat2, lon2]) {
 // enough to actually require knowing where the capital is (not just the
 // country), generous enough not to demand pixel-perfect clicking.
 const CAPITAL_CORRECT_RADIUS_KM = 50;
+// Region-scored pins count as correct within this many km of the target's
+// border, not only strictly inside it. Borderless mode never draws a
+// microstate as its own shape, and Monaco/Vatican/San Marino/the small
+// Caribbean islands are a few km across — a pixel-exact fingertip target
+// even fully zoomed in, so they were effectively unanswerable. Same idea
+// as CAPITAL_CORRECT_RADIUS_KM, deliberately tighter: for a normal-sized
+// country it only forgives a pin landing just over the border.
+const REGION_BORDER_TOLERANCE_KM = 20;
 
 // A guess value guaranteed never to equal any real item id (all of which
 // are ccn3 numeric strings or short hand-picked codes like "UNK"/"SML"/
@@ -446,7 +454,12 @@ const renderers = {
           const withinRadius = distanceKm <= CAPITAL_CORRECT_RADIUS_KM;
           onSelect(withinRadius ? item.id : containingId === item.id ? TOO_FAR_FROM_CAPITAL : containingId);
         } else {
-          onSelect(containingId);
+          // Target-aware tolerance (see REGION_BORDER_TOLERANCE_KM): a pin
+          // just outside the target's border reports the target itself, so
+          // the plain id-equality checkAnswer scores it correct. Anything
+          // else reports whatever shape the pin actually landed in.
+          const d = containingId === item.id ? 0 : map.borderDistanceKm(item.id, lon, lat);
+          onSelect(d != null && d <= REGION_BORDER_TOLERANCE_KM ? item.id : containingId);
         }
       },
       // Clicking close enough to the just-dropped pin confirms immediately

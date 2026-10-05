@@ -152,9 +152,13 @@ const WRAP_WINDOW = 0.5;
 // MAX_ZOOM is set so the tightest reachable view is at least as detailed
 // as the old per-region maximum: Europe used to fit at ~4.6x the world
 // fit's scale and allowed 10x on top of that, so ~46x world-scale was
-// already reachable. 50 clears that with a little headroom.
+// already reachable. 50 cleared that with a little headroom; raised to 200
+// on request so microstates (Vatican, Monaco, Caribbean islets) and tight
+// borders can be zoomed into comfortably. Past ~100x the 50m topology's
+// coastline detail starts to look angular — accepted, since the extra
+// zoom is for precise tapping, not cartographic detail.
 const MIN_ZOOM = 1;
-const MAX_ZOOM = 50;
+const MAX_ZOOM = 200;
 // How long after d3-zoom's "end" a gesture must stay quiet before the map
 // treats it as settled (de-promotes the GPU layers so the render sharpens,
 // re-pads the assist hulls — see _onGestureSettle). Longer than d3's own
@@ -255,12 +259,57 @@ function pointInRing(lon, lat, ring) {
   return inside;
 }
 
+// A lon/lat ring whose consecutive vertices jump more than 180° in
+// longitude crosses the antimeridian (Russia's Chukotka, Fiji, ...).
+// Tested naively, such an edge runs the long way round — from +180 back
+// to -180 across the whole map — so the ring "contains" a horizontal band
+// spanning every longitude at its latitudes: a point in northern Canada,
+// Norway, Finland, Iceland or Greenland resolved to Russia, one in
+// northern Australia to Fiji. Fix: unwrap the ring into one continuous
+// longitude run (shifting each vertex by ±360° so every edge takes the
+// short way), then test the point at lon, lon+360 and lon-360 — whichever
+// copy lands in the unwrapped range. Cached per ring: containment runs on
+// every hover frame over every feature, and topology rings are stable.
+const unwrappedRings = new WeakMap();
+function unwrapRing(ring) {
+  let entry = unwrappedRings.get(ring);
+  if (entry) return entry;
+  let crosses = false;
+  for (let i = 1; i < ring.length; i++) {
+    if (Math.abs(ring[i][0] - ring[i - 1][0]) > 180) {
+      crosses = true;
+      break;
+    }
+  }
+  if (!crosses) {
+    entry = { ring, crosses: false };
+  } else {
+    const out = [ring[0]];
+    let shift = 0;
+    for (let i = 1; i < ring.length; i++) {
+      const dx = ring[i][0] - ring[i - 1][0];
+      if (dx > 180) shift -= 360;
+      else if (dx < -180) shift += 360;
+      out.push([ring[i][0] + shift, ring[i][1]]);
+    }
+    entry = { ring: out, crosses: true };
+  }
+  unwrappedRings.set(ring, entry);
+  return entry;
+}
+
+function pointInLonLatRing(lon, lat, ring) {
+  const { ring: r, crosses } = unwrapRing(ring);
+  if (pointInRing(lon, lat, r)) return true;
+  return crosses && (pointInRing(lon + 360, lat, r) || pointInRing(lon - 360, lat, r));
+}
+
 // `coordinates`: one Polygon's rings — the first is the outer boundary,
 // any further rings are holes cut out of it.
 function pointInPolygonCoords(lon, lat, coordinates) {
-  if (!coordinates[0] || !pointInRing(lon, lat, coordinates[0])) return false;
+  if (!coordinates[0] || !pointInLonLatRing(lon, lat, coordinates[0])) return false;
   for (let i = 1; i < coordinates.length; i++) {
-    if (pointInRing(lon, lat, coordinates[i])) return false; // inside a hole
+    if (pointInLonLatRing(lon, lat, coordinates[i])) return false; // inside a hole
   }
   return true;
 }
@@ -812,6 +861,16 @@ export class WorldMap {
       // known — this initial value is just a safe placeholder before the
       // constructor's own _reflow() call runs.
       .scaleExtent([1, 10])
+      // d3-zoom's default clickDistance is 0: ANY pointer movement between
+      // mousedown and mouseup counts as a drag, and d3 then swallows the
+      // click that follows. Real hands (trackpads especially) nearly
+      // always drift a pixel or two during a click, so clicks silently
+      // did nothing — most visibly on tiny targets like Monaco, where the
+      // hover cue (resolved separately, per pointermove) kept showing the
+      // country under the cursor while the click itself vanished. A few
+      // px of slop is still far below any deliberate pan. (Touch has its
+      // own tapDistance, default 10px, which was already forgiving.)
+      .clickDistance(6)
       .on("zoom", (event) => {
         const t = event.transform;
         // Frozen zoom: the moment a live gesture changes `k`, stop
@@ -975,12 +1034,18 @@ export class WorldMap {
       this.svg.addEventListener("click", (event) => {
         if (!this.clickEnabled) return;
         // In map-click mode, anything interactive on the home copy (a
-        // country path, a hull hit-area) handles its own click and is a
-        // more specific target than the <svg>; only fall-through clicks
-        // (ghost content, ocean, terrain) reach here with the svg itself
-        // as the target. Pin mode's content is all pointer-events: none,
-        // so every click arrives this way there regardless.
-        if (!this.pinMode && event.target !== this.svg) return;
+        // playable country path, a hull hit-area) handles its own click —
+        // skip exactly those. Everything else (ghost content, ocean,
+        // terrain) is resolved geometrically here. This used to require
+        // `event.target === this.svg`, which only matched Chromium: Firefox
+        // reports a click on ghost content with the ghost's <use> element
+        // as the target, so every ghost-copy click was silently dropped —
+        // e.g. Monaco zoomed in on a Europe map (shown via a ghost past
+        // ~40x) highlighted on hover but never selected. Pin mode's
+        // content is all pointer-events: none, so every click arrives
+        // here regardless.
+        const t = event.target;
+        if (!this.pinMode && (t?.classList?.contains("country-hitarea") || t?.dataset?.id)) return;
         const [x, y] = this._screenToLocalXY(event.clientX, event.clientY);
 
         // Re-clicking the pin that's already down confirms, instead of
@@ -1751,6 +1816,16 @@ export class WorldMap {
   // oddly-shaped countries, where a pin dropped well inside the border
   // would otherwise read as "hundreds of km away" despite being a correct
   // guess.
+  // Pure query, no drawing: km from (lon, lat) to feature `id`'s border —
+  // 0 if inside it, null if unknown. Pin mode's Region scoring uses this
+  // for its border tolerance (inputs.js) before anything is revealed.
+  borderDistanceKm(id, lon, lat) {
+    const f = this._geometryById.get(id);
+    if (!f) return null;
+    if (pointInFeature(lon, lat, f)) return 0;
+    return featureNearestBorderPoint(lon, lat, f)?.distanceKm ?? null;
+  }
+
   revealBorderDistance(id) {
     if (!this.pinLonLat) return null;
     const f = this._geometryById.get(id);
