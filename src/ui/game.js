@@ -167,7 +167,11 @@ export function renderGame(
     if (!menuWrap.contains(event.target)) setMenuOpen(false);
   });
 
-  header.append(progress, score, timerEl, actionButton, menuWrap);
+  // On map-answer rounds the action button moves out of the header into
+  // the map overlay (see roundArea below); everywhere else it stays here.
+  const isAnswerMapEarly = (answerKind ?? answerAttr.answerKinds[0]).startsWith("map");
+  if (isAnswerMapEarly) header.append(progress, score, timerEl, menuWrap);
+  else header.append(progress, score, timerEl, actionButton, menuWrap);
 
   const promptArea = document.createElement("div");
   promptArea.className = "prompt-area";
@@ -215,8 +219,20 @@ export function renderGame(
   // out of view without scrolling, right after the player just clicked
   // somewhere near the top of a tall map. Placed before the map instead
   // so it's immediately visible, in the same spot every round.
+  //
+  // When the answer IS the map, the map now runs edge to edge from the
+  // header down, and the round's controls float over its top edge as an
+  // overlay instead of taking layout space: Confirm/Next, then the
+  // question, then the feedback. Before, the feedback line sat in the
+  // flex column above the map, so a long wrong-answer message wrapping to
+  // a second line (common on phones) pushed the map down and shrank it
+  // mid-round. An overlay can't move the map, whatever its text length.
   if (isAnswerMap) {
-    roundArea.append(promptArea, feedbackArea, answerArea);
+    roundArea.classList.add("round-area--map-overlay");
+    const overlay = document.createElement("div");
+    overlay.className = "map-overlay";
+    overlay.append(actionButton, promptArea, feedbackArea);
+    roundArea.append(answerArea, overlay);
   } else {
     roundArea.append(promptArea, answerArea, feedbackArea);
   }

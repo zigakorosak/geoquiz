@@ -439,6 +439,67 @@ button:disabled {
   border-color: var(--wrong);
 }
 
+/* Map-answer rounds: the map fills the whole round area and the action
+   button, question and feedback float over its top edge (game.js). The
+   overlay itself ignores pointer events so taps/drags on the question or
+   feedback text still reach the map underneath; only the button takes
+   them. Pills use a plain translucent background, not backdrop-filter —
+   a live blur over the map would be re-rendered on every pan frame. */
+.round-area--map-overlay {
+  position: relative;
+  gap: 0;
+}
+
+.map-overlay {
+  position: absolute;
+  top: 0.5rem;
+  left: 0;
+  right: 0;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.map-overlay .action-button {
+  pointer-events: auto;
+  padding: 0.4em 1.4em;
+  font-size: 0.9rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.map-overlay .prompt-area,
+.map-overlay .feedback-area {
+  min-height: 0;
+}
+
+.map-overlay .prompt-text,
+.map-overlay .answer-feedback {
+  background: rgba(10, 14, 22, 0.78);
+  border-radius: 10px;
+  padding: 0.15em 0.6em;
+  max-width: 100%;
+}
+
+.map-overlay .answer-feedback {
+  color: var(--text);
+}
+
+/* A question image (flag/emblem) floating over the map is drawn smaller
+   than in a text-answer round: at full size it covered a large part of
+   the map — often the very region being asked about. */
+.map-overlay .prompt-image {
+  max-height: min(96px, 13vh);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+.map-overlay .answer-feedback:empty {
+  display: none;
+}
+
 .feedback-area {
   display: flex;
   justify-content: center;

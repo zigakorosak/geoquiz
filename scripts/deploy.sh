@@ -15,16 +15,30 @@ cd "$(dirname "$0")/.."
 branch="$(git branch --show-current)"
 workflow="Deploy to Namecheap"
 
-gh workflow run "$workflow" --ref "$branch"
+# Remember the newest existing run BEFORE triggering: the old version
+# polled for "the latest run" and accepted the first answer, which was
+# usually the *previous* deploy (the new run takes a few seconds to
+# register), so it watched an already-finished run and returned
+# immediately while the real deploy was still going.
+prev_id=$(gh run list --workflow="$workflow" --branch="$branch" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
 
-# workflow_dispatch doesn't hand back a run id directly, so poll briefly
-# for the run it just created rather than parsing run-triggering output.
-run_id=""
-for _ in 1 2 3 4 5 6 7 8 9 10; do
-  sleep 2
-  run_id=$(gh run list --workflow="$workflow" --branch="$branch" --limit 1 --json databaseId,createdAt --jq '.[0].databaseId')
-  [ -n "$run_id" ] && break
-done
+trigger_out=$(gh workflow run "$workflow" --ref "$branch" 2>&1)
+echo "$trigger_out"
+
+# Newer gh prints the created run's URL — take the id straight from it.
+run_id=$(grep -oE 'actions/runs/[0-9]+' <<<"$trigger_out" | grep -oE '[0-9]+$' | head -1 || true)
+
+# Older gh prints no URL: poll until a run newer than prev_id shows up.
+if [ -z "$run_id" ]; then
+  for _ in $(seq 1 30); do
+    sleep 2
+    latest=$(gh run list --workflow="$workflow" --branch="$branch" --limit 1 --json databaseId --jq '.[0].databaseId // empty')
+    if [ -n "$latest" ] && [ "$latest" != "$prev_id" ]; then
+      run_id="$latest"
+      break
+    fi
+  done
+fi
 
 if [ -z "$run_id" ]; then
   echo "Could not find the triggered run — check the Actions tab manually."
