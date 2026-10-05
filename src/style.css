@@ -641,23 +641,19 @@ button:disabled {
 }
 
 /* The merged landmass itself — see WorldMap.js's pinLandmass/pinMode.
-   `stroke` matches `fill`, at a deliberately *small* width: the real
-   hairline-streak artifacts merge() produces are now filtered out of the
-   geometry itself (WorldMap.js's _withoutMergeSlivers), which is where
-   that problem actually belonged — an earlier attempt used an 8px stroke
-   here to try to bury them instead, which backfired badly, since a wide
-   stroke makes a hairline artifact *thicker and more visible*, not less.
-   What's left for this stroke to do is only the original, much smaller
-   job: insurance against a sub-pixel antialiasing gap along a shared
-   edge. Unlike the per-country version of this idea (twice abandoned), a
-   path stroking *itself* always aligns exactly with its own fill boundary
-   — same antialiasing pass, not two separately-rendered paths having to
-   agree on where an edge is — so it can only add coverage. */
+   Fill only, deliberately NO stroke. A same-color 1px stroke used to sit
+   here as insurance against sub-pixel antialiasing gaps, but it was the
+   whole of pin mode's lag in Firefox: these two paths are the entire
+   world's coastline (~1.8M chars of path data), and Firefox re-strokes
+   all of it every frame with no per-part culling — pan measured 83ms/
+   frame with the stroke vs 17ms without, zoom spikes 283ms vs 17ms. The
+   real hairline artifacts merge() produces are filtered out of the
+   geometry itself (WorldMap.js's _withoutMergeSlivers), and an earlier
+   attempt with an 8px stroke showed strokes make such artifacts worse,
+   not better. */
 .pin-landmass {
   fill: var(--map-land-muted);
-  stroke: var(--map-land-muted);
-  stroke-width: 1;
-  vector-effect: non-scaling-stroke;
+  stroke: none;
   pointer-events: none;
 }
 
@@ -669,7 +665,6 @@ button:disabled {
    boundary can let the ocean color through. */
 .pin-landmass--playable {
   fill: var(--map-land);
-  stroke: var(--map-land);
 }
 
 /* Confirm reveals only the target country's own outline — never the pin's
