@@ -11,6 +11,7 @@
 import { QuizSession } from "../core/engine.js";
 import { renderPrompt } from "./prompts.js";
 import { renderAnswerInput } from "./inputs.js";
+import { createHamburgerMenu } from "./hamburgerMenu.js";
 
 export function renderGame(
   container,
@@ -132,40 +133,8 @@ export function renderGame(
     onExit();
   });
 
-  // Restart / Back / Home live behind a hamburger toggle rather than as
-  // three always-visible buttons — they're rare, deliberate actions, and
-  // the row they occupied crowded the header (especially on tablets).
-  // The dropdown is plain show/hide, closed by picking an action, tapping
-  // the toggle again, or tapping anywhere else on the game screen (that
-  // listener lives on `root`, so it's torn down with the screen — no
-  // document-level listener to leak across restarts).
-  const menuWrap = document.createElement("div");
-  menuWrap.className = "game-menu";
-  const menuToggle = document.createElement("button");
-  menuToggle.type = "button";
-  menuToggle.className = "exit-button game-menu-toggle";
-  menuToggle.setAttribute("aria-label", "Game menu");
-  menuToggle.setAttribute("aria-expanded", "false");
-  menuToggle.textContent = "☰";
-  const menuDropdown = document.createElement("div");
-  menuDropdown.className = "game-menu-dropdown";
-  menuDropdown.hidden = true;
-  const setMenuOpen = (open) => {
-    menuDropdown.hidden = !open;
-    menuToggle.setAttribute("aria-expanded", String(open));
-  };
-  menuToggle.addEventListener("click", (event) => {
-    // Don't let the screen-wide "click anywhere to advance" listener see
-    // the toggle, and don't let the outside-click closer immediately undo
-    // the open.
-    event.stopPropagation();
-    setMenuOpen(menuDropdown.hidden);
-  });
-  menuDropdown.append(restartButton, backButton, exitButton);
-  menuWrap.append(menuToggle, menuDropdown);
-  root.addEventListener("click", (event) => {
-    if (!menuWrap.contains(event.target)) setMenuOpen(false);
-  });
+  // Restart / Back / Home live behind the shared ☰ menu (hamburgerMenu.js).
+  const menuWrap = createHamburgerMenu(root, [restartButton, backButton, exitButton], { label: "Game menu" });
 
   // On map-answer rounds the action button moves out of the header into
   // the map overlay (see roundArea below); everywhere else it stays here.

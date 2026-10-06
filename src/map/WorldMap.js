@@ -2022,6 +2022,67 @@ export class WorldMap {
     }
   }
 
+  // Explore screen: show (or with null, hide) a capital marker at
+  // `capitalLatLng` ([lat, lon], the app's field order) with no pin or
+  // line — the game's revealCapitalDistance needs a dropped pin to measure
+  // from. Same marker element, so it re-projects on reflow and keeps its
+  // constant on-screen size the same way.
+  showCapital(capitalLatLng) {
+    if (!capitalLatLng) {
+      this._revealedCapitalPoint = null;
+      this.capitalMarker.style.display = "none";
+      return;
+    }
+    const point = [capitalLatLng[1], capitalLatLng[0]];
+    this._revealedCapitalPoint = point;
+    const p = this._projectWithWrap(point);
+    if (!p) return;
+    this.capitalMarker.setAttribute("cx", p[0]);
+    this.capitalMarker.setAttribute("cy", p[1]);
+    this.capitalMarker.style.display = "";
+  }
+
+  // Explore screen's Random: jump the view to frame feature `id`, centred
+  // in the part of the viewport below `topInset` px (an overlay card sits
+  // over the top). A feature whose bounds span most of the world — the
+  // antimeridian-split ones (Russia, Fiji, Kiribati, the US via the
+  // Aleutians) — is framed by its largest single part instead, or it
+  // would just frame the whole map. Instant, not animated, and run with
+  // the gesture hooks suppressed like every other programmatic transform;
+  // _onGestureSettle afterwards re-pads the tap-assist hulls for the new k.
+  focusOn(id, { topInset = 0 } = {}) {
+    const f = this._geometryById.get(id);
+    if (!f || !this._lastSize) return;
+    const { width, height } = this._lastSize;
+    let b = this.pathGen.bounds(f);
+    if (this._wrapPeriod && b[1][0] - b[0][0] > this._wrapPeriod * 0.5 && f.geometry?.type === "MultiPolygon") {
+      let best = null;
+      let bestArea = -1;
+      for (const coords of f.geometry.coordinates) {
+        const part = { type: "Feature", geometry: { type: "Polygon", coordinates: coords } };
+        const a = this.pathGen.area(part);
+        if (a > bestArea) {
+          bestArea = a;
+          best = part;
+        }
+      }
+      if (best) b = this.pathGen.bounds(best);
+    }
+    const bw = Math.max(b[1][0] - b[0][0], 1e-6);
+    const bh = Math.max(b[1][1] - b[0][1], 1e-6);
+    const availH = Math.max(height - topInset, height * 0.4);
+    // 0.6: leave a comfortable margin of surrounding context. Capped well
+    // below MAX_ZOOM so a microstate still shows its neighbourhood.
+    const k = Math.max(MIN_ZOOM, Math.min(60, Math.min(width / bw, availH / bh) * 0.6));
+    const cx = (b[0][0] + b[1][0]) / 2;
+    const cy = (b[0][1] + b[1][1]) / 2;
+    const target = zoomIdentity.translate(width / 2 - k * cx, height - availH / 2 - k * cy).scale(k);
+    this._suppressGestureHooks = true;
+    this._selection.call(this.zoomBehavior.transform, target);
+    this._suppressGestureHooks = false;
+    this._onGestureSettle();
+  }
+
   getTransform() {
     return this.currentTransform;
   }

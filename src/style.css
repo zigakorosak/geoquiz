@@ -222,6 +222,77 @@ button:disabled {
   font-weight: 600;
 }
 
+/* Info card floating over the explore map (mapExplore.js), in the same
+   translucent-pill style as the game's map-round overlay. Pass-through
+   for pointer events (inherited from .map-overlay), so the map under it
+   stays draggable/tappable. Compact on purpose: it covers the top of the
+   map, so everything is sized to stay a strip, not a panel. */
+.explore-card {
+  background: rgba(10, 14, 22, 0.82);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem 0.9rem;
+  max-width: min(100%, 26rem);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+}
+
+.explore-card[hidden] {
+  display: none;
+}
+
+.explore-card-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.explore-card-sub {
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+
+.explore-card-images {
+  display: flex;
+  gap: 0.7rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.explore-card-images img {
+  max-height: min(64px, 9vh);
+  max-width: 7rem;
+  object-fit: contain;
+}
+
+.explore-card-facts {
+  margin: 0;
+  display: grid;
+  grid-template-columns: auto auto;
+  column-gap: 0.6rem;
+  row-gap: 0.1rem;
+  font-size: 0.9rem;
+}
+
+.explore-card-facts dt {
+  color: var(--text-dim);
+  text-align: right;
+}
+
+.explore-card-facts dd {
+  margin: 0;
+  text-align: left;
+}
+
+.game-header .explore-label {
+  flex: 1;
+  min-width: 0;
+}
+
 .explore-area {
   /* mapExplore.js has no prompt/answer split to be conditional about —
      this screen is *always* a full-size map, so unlike game.js's
