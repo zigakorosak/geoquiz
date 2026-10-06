@@ -1,0 +1,596 @@
+[
+  {
+    "id": "CN-AH",
+    "name": "Anhui (安徽, Ānhuī)",
+    "nameEn": "Anhui",
+    "nameZh": "安徽",
+    "pinyin": "Ānhuī",
+    "aliases": [
+      "Anhui",
+      "Ānhuī",
+      "安徽"
+    ],
+    "type": "Province",
+    "capital": "Hefei",
+    "capitalLatLng": [
+      31.82,
+      117.23
+    ]
+  },
+  {
+    "id": "CN-BJ",
+    "name": "Beijing (北京, Běijīng)",
+    "nameEn": "Beijing",
+    "nameZh": "北京",
+    "pinyin": "Běijīng",
+    "aliases": [
+      "Beijing",
+      "Běijīng",
+      "北京"
+    ],
+    "type": "Municipality",
+    "capital": null,
+    "capitalLatLng": null
+  },
+  {
+    "id": "CN-CQ",
+    "name": "Chongqing (重庆, Chóngqìng)",
+    "nameEn": "Chongqing",
+    "nameZh": "重庆",
+    "pinyin": "Chóngqìng",
+    "aliases": [
+      "Chongqing",
+      "Chóngqìng",
+      "重庆"
+    ],
+    "type": "Municipality",
+    "capital": null,
+    "capitalLatLng": null
+  },
+  {
+    "id": "CN-FJ",
+    "name": "Fujian (福建, Fújiàn)",
+    "nameEn": "Fujian",
+    "nameZh": "福建",
+    "pinyin": "Fújiàn",
+    "aliases": [
+      "Fujian",
+      "Fújiàn",
+      "福建"
+    ],
+    "type": "Province",
+    "capital": "Fuzhou",
+    "capitalLatLng": [
+      26.07,
+      119.3
+    ]
+  },
+  {
+    "id": "CN-GS",
+    "name": "Gansu (甘肃, Gānsù)",
+    "nameEn": "Gansu",
+    "nameZh": "甘肃",
+    "pinyin": "Gānsù",
+    "aliases": [
+      "Gansu",
+      "Gānsù",
+      "甘肃"
+    ],
+    "type": "Province",
+    "capital": "Lanzhou",
+    "capitalLatLng": [
+      36.06,
+      103.83
+    ]
+  },
+  {
+    "id": "CN-GD",
+    "name": "Guangdong (广东, Guǎngdōng)",
+    "nameEn": "Guangdong",
+    "nameZh": "广东",
+    "pinyin": "Guǎngdōng",
+    "aliases": [
+      "Guangdong",
+      "Guǎngdōng",
+      "广东"
+    ],
+    "type": "Province",
+    "capital": "Guangzhou",
+    "capitalLatLng": [
+      23.13,
+      113.26
+    ]
+  },
+  {
+    "id": "CN-GX",
+    "name": "Guangxi (广西, Guǎngxī)",
+    "nameEn": "Guangxi",
+    "nameZh": "广西",
+    "pinyin": "Guǎngxī",
+    "aliases": [
+      "Guangxi",
+      "Guǎngxī",
+      "广西"
+    ],
+    "type": "Autonomous Region",
+    "capital": "Nanning",
+    "capitalLatLng": [
+      22.82,
+      108.32
+    ]
+  },
+  {
+    "id": "CN-GZ",
+    "name": "Guizhou (贵州, Guìzhōu)",
+    "nameEn": "Guizhou",
+    "nameZh": "贵州",
+    "pinyin": "Guìzhōu",
+    "aliases": [
+      "Guizhou",
+      "Guìzhōu",
+      "贵州"
+    ],
+    "type": "Province",
+    "capital": "Guiyang",
+    "capitalLatLng": [
+      26.65,
+      106.63
+    ]
+  },
+  {
+    "id": "CN-HI",
+    "name": "Hainan (海南, Hǎinán)",
+    "nameEn": "Hainan",
+    "nameZh": "海南",
+    "pinyin": "Hǎinán",
+    "aliases": [
+      "Hainan",
+      "Hǎinán",
+      "海南"
+    ],
+    "type": "Province",
+    "capital": "Haikou",
+    "capitalLatLng": [
+      20.04,
+      110.2
+    ]
+  },
+  {
+    "id": "CN-HE",
+    "name": "Hebei (河北, Héběi)",
+    "nameEn": "Hebei",
+    "nameZh": "河北",
+    "pinyin": "Héběi",
+    "aliases": [
+      "Hebei",
+      "Héběi",
+      "河北"
+    ],
+    "type": "Province",
+    "capital": "Shijiazhuang",
+    "capitalLatLng": [
+      38.04,
+      114.51
+    ]
+  },
+  {
+    "id": "CN-HL",
+    "name": "Heilongjiang (黑龙江, Hēilóngjiāng)",
+    "nameEn": "Heilongjiang",
+    "nameZh": "黑龙江",
+    "pinyin": "Hēilóngjiāng",
+    "aliases": [
+      "Heilongjiang",
+      "Hēilóngjiāng",
+      "黑龙江"
+    ],
+    "type": "Province",
+    "capital": "Harbin",
+    "capitalLatLng": [
+      45.8,
+      126.53
+    ]
+  },
+  {
+    "id": "CN-HA",
+    "name": "Henan (河南, Hénán)",
+    "nameEn": "Henan",
+    "nameZh": "河南",
+    "pinyin": "Hénán",
+    "aliases": [
+      "Henan",
+      "Hénán",
+      "河南"
+    ],
+    "type": "Province",
+    "capital": "Zhengzhou",
+    "capitalLatLng": [
+      34.75,
+      113.62
+    ]
+  },
+  {
+    "id": "HK",
+    "name": "Hong Kong (香港, Xiānggǎng)",
+    "nameEn": "Hong Kong",
+    "nameZh": "香港",
+    "pinyin": "Xiānggǎng",
+    "aliases": [
+      "Hong Kong",
+      "Xiānggǎng",
+      "香港"
+    ],
+    "type": "Special Administrative Region",
+    "capital": null,
+    "capitalLatLng": null
+  },
+  {
+    "id": "CN-HB",
+    "name": "Hubei (湖北, Húběi)",
+    "nameEn": "Hubei",
+    "nameZh": "湖北",
+    "pinyin": "Húběi",
+    "aliases": [
+      "Hubei",
+      "Húběi",
+      "湖北"
+    ],
+    "type": "Province",
+    "capital": "Wuhan",
+    "capitalLatLng": [
+      30.59,
+      114.31
+    ]
+  },
+  {
+    "id": "CN-HN",
+    "name": "Hunan (湖南, Húnán)",
+    "nameEn": "Hunan",
+    "nameZh": "湖南",
+    "pinyin": "Húnán",
+    "aliases": [
+      "Hunan",
+      "Húnán",
+      "湖南"
+    ],
+    "type": "Province",
+    "capital": "Changsha",
+    "capitalLatLng": [
+      28.23,
+      112.94
+    ]
+  },
+  {
+    "id": "CN-NM",
+    "name": "Inner Mongolia (内蒙古, Nèi Měnggǔ)",
+    "nameEn": "Inner Mongolia",
+    "nameZh": "内蒙古",
+    "pinyin": "Nèi Měnggǔ",
+    "aliases": [
+      "Inner Mongolia",
+      "Nèi Měnggǔ",
+      "内蒙古"
+    ],
+    "type": "Autonomous Region",
+    "capital": "Hohhot",
+    "capitalLatLng": [
+      40.84,
+      111.75
+    ]
+  },
+  {
+    "id": "CN-JS",
+    "name": "Jiangsu (江苏, Jiāngsū)",
+    "nameEn": "Jiangsu",
+    "nameZh": "江苏",
+    "pinyin": "Jiāngsū",
+    "aliases": [
+      "Jiangsu",
+      "Jiāngsū",
+      "江苏"
+    ],
+    "type": "Province",
+    "capital": "Nanjing",
+    "capitalLatLng": [
+      32.06,
+      118.8
+    ]
+  },
+  {
+    "id": "CN-JX",
+    "name": "Jiangxi (江西, Jiāngxī)",
+    "nameEn": "Jiangxi",
+    "nameZh": "江西",
+    "pinyin": "Jiāngxī",
+    "aliases": [
+      "Jiangxi",
+      "Jiāngxī",
+      "江西"
+    ],
+    "type": "Province",
+    "capital": "Nanchang",
+    "capitalLatLng": [
+      28.68,
+      115.86
+    ]
+  },
+  {
+    "id": "CN-JL",
+    "name": "Jilin (吉林, Jílín)",
+    "nameEn": "Jilin",
+    "nameZh": "吉林",
+    "pinyin": "Jílín",
+    "aliases": [
+      "Jilin",
+      "Jílín",
+      "吉林"
+    ],
+    "type": "Province",
+    "capital": "Changchun",
+    "capitalLatLng": [
+      43.82,
+      125.32
+    ]
+  },
+  {
+    "id": "CN-LN",
+    "name": "Liaoning (辽宁, Liáoníng)",
+    "nameEn": "Liaoning",
+    "nameZh": "辽宁",
+    "pinyin": "Liáoníng",
+    "aliases": [
+      "Liaoning",
+      "Liáoníng",
+      "辽宁"
+    ],
+    "type": "Province",
+    "capital": "Shenyang",
+    "capitalLatLng": [
+      41.81,
+      123.43
+    ]
+  },
+  {
+    "id": "MO",
+    "name": "Macau (澳门, Àomén)",
+    "nameEn": "Macau",
+    "nameZh": "澳门",
+    "pinyin": "Àomén",
+    "aliases": [
+      "Macau",
+      "Àomén",
+      "澳门"
+    ],
+    "type": "Special Administrative Region",
+    "capital": null,
+    "capitalLatLng": null
+  },
+  {
+    "id": "CN-NX",
+    "name": "Ningxia (宁夏, Níngxià)",
+    "nameEn": "Ningxia",
+    "nameZh": "宁夏",
+    "pinyin": "Níngxià",
+    "aliases": [
+      "Ningxia",
+      "Níngxià",
+      "宁夏"
+    ],
+    "type": "Autonomous Region",
+    "capital": "Yinchuan",
+    "capitalLatLng": [
+      38.49,
+      106.23
+    ]
+  },
+  {
+    "id": "CN-QH",
+    "name": "Qinghai (青海, Qīnghǎi)",
+    "nameEn": "Qinghai",
+    "nameZh": "青海",
+    "pinyin": "Qīnghǎi",
+    "aliases": [
+      "Qinghai",
+      "Qīnghǎi",
+      "青海"
+    ],
+    "type": "Province",
+    "capital": "Xining",
+    "capitalLatLng": [
+      36.62,
+      101.78
+    ]
+  },
+  {
+    "id": "CN-SN",
+    "name": "Shaanxi (陕西, Shǎnxī)",
+    "nameEn": "Shaanxi",
+    "nameZh": "陕西",
+    "pinyin": "Shǎnxī",
+    "aliases": [
+      "Shaanxi",
+      "Shǎnxī",
+      "陕西"
+    ],
+    "type": "Province",
+    "capital": "Xi'an",
+    "capitalLatLng": [
+      34.34,
+      108.94
+    ]
+  },
+  {
+    "id": "CN-SD",
+    "name": "Shandong (山东, Shāndōng)",
+    "nameEn": "Shandong",
+    "nameZh": "山东",
+    "pinyin": "Shāndōng",
+    "aliases": [
+      "Shandong",
+      "Shāndōng",
+      "山东"
+    ],
+    "type": "Province",
+    "capital": "Jinan",
+    "capitalLatLng": [
+      36.65,
+      117.12
+    ]
+  },
+  {
+    "id": "CN-SH",
+    "name": "Shanghai (上海, Shànghǎi)",
+    "nameEn": "Shanghai",
+    "nameZh": "上海",
+    "pinyin": "Shànghǎi",
+    "aliases": [
+      "Shanghai",
+      "Shànghǎi",
+      "上海"
+    ],
+    "type": "Municipality",
+    "capital": null,
+    "capitalLatLng": null
+  },
+  {
+    "id": "CN-SX",
+    "name": "Shanxi (山西, Shānxī)",
+    "nameEn": "Shanxi",
+    "nameZh": "山西",
+    "pinyin": "Shānxī",
+    "aliases": [
+      "Shanxi",
+      "Shānxī",
+      "山西"
+    ],
+    "type": "Province",
+    "capital": "Taiyuan",
+    "capitalLatLng": [
+      37.87,
+      112.55
+    ]
+  },
+  {
+    "id": "CN-SC",
+    "name": "Sichuan (四川, Sìchuān)",
+    "nameEn": "Sichuan",
+    "nameZh": "四川",
+    "pinyin": "Sìchuān",
+    "aliases": [
+      "Sichuan",
+      "Sìchuān",
+      "四川"
+    ],
+    "type": "Province",
+    "capital": "Chengdu",
+    "capitalLatLng": [
+      30.57,
+      104.07
+    ]
+  },
+  {
+    "id": "TW",
+    "name": "Taiwan (台湾, Táiwān)",
+    "nameEn": "Taiwan",
+    "nameZh": "台湾",
+    "pinyin": "Táiwān",
+    "aliases": [
+      "Taiwan",
+      "Táiwān",
+      "台湾"
+    ],
+    "type": "Province",
+    "capital": "Taipei",
+    "capitalLatLng": [
+      25.03,
+      121.57
+    ]
+  },
+  {
+    "id": "CN-TJ",
+    "name": "Tianjin (天津, Tiānjīn)",
+    "nameEn": "Tianjin",
+    "nameZh": "天津",
+    "pinyin": "Tiānjīn",
+    "aliases": [
+      "Tianjin",
+      "Tiānjīn",
+      "天津"
+    ],
+    "type": "Municipality",
+    "capital": null,
+    "capitalLatLng": null
+  },
+  {
+    "id": "CN-XZ",
+    "name": "Tibet (西藏, Xīzàng)",
+    "nameEn": "Tibet",
+    "nameZh": "西藏",
+    "pinyin": "Xīzàng",
+    "aliases": [
+      "Tibet",
+      "Xīzàng",
+      "西藏"
+    ],
+    "type": "Autonomous Region",
+    "capital": "Lhasa",
+    "capitalLatLng": [
+      29.65,
+      91.13
+    ]
+  },
+  {
+    "id": "CN-XJ",
+    "name": "Xinjiang (新疆, Xīnjiāng)",
+    "nameEn": "Xinjiang",
+    "nameZh": "新疆",
+    "pinyin": "Xīnjiāng",
+    "aliases": [
+      "Xinjiang",
+      "Xīnjiāng",
+      "新疆"
+    ],
+    "type": "Autonomous Region",
+    "capital": "Ürümqi",
+    "capitalLatLng": [
+      43.83,
+      87.62
+    ]
+  },
+  {
+    "id": "CN-YN",
+    "name": "Yunnan (云南, Yúnnán)",
+    "nameEn": "Yunnan",
+    "nameZh": "云南",
+    "pinyin": "Yúnnán",
+    "aliases": [
+      "Yunnan",
+      "Yúnnán",
+      "云南"
+    ],
+    "type": "Province",
+    "capital": "Kunming",
+    "capitalLatLng": [
+      25.04,
+      102.71
+    ]
+  },
+  {
+    "id": "CN-ZJ",
+    "name": "Zhejiang (浙江, Zhèjiāng)",
+    "nameEn": "Zhejiang",
+    "nameZh": "浙江",
+    "pinyin": "Zhèjiāng",
+    "aliases": [
+      "Zhejiang",
+      "Zhèjiāng",
+      "浙江"
+    ],
+    "type": "Province",
+    "capital": "Hangzhou",
+    "capitalLatLng": [
+      30.27,
+      120.16
+    ]
+  }
+]

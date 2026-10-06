@@ -1,5 +1,5 @@
-// Free-explore map: the whole world, every item (including extra
-// territories) clickable, no quiz mechanics. Clicking a country (or
+// Free-explore map for any dataset (World, USA, China — picked on the
+// Map choice screen, main.js): every item clickable, no quiz mechanics. Clicking a country (or
 // Random) shows an info card floating over the top of the map — name,
 // continent, flag, emblem, capital (also marked on the map) and currency —
 // in the same overlay style as the game's map rounds. Header mirrors the
@@ -12,7 +12,7 @@ import { createHamburgerMenu } from "./hamburgerMenu.js";
 
 const BASE = import.meta.env?.BASE_URL ?? "/";
 
-export function renderMapExplore(container, onBack) {
+export function renderMapExplore(container, { datasetKey = "countries", onBack, onHome }) {
   container.innerHTML = "";
 
   const root = document.createElement("div");
@@ -23,7 +23,7 @@ export function renderMapExplore(container, onBack) {
 
   const label = document.createElement("span");
   label.className = "explore-label";
-  label.textContent = "Tap a country";
+  label.textContent = { "us-states": "Tap a state", china: "Tap a province" }[datasetKey] ?? "Tap a country";
 
   const randomButton = document.createElement("button");
   randomButton.type = "button";
@@ -31,17 +31,25 @@ export function renderMapExplore(container, onBack) {
   randomButton.textContent = "Random";
   randomButton.disabled = true; // until the map has loaded
 
+  // Back (to the map choice screen) and Home, behind the ☰ menu like the
+  // game screen's Restart/Back/Home.
+  const leave = (to) => {
+    cancelled = true;
+    map?.destroy();
+    to();
+  };
+  const backButton = document.createElement("button");
+  backButton.type = "button";
+  backButton.className = "exit-button";
+  backButton.textContent = "Back";
+  backButton.addEventListener("click", () => leave(onBack));
   const homeButton = document.createElement("button");
   homeButton.type = "button";
   homeButton.className = "exit-button";
   homeButton.textContent = "Home";
-  homeButton.addEventListener("click", () => {
-    cancelled = true;
-    map?.destroy();
-    onBack();
-  });
+  homeButton.addEventListener("click", () => leave(onHome ?? onBack));
 
-  header.append(label, randomButton, createHamburgerMenu(root, [homeButton], { label: "Map menu" }));
+  header.append(label, randomButton, createHamburgerMenu(root, [backButton, homeButton], { label: "Map menu" }));
 
   // Same structure as a game map round (game.js): the map fills the area
   // and the info card floats over its top edge, so showing/hiding the card
@@ -80,7 +88,10 @@ export function renderMapExplore(container, onBack) {
 
     const sub = document.createElement("div");
     sub.className = "explore-card-sub";
-    sub.textContent = [item.region, item.subregion].filter(Boolean).join(" · ");
+    // Whatever classification the dataset has: a China division's type
+    // ("Autonomous Region"), a country's continent · sub-region, nothing
+    // for US states.
+    sub.textContent = item.type ?? [item.region, item.subregion].filter(Boolean).join(" · ");
 
     const images = document.createElement("div");
     images.className = "explore-card-images";
@@ -118,7 +129,7 @@ export function renderMapExplore(container, onBack) {
     map?.showCapital(item.capitalLatLng ?? null);
   }
 
-  loadDataset("countries")
+  loadDataset(datasetKey)
     .then((dataset) => {
       // Back was clicked while the data was still loading — building the
       // map now would mount it into a detached node and leak the whole
@@ -130,6 +141,7 @@ export function renderMapExplore(container, onBack) {
         topology: dataset.topology,
         objectKey: dataset.topologyObject,
         dashedBorders: dataset.dashedBorders,
+        projection: dataset.projection,
         // Only real items are clickable/bright — scenery shapes with no
         // item behind them (Antarctica and the other Antarctic-region
         // territories) render muted and inert, as in every game.

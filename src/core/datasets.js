@@ -32,14 +32,31 @@ export const datasetMeta = {
     topologyUrl: `${import.meta.env?.BASE_URL ?? "/"}data/us-states-topology.json`,
     topologyObject: "states",
     attributeKeys: ["name", "location", "capital"],
-    // Pre-projected (Albers USA, Alaska/Hawaii insets already applied) —
+    // Real lon/lat drawn through d3's Albers USA (Alaska/Hawaii insets) —
     // see WorldMap.js's PROJECTIONS map and generate-us-states-data.mjs.
-    projection: "identity",
+    // (It used to ship pre-projected with an "identity" projection, which
+    // ruled out pin modes and the capital marker.)
+    projection: "albersUsa",
     // Not picked from the subject step like other datasets — reached via
     // the region step's America branch instead (regions.js), which is
     // also why there's nothing left to filter by once you're here: no
     // further region breakdown, and "sovereignty" isn't a concept that
     // applies to US states.
+    supportsRegionFilter: false,
+    supportsSovereigntyFilter: false,
+  },
+  china: {
+    key: "china",
+    label: "China (provinces)",
+    itemsUrl: `${import.meta.env?.BASE_URL ?? "/"}data/china.json`,
+    topologyUrl: `${import.meta.env?.BASE_URL ?? "/"}data/china-topology.json`,
+    topologyObject: "provinces",
+    attributeKeys: ["name", "location", "capital"],
+    // Real lon/lat drawn through an equal-area conic centred on China (see
+    // WorldMap.js's PROJECTIONS) — so unlike us-states, pin modes work.
+    projection: "china",
+    // Reached via the region step's Asia branch (regions.js), exactly like
+    // US States under America: nothing further to filter by once here.
     supportsRegionFilter: false,
     supportsSovereigntyFilter: false,
   },

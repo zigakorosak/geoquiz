@@ -94,18 +94,27 @@ export const regions = [
   {
     key: "asia",
     label: "Asia",
-    match: (item) => (item.region === "Asia" && !EUROPE_ONLY.has(item.name)) || ASIA_BONUS.has(item.name),
-    // Same pattern as Europe's own fitExclude (see EUROPE_FIT_EXCLUDE):
-    // Russia is Asia-bonus-eligible (ASIA_BONUS above) and its topology
-    // shape spans the antimeridian (lon -180 to 179.88 — the whole map's
-    // width), which dominates any fit that includes it. Measured directly
-    // (jsdom, 800×500): fit scale goes from 1.25x world scale to 2.91x
-    // once Russia is excluded from framing — Russia stays fully in the
-    // region's match, rendered and playable, just not part of what decides
-    // the starting zoom. The resulting frame's own natural anchors
-    // (Kazakhstan north, Indonesia south, Japan east, Türkiye west) needed
-    // no further exclusions.
-    fitExclude: new Set(["Russia"]),
+    children: [
+      {
+        key: "asia-all",
+        label: "All of Asia",
+        match: (item) => (item.region === "Asia" && !EUROPE_ONLY.has(item.name)) || ASIA_BONUS.has(item.name),
+        // Same pattern as Europe's own fitExclude (see EUROPE_FIT_EXCLUDE):
+        // Russia is Asia-bonus-eligible (ASIA_BONUS above) and its topology
+        // shape spans the antimeridian (lon -180 to 179.88 — the whole map's
+        // width), which dominates any fit that includes it. Measured directly
+        // (jsdom, 800×500): fit scale goes from 1.25x world scale to 2.91x
+        // once Russia is excluded from framing — Russia stays fully in the
+        // region's match, rendered and playable, just not part of what decides
+        // the starting zoom. The resulting frame's own natural anchors
+        // (Kazakhstan north, Indonesia south, Japan east, Türkiye west) needed
+        // no further exclusions.
+        fitExclude: new Set(["Russia"]),
+      },
+      // Switches to the China provinces dataset — same mechanism as
+      // America's "US States" entry below (see gameWizard.js).
+      { key: "china", label: "China (provinces)", datasetKey: "china" },
+    ],
   },
   {
     key: "africa",

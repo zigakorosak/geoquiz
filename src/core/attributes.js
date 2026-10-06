@@ -34,7 +34,19 @@ export const attributes = {
     promptKind: "text",
     answerKinds: ["text-guess", "multiple-choice"],
     getValue: (item) => item.name,
-    checkAnswer: (guess, item) => normalizeText(guess) === normalizeText(item.name),
+    // `aliases` (optional, per item) are other accepted spellings — China's
+    // provinces display as "Guangdong (广东, Guǎngdōng)" but accept a typed
+    // "Guangdong", "Guǎngdōng"/"guangdong" or "广东" too. normalizeText
+    // strips everything but a-z/0-9, which would reduce Chinese characters
+    // to an empty string, so a trimmed exact comparison covers those, and
+    // an empty normalized guess never matches anything.
+    checkAnswer: (guess, item) => {
+      const g = normalizeText(guess);
+      const raw = String(guess).trim();
+      return [item.name, ...(item.aliases ?? [])].some(
+        (n) => (g !== "" && g === normalizeText(n)) || (raw !== "" && raw === n)
+      );
+    },
     formatAnswer: (item) => item.name,
   },
   capital: {
@@ -57,8 +69,9 @@ export const attributes = {
     // "map-pin" (drop a pin on a borderless map, scored on which country's
     // shape it lands in) only makes sense for datasets with real
     // geographic coordinates — gameWizard.js prunes it back out for a
-    // dataset using a pre-projected "identity" projection (US states),
-    // where there's no lon/lat to invert a click to.
+    // dataset using a pre-projected "identity" projection, where there's
+    // no lon/lat to invert a click to. (No current dataset is one — US
+    // states were, until they moved to a runtime Albers USA projection.)
     answerKinds: ["map-click", "map-pin"],
     getValue: (item) => item.id,
     checkAnswer: (guessId, item) => guessId === item.id,

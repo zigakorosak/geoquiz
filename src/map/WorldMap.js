@@ -5,7 +5,7 @@
 // matching item ids works the same way, so a second map-based dataset
 // (US states) reuses it with only its `projection` config differing.
 
-import { geoNaturalEarth1, geoIdentity, geoPath } from "d3-geo";
+import { geoNaturalEarth1, geoIdentity, geoConicEqualArea, geoAlbersUsa, geoPath } from "d3-geo";
 import { feature, mesh, merge } from "topojson-client";
 import { zoom, zoomIdentity } from "d3-zoom";
 import { select } from "d3-selection";
@@ -16,12 +16,21 @@ const SVG_NS = "http://www.w3.org/2000/svg";
 // never has to import d3. "naturalEarth1" (default) is a whole-world
 // projection expecting raw lon/lat input, used for the countries dataset.
 // "identity" is a pass-through for topologies that arrive already
-// projected — us-states' topology is pre-built with Albers USA (Alaska/
-// Hawaii relocated into their conventional insets), so it just needs its
-// existing flat coordinates fit to the viewport, not projected again.
+// projected (fit to the viewport, not projected again) — no current
+// dataset uses it; US states did, until they moved to "albersUsa".
 const PROJECTIONS = {
   naturalEarth1: () => geoNaturalEarth1(),
   identity: () => geoIdentity(),
+  // China's provinces (generate-china-data.mjs): an equal-area conic
+  // centred on China — the standard way China is drawn, without the
+  // north-west stretch a world projection gives Xinjiang/Heilongjiang.
+  // Real lon/lat in, so pin modes and capital distances work as on the
+  // world map.
+  china: () => geoConicEqualArea().rotate([-105, 0]).parallels([25, 47]),
+  // US states (generate-us-states-data.mjs): Albers for the lower 48 with
+  // Alaska and Hawaii moved into insets. Real lon/lat in, and invertible
+  // inside the insets too, so pin modes and capital distances work.
+  albersUsa: () => geoAlbersUsa(),
 };
 // Both thresholds below are *ratios* against a map's own "even-split"
 // reference area — (viewport width × height) / playable feature count,
@@ -456,14 +465,15 @@ export class WorldMap {
     this.pinLonLat = null;
     this._instanceId = `wm${instanceCounter++}`;
 
-    // Infinite horizontal wrap applies to any lon/lat-projected view. Only
-    // a pre-projected "identity" topology (US states' Albers projection,
-    // with Alaska/Hawaii relocated into fixed insets) has no periodic
-    // lon/lat structure to wrap at all. See _wrapTransform/_applyTransform
+    // Infinite horizontal wrap applies only to the whole-world view (see
+    // the wrapEnabled line below). See _wrapTransform/_applyTransform
     // for how the wrap itself works, and the per-feature loop below for
     // how "one copy" of the map's content is built once and reused for
     // all three.
-    this.wrapEnabled = (projection ?? "naturalEarth1") !== "identity";
+    // Only the whole-world map wraps — a single-country map (US states,
+    // China's provinces) has no antimeridian to scroll across, and ghost
+    // copies one map-width apart would just show the country repeated.
+    this.wrapEnabled = (projection ?? "naturalEarth1") === "naturalEarth1";
     this._wrapPeriod = null; // one world-width, in projected px at the current fitSize scale — set in _reflow
     this._homeLeft = null; // left edge of that same world, in the same units
 
@@ -732,7 +742,11 @@ export class WorldMap {
     this.revealPath.setAttribute("class", "country");
     this.revealPath.style.pointerEvents = "none";
     this._revealedFeatureId = null; // kept so _reflow can re-project it
-    if (this.pinMode) this.contentGroup.appendChild(this.revealPath);
+    // Under the pin-to-target line, not over it: appended after it, the
+    // revealed target's fill covered the line's last stretch, so the line
+    // visibly stopped at the target's border instead of reaching the
+    // capital marker.
+    if (this.pinMode) this.contentGroup.insertBefore(this.revealPath, this.pinBorderLine);
 
     // Data-driven, not hardcoded to any specific pair: dashedBorders is a
     // list of [idA, idB] country-id pairs (see core/datasets.js) whose
@@ -1505,6 +1519,12 @@ export class WorldMap {
     // k differs from the current one (a resize reset, the constructor's
     // initial framing), enter frozen-zoom mode for a spurious 200ms of
     // CSS-scaled blur before the settle baked it.
+    // Clamp into the pan limits first, as a gesture would — zoom.transform()
+    // applies a transform unconstrained, and a region framing near the
+    // map's top/bottom edge (North America, Oceania) otherwise started the
+    // game outside the allowed range: the first drag then had d3 snap the
+    // view back by up to ~150px. Same fix as focusOn.
+    target = this.zoomBehavior.constrain()(target, [[0, 0], [width, height]], this.zoomBehavior.translateExtent());
     this._suppressGestureHooks = true;
     this._selection.call(this.zoomBehavior.transform, target);
     this._suppressGestureHooks = false;
@@ -2117,7 +2137,18 @@ export class WorldMap {
     const k = Math.max(MIN_ZOOM, Math.min(60, Math.min(width / bw, availH / bh) * 0.6));
     const cx = (b[0][0] + b[1][0]) / 2;
     const cy = (b[0][1] + b[1][1]) / 2;
-    const target = zoomIdentity.translate(width / 2 - k * cx, height - availH / 2 - k * cy).scale(k);
+    const unclamped = zoomIdentity.translate(width / 2 - k * cx, height - availH / 2 - k * cy).scale(k);
+    // Clamp into the pan limits (translateExtent) the same way a gesture
+    // would. zoom.transform() applies a transform as-is, unconstrained, so
+    // framing a state near the edge of a non-wrapping map (California,
+    // Maine) left the view outside the allowed range — and the very first
+    // drag then had d3 snap it back by hundreds of px, landing the click
+    // on a different state.
+    const target = this.zoomBehavior.constrain()(
+      unclamped,
+      [[0, 0], [width, height]],
+      this.zoomBehavior.translateExtent()
+    );
     this._suppressGestureHooks = true;
     this._selection.call(this.zoomBehavior.transform, target);
     this._suppressGestureHooks = false;

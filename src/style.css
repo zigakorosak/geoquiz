@@ -559,6 +559,14 @@ button:disabled {
   color: var(--text);
 }
 
+/* Question text over the map scales with screen width (2rem on desktop,
+   down to 1.25rem on a phone) — long names like "Inner Mongolia (内蒙古,
+   Nèi Měnggǔ)" otherwise wrapped to two big lines on a phone and covered
+   the top of the map. */
+.map-overlay .prompt-text {
+  font-size: clamp(1.25rem, 6vw, 2rem);
+}
+
 /* A question image (flag/emblem) floating over the map is drawn smaller
    than in a text-answer round: at full size it covered a large part of
    the map — often the very region being asked about. */

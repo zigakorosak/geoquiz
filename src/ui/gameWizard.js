@@ -136,7 +136,7 @@ const answerKindLabels = {
 function availableAnswerKinds(config) {
   // "map-pin" needs a real lon/lat to invert a click to and score a
   // distance from — meaningless for a dataset using a pre-projected
-  // "identity" projection (US states), so it's pruned out here rather
+  // "identity" projection (none today; US states used to be), so it's pruned out here rather
   // than never having been declared on the "location" attribute at all;
   // attributes.js stays dataset-agnostic, datasetMeta.projection is
   // already the signal that distinguishes the two cases.
@@ -394,7 +394,7 @@ function showSubRegionStep(container, config, goBack, onExit) {
         // answerKind was picked back when the dataset was still the
         // *previous* one (answer type comes before region in the wizard),
         // so a choice only valid there — "map-pin" needs real lon/lat,
-        // meaningless for an "identity"-projection dataset like US States
+        // meaningless for an "identity"-projection dataset
         // — has to be re-validated now rather than carried through as-is.
         const answerKind =
           config.answerKind === "map-pin" && meta.projection === "identity" ? "map-click" : config.answerKind;

@@ -2,256 +2,457 @@
   {
     "id": "01",
     "name": "Alabama",
-    "capital": "Montgomery"
+    "capital": "Montgomery",
+    "capitalLatLng": [
+      32.377,
+      -86.3
+    ]
   },
   {
     "id": "02",
     "name": "Alaska",
-    "capital": "Juneau"
+    "capital": "Juneau",
+    "capitalLatLng": [
+      58.302,
+      -134.42
+    ]
   },
   {
     "id": "04",
     "name": "Arizona",
-    "capital": "Phoenix"
+    "capital": "Phoenix",
+    "capitalLatLng": [
+      33.448,
+      -112.074
+    ]
   },
   {
     "id": "05",
     "name": "Arkansas",
-    "capital": "Little Rock"
+    "capital": "Little Rock",
+    "capitalLatLng": [
+      34.746,
+      -92.29
+    ]
   },
   {
     "id": "06",
     "name": "California",
-    "capital": "Sacramento"
+    "capital": "Sacramento",
+    "capitalLatLng": [
+      38.576,
+      -121.494
+    ]
   },
   {
     "id": "08",
     "name": "Colorado",
-    "capital": "Denver"
+    "capital": "Denver",
+    "capitalLatLng": [
+      39.739,
+      -104.985
+    ]
   },
   {
     "id": "09",
     "name": "Connecticut",
-    "capital": "Hartford"
+    "capital": "Hartford",
+    "capitalLatLng": [
+      41.764,
+      -72.682
+    ]
   },
   {
     "id": "10",
     "name": "Delaware",
-    "capital": "Dover"
+    "capital": "Dover",
+    "capitalLatLng": [
+      39.157,
+      -75.52
+    ]
   },
   {
     "id": "11",
     "name": "District of Columbia",
-    "capital": null
+    "capital": null,
+    "capitalLatLng": null
   },
   {
     "id": "12",
     "name": "Florida",
-    "capital": "Tallahassee"
+    "capital": "Tallahassee",
+    "capitalLatLng": [
+      30.438,
+      -84.281
+    ]
   },
   {
     "id": "13",
     "name": "Georgia",
-    "capital": "Atlanta"
+    "capital": "Atlanta",
+    "capitalLatLng": [
+      33.749,
+      -84.388
+    ]
   },
   {
     "id": "15",
     "name": "Hawaii",
-    "capital": "Honolulu"
+    "capital": "Honolulu",
+    "capitalLatLng": [
+      21.307,
+      -157.858
+    ]
   },
   {
     "id": "16",
     "name": "Idaho",
-    "capital": "Boise"
+    "capital": "Boise",
+    "capitalLatLng": [
+      43.615,
+      -116.202
+    ]
   },
   {
     "id": "17",
     "name": "Illinois",
-    "capital": "Springfield"
+    "capital": "Springfield",
+    "capitalLatLng": [
+      39.798,
+      -89.654
+    ]
   },
   {
     "id": "18",
     "name": "Indiana",
-    "capital": "Indianapolis"
+    "capital": "Indianapolis",
+    "capitalLatLng": [
+      39.768,
+      -86.158
+    ]
   },
   {
     "id": "19",
     "name": "Iowa",
-    "capital": "Des Moines"
+    "capital": "Des Moines",
+    "capitalLatLng": [
+      41.591,
+      -93.604
+    ]
   },
   {
     "id": "20",
     "name": "Kansas",
-    "capital": "Topeka"
+    "capital": "Topeka",
+    "capitalLatLng": [
+      39.048,
+      -95.678
+    ]
   },
   {
     "id": "21",
     "name": "Kentucky",
-    "capital": "Frankfort"
+    "capital": "Frankfort",
+    "capitalLatLng": [
+      38.187,
+      -84.875
+    ]
   },
   {
     "id": "22",
     "name": "Louisiana",
-    "capital": "Baton Rouge"
+    "capital": "Baton Rouge",
+    "capitalLatLng": [
+      30.457,
+      -91.187
+    ]
   },
   {
     "id": "23",
     "name": "Maine",
-    "capital": "Augusta"
+    "capital": "Augusta",
+    "capitalLatLng": [
+      44.307,
+      -69.782
+    ]
   },
   {
     "id": "24",
     "name": "Maryland",
-    "capital": "Annapolis"
+    "capital": "Annapolis",
+    "capitalLatLng": [
+      38.979,
+      -76.491
+    ]
   },
   {
     "id": "25",
     "name": "Massachusetts",
-    "capital": "Boston"
+    "capital": "Boston",
+    "capitalLatLng": [
+      42.358,
+      -71.064
+    ]
   },
   {
     "id": "26",
     "name": "Michigan",
-    "capital": "Lansing"
+    "capital": "Lansing",
+    "capitalLatLng": [
+      42.733,
+      -84.555
+    ]
   },
   {
     "id": "27",
     "name": "Minnesota",
-    "capital": "Saint Paul"
+    "capital": "Saint Paul",
+    "capitalLatLng": [
+      44.955,
+      -93.102
+    ]
   },
   {
     "id": "28",
     "name": "Mississippi",
-    "capital": "Jackson"
+    "capital": "Jackson",
+    "capitalLatLng": [
+      32.303,
+      -90.182
+    ]
   },
   {
     "id": "29",
     "name": "Missouri",
-    "capital": "Jefferson City"
+    "capital": "Jefferson City",
+    "capitalLatLng": [
+      38.579,
+      -92.173
+    ]
   },
   {
     "id": "30",
     "name": "Montana",
-    "capital": "Helena"
+    "capital": "Helena",
+    "capitalLatLng": [
+      46.586,
+      -112.018
+    ]
   },
   {
     "id": "31",
     "name": "Nebraska",
-    "capital": "Lincoln"
+    "capital": "Lincoln",
+    "capitalLatLng": [
+      40.808,
+      -96.7
+    ]
   },
   {
     "id": "32",
     "name": "Nevada",
-    "capital": "Carson City"
+    "capital": "Carson City",
+    "capitalLatLng": [
+      39.164,
+      -119.766
+    ]
   },
   {
     "id": "33",
     "name": "New Hampshire",
-    "capital": "Concord"
+    "capital": "Concord",
+    "capitalLatLng": [
+      43.207,
+      -71.538
+    ]
   },
   {
     "id": "34",
     "name": "New Jersey",
-    "capital": "Trenton"
+    "capital": "Trenton",
+    "capitalLatLng": [
+      40.22,
+      -74.77
+    ]
   },
   {
     "id": "35",
     "name": "New Mexico",
-    "capital": "Santa Fe"
+    "capital": "Santa Fe",
+    "capitalLatLng": [
+      35.682,
+      -105.94
+    ]
   },
   {
     "id": "36",
     "name": "New York",
-    "capital": "Albany"
+    "capital": "Albany",
+    "capitalLatLng": [
+      42.653,
+      -73.757
+    ]
   },
   {
     "id": "37",
     "name": "North Carolina",
-    "capital": "Raleigh"
+    "capital": "Raleigh",
+    "capitalLatLng": [
+      35.78,
+      -78.639
+    ]
   },
   {
     "id": "38",
     "name": "North Dakota",
-    "capital": "Bismarck"
+    "capital": "Bismarck",
+    "capitalLatLng": [
+      46.821,
+      -100.783
+    ]
   },
   {
     "id": "39",
     "name": "Ohio",
-    "capital": "Columbus"
+    "capital": "Columbus",
+    "capitalLatLng": [
+      39.961,
+      -82.999
+    ]
   },
   {
     "id": "40",
     "name": "Oklahoma",
-    "capital": "Oklahoma City"
+    "capital": "Oklahoma City",
+    "capitalLatLng": [
+      35.492,
+      -97.503
+    ]
   },
   {
     "id": "41",
     "name": "Oregon",
-    "capital": "Salem"
+    "capital": "Salem",
+    "capitalLatLng": [
+      44.938,
+      -123.03
+    ]
   },
   {
     "id": "42",
     "name": "Pennsylvania",
-    "capital": "Harrisburg"
+    "capital": "Harrisburg",
+    "capitalLatLng": [
+      40.264,
+      -76.884
+    ]
   },
   {
     "id": "44",
     "name": "Rhode Island",
-    "capital": "Providence"
+    "capital": "Providence",
+    "capitalLatLng": [
+      41.831,
+      -71.415
+    ]
   },
   {
     "id": "45",
     "name": "South Carolina",
-    "capital": "Columbia"
+    "capital": "Columbia",
+    "capitalLatLng": [
+      34,
+      -81.033
+    ]
   },
   {
     "id": "46",
     "name": "South Dakota",
-    "capital": "Pierre"
+    "capital": "Pierre",
+    "capitalLatLng": [
+      44.367,
+      -100.346
+    ]
   },
   {
     "id": "47",
     "name": "Tennessee",
-    "capital": "Nashville"
+    "capital": "Nashville",
+    "capitalLatLng": [
+      36.166,
+      -86.784
+    ]
   },
   {
     "id": "48",
     "name": "Texas",
-    "capital": "Austin"
+    "capital": "Austin",
+    "capitalLatLng": [
+      30.275,
+      -97.74
+    ]
   },
   {
     "id": "49",
     "name": "Utah",
-    "capital": "Salt Lake City"
+    "capital": "Salt Lake City",
+    "capitalLatLng": [
+      40.777,
+      -111.888
+    ]
   },
   {
     "id": "50",
     "name": "Vermont",
-    "capital": "Montpelier"
+    "capital": "Montpelier",
+    "capitalLatLng": [
+      44.262,
+      -72.581
+    ]
   },
   {
     "id": "51",
     "name": "Virginia",
-    "capital": "Richmond"
+    "capital": "Richmond",
+    "capitalLatLng": [
+      37.539,
+      -77.434
+    ]
   },
   {
     "id": "53",
     "name": "Washington",
-    "capital": "Olympia"
+    "capital": "Olympia",
+    "capitalLatLng": [
+      47.035,
+      -122.905
+    ]
   },
   {
     "id": "54",
     "name": "West Virginia",
-    "capital": "Charleston"
+    "capital": "Charleston",
+    "capitalLatLng": [
+      38.336,
+      -81.612
+    ]
   },
   {
     "id": "55",
     "name": "Wisconsin",
-    "capital": "Madison"
+    "capital": "Madison",
+    "capitalLatLng": [
+      43.075,
+      -89.384
+    ]
   },
   {
     "id": "56",
     "name": "Wyoming",
-    "capital": "Cheyenne"
+    "capital": "Cheyenne",
+    "capitalLatLng": [
+      41.14,
+      -104.82
+    ]
   }
 ]
