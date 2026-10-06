@@ -191,6 +191,27 @@ button:disabled {
 
 /* ---------- Wizard screens (home, games flow, settings) ---------- */
 
+/* Choice screens (home, every games-wizard step, the map chooser —
+   screenKit.js): the options stack one under the other in a single
+   horizontally centred column; the block starts at the top of the
+   screen. */
+.wizard-options {
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-self: center;
+  width: min(100%, 20rem);
+}
+
+.wizard-options .wizard-option {
+  width: 100%;
+}
+
+/* Back lines up with the left edge of the centred option column instead
+   of the screen's far left. */
+.wizard-screen .wizard-back {
+  margin-inline-start: max(0px, calc((100% - 20rem) / 2));
+}
+
 .wizard-back {
   align-self: flex-start;
   font-size: 0.9rem;
