@@ -11,6 +11,9 @@
 # if there are local commits that haven't been pushed yet.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib/timing.sh
+timer_start
+trap 'timer_report "Deploy" $?' EXIT
 
 branch="$(git branch --show-current)"
 workflow="Deploy to Namecheap"

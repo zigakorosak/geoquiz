@@ -9,6 +9,9 @@
 # sequence typed out by hand every time.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib/timing.sh
+timer_start
+trap 'timer_report "Push" $?' EXIT
 
 message="${1:?Usage: scripts/git-push.sh \"commit message\"}"
 

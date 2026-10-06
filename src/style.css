@@ -811,6 +811,39 @@ button:disabled {
   stroke-width: 1.5;
 }
 
+/* HTML marker dots over the map (WorldMap.js's markerLayer): the pin and
+   the capital marker, drawn outside the svg so they keep a constant
+   on-screen size through zoom gestures. Each dot is positioned by a
+   translate to its centre; the negative margin centres the box on it.
+   Sizes match PIN_RADIUS_PX (4px radius) and the old circles' styling. */
+.marker-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.marker-dot {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 9px;
+  height: 9px;
+  margin: -4.5px 0 0 -4.5px;
+  border-radius: 50%;
+  border: 1px solid #fff;
+  box-sizing: border-box;
+  will-change: transform;
+}
+
+.marker-dot--pin {
+  background: var(--accent);
+}
+
+.marker-dot--capital {
+  background: var(--correct);
+}
+
 .pin-marker {
   fill: var(--accent);
   stroke: #fff;

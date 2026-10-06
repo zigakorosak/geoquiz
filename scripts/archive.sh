@@ -5,6 +5,9 @@
 # Usage: scripts/archive.sh [short-label]
 set -euo pipefail
 cd "$(dirname "$0")/.."
+. scripts/lib/timing.sh
+timer_start
+trap 'timer_report "Archive" $?' EXIT
 
 label="${1:-snapshot}"
 timestamp=$(date +%Y-%m-%d_%H%M%S)

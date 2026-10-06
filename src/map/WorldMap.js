@@ -678,6 +678,45 @@ export class WorldMap {
     this.contentGroup.appendChild(this.capitalMarker);
     this._revealedCapitalPoint = null; // lon/lat — re-projected on every _reflow, see below
 
+    // The two circles above stay the *source of truth* for marker state
+    // (every code path sets their cx/cy/display, and _reflow re-projects
+    // them) but are never painted themselves. What's painted is an HTML
+    // dot per circle per world copy, in a layer over the svg, positioned
+    // in screen px from the current transform (_syncMarkerDots). Why: the
+    // svg circles live inside the zoomed content, so during a frozen zoom
+    // gesture (the whole svg CSS-scaled as one raster) they scaled with
+    // the map — the pin ballooned from 4px to 60+px mid-pinch and snapped
+    // back at settle. Counter-scaling the circle's `r` every tick would
+    // dirty the svg and force the full-scene repaint frozen zoom exists to
+    // avoid; moving a few tiny HTML dots is a cheap compositor update, and
+    // keeps them a constant size through every frame of every gesture.
+    // `visibility` (a presentation attribute) rather than CSS, so the
+    // ghost copies' <use> clones inherit it too.
+    this.pinMarker.setAttribute("visibility", "hidden");
+    this.capitalMarker.setAttribute("visibility", "hidden");
+    this.markerLayer = document.createElement("div");
+    this.markerLayer.className = "marker-layer";
+    this._markerDots = [];
+    for (const [circle, cls] of [[this.pinMarker, "marker-dot marker-dot--pin"], [this.capitalMarker, "marker-dot marker-dot--capital"]]) {
+      const copies = [];
+      for (let i = 0; i < 3; i++) {
+        const dot = document.createElement("div");
+        dot.className = cls;
+        dot.hidden = true;
+        this.markerLayer.appendChild(dot);
+        copies.push(dot);
+      }
+      this._markerDots.push({ circle, copies });
+    }
+    // Any change to a circle's position/visibility (pin drop, reveal,
+    // reflow re-projection, clearMarks) re-syncs the dots — no need to
+    // touch every call site that moves a marker.
+    this.viewportEl.appendChild(this.markerLayer);
+    this._markerObserver = new MutationObserver(() => this._syncMarkerDots());
+    for (const { circle } of this._markerDots) {
+      this._markerObserver.observe(circle, { attributes: true, attributeFilter: ["cx", "cy", "style"] });
+    }
+
     // Pin mode renders NO per-country paths at all (see the per-feature
     // loop below) — `pinLandmass` is the whole map. This single spare path
     // is what `markResult` draws the post-confirm target reveal into
@@ -962,11 +1001,13 @@ export class WorldMap {
           const dx = t.x - scale * b.x - this._overscanX * (scale - 1);
           const dy = t.y - scale * b.y - this._overscanY * (scale - 1);
           this.svg.style.transform = `translate(${dx}px, ${dy}px) scale(${scale})`;
+          this._syncMarkerDots();
           return;
         }
 
         this.currentTransform = this._wrapTransform(t);
         this._applyTransform(this.currentTransform);
+        this._syncMarkerDots();
 
         // Everything below exists only to counter-scale against `k` — so
         // when `k` didn't change (a pure pan/drag, the most common gesture
@@ -2083,6 +2124,37 @@ export class WorldMap {
     this._onGestureSettle();
   }
 
+  // Positions the HTML marker dots (see the constructor) over wherever
+  // their svg circles currently sit on screen: home copy, plus one ghost
+  // copy either side when wrapping (the same copies the map itself draws),
+  // each hidden when off-screen. Pure screen-space math from
+  // currentTransform, which is exact in both the live and frozen-zoom
+  // paths (the frozen CSS delta is chosen so screen positions match it).
+  _syncMarkerDots() {
+    if (!this._markerDots) return;
+    const t = this.currentTransform;
+    const w = this._lastSize?.width ?? 0;
+    const h = this._lastSize?.height ?? 0;
+    const period = this.wrapEnabled && this._wrapPeriod ? this._wrapPeriod * t.k : 0;
+    for (const { circle, copies } of this._markerDots) {
+      const shown = circle.style.display !== "none" && circle.hasAttribute("cx");
+      const cx = Number(circle.getAttribute("cx"));
+      const cy = Number(circle.getAttribute("cy"));
+      copies.forEach((dot, i) => {
+        const offset = i - 1; // -1, 0, +1 world copies
+        if (!shown || (offset !== 0 && !period)) {
+          dot.hidden = true;
+          return;
+        }
+        const x = t.x + t.k * cx + offset * period;
+        const y = t.y + t.k * cy;
+        const visible = x > -20 && x < w + 20 && y > -20 && y < h + 20;
+        dot.hidden = !visible;
+        if (visible) dot.style.transform = `translate(${x}px, ${y}px)`;
+      });
+    }
+  }
+
   getTransform() {
     return this.currentTransform;
   }
@@ -2199,6 +2271,7 @@ export class WorldMap {
     clearTimeout(this._settleTimer);
     if (this._hoverRafId !== null) cancelAnimationFrame(this._hoverRafId);
     this._resizeObserver.disconnect();
+    this._markerObserver?.disconnect();
     this._selection.on(".zoom", null);
     this.viewportEl.remove();
   }
