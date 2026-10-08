@@ -237,6 +237,26 @@ button:disabled {
   color: var(--text-dim);
 }
 
+/* How to Play (howToPlay.js): readable text column, same width as the
+   menus' option column would allow on desktop but not cramped. */
+.how-to-play .menu-step {
+  width: min(100%, 38rem);
+  align-self: center;
+}
+
+.how-to-play ul {
+  margin: 0;
+  padding-left: 1.2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  line-height: 1.45;
+}
+
+.how-to-play .wizard-back {
+  margin-inline-start: max(0px, calc((100% - 38rem) / 2));
+}
+
 /* ---------- Map explore screen ---------- */
 
 .explore-label {

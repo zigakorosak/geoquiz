@@ -4,11 +4,12 @@ import { startGameWizard } from "./ui/gameWizard.js";
 import { renderMapExplore } from "./ui/mapExplore.js";
 import { renderSettings } from "./ui/settingsScreen.js";
 import { renderChoiceScreen } from "./ui/screenKit.js";
+import { renderHowToPlay } from "./ui/howToPlay.js";
 
 const app = document.querySelector("#app");
 
 function showHome() {
-  renderHome(app, { onGames: showGames, onMap: showMap, onSettings: showSettings });
+  renderHome(app, { onGames: showGames, onMap: showMap, onHowTo: showHowTo, onSettings: showSettings });
 }
 
 function showGames() {
@@ -30,6 +31,10 @@ function showMap() {
     onPick: (m) => renderMapExplore(app, { datasetKey: m.datasetKey, onBack: showMap, onHome: showHome }),
     onBack: showHome,
   });
+}
+
+function showHowTo() {
+  renderHowToPlay(app, showHome);
 }
 
 function showSettings() {
