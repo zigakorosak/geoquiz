@@ -109,6 +109,9 @@ export function renderMapExplore(container, { datasetKey = "countries", onBack, 
     const facts = document.createElement("dl");
     facts.className = "explore-card-facts";
     for (const [term, value] of [
+      // China's divisions carry what their name means (from the reference
+      // map in docs/reference/, via generate-china-data.mjs).
+      ["Name means", item.meaning ? `“${item.meaning}”` : null],
       ["Capital", item.capital],
       ["Currency", item.currency],
     ]) {
@@ -124,6 +127,12 @@ export function renderMapExplore(container, { datasetKey = "countries", onBack, 
     if (sub.textContent) card.append(sub);
     if (images.childElementCount) card.append(images);
     if (facts.childElementCount) card.append(facts);
+    if (item.meaningNote) {
+      const note = document.createElement("div");
+      note.className = "explore-card-note";
+      note.textContent = item.meaningNote;
+      card.append(note);
+    }
     card.hidden = false;
     // The capital's location, as a dot on the map itself.
     map?.showCapital(item.capitalLatLng ?? null);

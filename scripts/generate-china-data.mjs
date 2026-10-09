@@ -113,6 +113,53 @@ const ZH = {
   Zhejiang: ["浙江", "Zhèjiāng"],
 };
 
+// What each name means, transcribed from docs/reference/
+// china-province-name-meanings.jpeg (a labelled map of the provinces'
+// name etymologies). [meaning, optional footnote]. Where the picture gives
+// only a footnote (Jilin, Taiwan, Guizhou), the meaning line summarises it.
+// Obvious typos on the picture are corrected ("Tebetians", "Anicent").
+// Hong Kong and Macau aren't on the picture: theirs are the standard
+// literal readings of 香港 / 澳门.
+const MEANINGS = {
+  Anhui: ["Realm of the cities Anqing and Huizhou"],
+  Beijing: ["Northern Capital"],
+  Chongqing: ["The Twofold Joy"],
+  Fujian: ["Realm of the cities Fuzhou and Jianzhou"],
+  Gansu: ["Realm of the cities Ganzhou and Suzhou"],
+  Guangdong: ["East of the ancient Guangxin City"],
+  Guangxi: ["West of the ancient Guangxin City", "Guangxin: “Emperor's far-reaching grace”."],
+  Guizhou: [
+    "Origin uncertain",
+    "Perhaps derived from the Luoshi Ghost Realm, a Yi tribal state ruled by sorcerers.",
+  ],
+  Hainan: ["South of the Sea"],
+  Hebei: ["North of the Yellow River"],
+  Heilongjiang: ["The Dark Dragon River"],
+  Henan: ["South of the Yellow River"],
+  "Hong Kong": ["Fragrant Harbour"],
+  Hubei: ["North of Dongting Lake"],
+  Hunan: ["South of Dongting Lake"],
+  "Inner Mongolia": ["Inner Mongolia"],
+  Jiangsu: ["Realm of the cities Jiangning and Suzhou"],
+  Jiangxi: ["The Western Lands South of the Yangtze"],
+  Jilin: ["Along the river", "Transcribed from the Manchu Girin ula, “along the river”."],
+  Liaoning: ["Peace of the Liao River lands"],
+  Macau: ["Bay Gate"],
+  Ningxia: ["Victory over the Western Xia"],
+  Qinghai: ["The Great Blue Lake", "A calque of the Tibetan Co Ngoinbo, “the blue sea”."],
+  Shaanxi: ["West of the ancient borderstone at Shaanyuan"],
+  Shandong: ["East of the Taihang Mountains"],
+  Shanghai: ["The Upper Channel"],
+  Shanxi: ["West of the Taihang Mountains"],
+  Sichuan: ["The Four Circuits of the Chuanxia (Three Gorges) Region"],
+  Taiwan: ["Land by the sea", "Transcribed from a Siraya word meaning “land by the sea”."],
+  Tianjin: ["Ford of the Son of Heaven"],
+  Tibet: ["Western Tsang", "“Ü-Tsang” is the Tibetans' own name for their cultural heartland."],
+  Xinjiang: ["Newly Restored Borderland"],
+  Yunnan: ["South of the Rosy Clouds"],
+  Zhejiang: ["The Winding River"],
+};
+
 const TYPE = {
   Province: "Province",
   "Autonomous Region": "Autonomous Region",
@@ -184,6 +231,7 @@ const items = [...groups.entries()]
     if (g.type !== "Municipality" && g.type !== "Special Administrative Region" && !cap) {
       throw new Error(`No capital for ${g.name}`);
     }
+    if (!MEANINGS[g.name]) throw new Error(`No name meaning for ${g.name}`);
     const zh = ZH[g.name];
     if (!zh) throw new Error(`No Chinese name for ${g.name}`);
     const [hanzi, pinyin] = zh;
@@ -194,6 +242,8 @@ const items = [...groups.entries()]
       nameZh: hanzi,
       pinyin,
       aliases: [g.name, pinyin, hanzi],
+      meaning: MEANINGS[g.name]?.[0] ?? null,
+      meaningNote: MEANINGS[g.name]?.[1] ?? null,
       type: g.type,
       capital: cap ? cap[0] : null,
       capitalLatLng: cap ? cap[1] : null,

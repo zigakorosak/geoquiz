@@ -324,6 +324,13 @@ button:disabled {
   text-align: right;
 }
 
+.explore-card-note {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  font-style: italic;
+  max-width: 22rem;
+}
+
 .explore-card-facts dd {
   margin: 0;
   text-align: left;

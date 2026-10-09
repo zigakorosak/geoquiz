@@ -10,6 +10,8 @@
       "Ānhuī",
       "安徽"
     ],
+    "meaning": "Realm of the cities Anqing and Huizhou",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Hefei",
     "capitalLatLng": [
@@ -28,6 +30,8 @@
       "Běijīng",
       "北京"
     ],
+    "meaning": "Northern Capital",
+    "meaningNote": null,
     "type": "Municipality",
     "capital": null,
     "capitalLatLng": null
@@ -43,6 +47,8 @@
       "Chóngqìng",
       "重庆"
     ],
+    "meaning": "The Twofold Joy",
+    "meaningNote": null,
     "type": "Municipality",
     "capital": null,
     "capitalLatLng": null
@@ -58,6 +64,8 @@
       "Fújiàn",
       "福建"
     ],
+    "meaning": "Realm of the cities Fuzhou and Jianzhou",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Fuzhou",
     "capitalLatLng": [
@@ -76,6 +84,8 @@
       "Gānsù",
       "甘肃"
     ],
+    "meaning": "Realm of the cities Ganzhou and Suzhou",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Lanzhou",
     "capitalLatLng": [
@@ -94,6 +104,8 @@
       "Guǎngdōng",
       "广东"
     ],
+    "meaning": "East of the ancient Guangxin City",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Guangzhou",
     "capitalLatLng": [
@@ -112,6 +124,8 @@
       "Guǎngxī",
       "广西"
     ],
+    "meaning": "West of the ancient Guangxin City",
+    "meaningNote": "Guangxin: “Emperor's far-reaching grace”.",
     "type": "Autonomous Region",
     "capital": "Nanning",
     "capitalLatLng": [
@@ -130,6 +144,8 @@
       "Guìzhōu",
       "贵州"
     ],
+    "meaning": "Origin uncertain",
+    "meaningNote": "Perhaps derived from the Luoshi Ghost Realm, a Yi tribal state ruled by sorcerers.",
     "type": "Province",
     "capital": "Guiyang",
     "capitalLatLng": [
@@ -148,6 +164,8 @@
       "Hǎinán",
       "海南"
     ],
+    "meaning": "South of the Sea",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Haikou",
     "capitalLatLng": [
@@ -166,6 +184,8 @@
       "Héběi",
       "河北"
     ],
+    "meaning": "North of the Yellow River",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Shijiazhuang",
     "capitalLatLng": [
@@ -184,6 +204,8 @@
       "Hēilóngjiāng",
       "黑龙江"
     ],
+    "meaning": "The Dark Dragon River",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Harbin",
     "capitalLatLng": [
@@ -202,6 +224,8 @@
       "Hénán",
       "河南"
     ],
+    "meaning": "South of the Yellow River",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Zhengzhou",
     "capitalLatLng": [
@@ -220,6 +244,8 @@
       "Xiānggǎng",
       "香港"
     ],
+    "meaning": "Fragrant Harbour",
+    "meaningNote": null,
     "type": "Special Administrative Region",
     "capital": null,
     "capitalLatLng": null
@@ -235,6 +261,8 @@
       "Húběi",
       "湖北"
     ],
+    "meaning": "North of Dongting Lake",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Wuhan",
     "capitalLatLng": [
@@ -253,6 +281,8 @@
       "Húnán",
       "湖南"
     ],
+    "meaning": "South of Dongting Lake",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Changsha",
     "capitalLatLng": [
@@ -271,6 +301,8 @@
       "Nèi Měnggǔ",
       "内蒙古"
     ],
+    "meaning": "Inner Mongolia",
+    "meaningNote": null,
     "type": "Autonomous Region",
     "capital": "Hohhot",
     "capitalLatLng": [
@@ -289,6 +321,8 @@
       "Jiāngsū",
       "江苏"
     ],
+    "meaning": "Realm of the cities Jiangning and Suzhou",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Nanjing",
     "capitalLatLng": [
@@ -307,6 +341,8 @@
       "Jiāngxī",
       "江西"
     ],
+    "meaning": "The Western Lands South of the Yangtze",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Nanchang",
     "capitalLatLng": [
@@ -325,6 +361,8 @@
       "Jílín",
       "吉林"
     ],
+    "meaning": "Along the river",
+    "meaningNote": "Transcribed from the Manchu Girin ula, “along the river”.",
     "type": "Province",
     "capital": "Changchun",
     "capitalLatLng": [
@@ -343,6 +381,8 @@
       "Liáoníng",
       "辽宁"
     ],
+    "meaning": "Peace of the Liao River lands",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Shenyang",
     "capitalLatLng": [
@@ -361,6 +401,8 @@
       "Àomén",
       "澳门"
     ],
+    "meaning": "Bay Gate",
+    "meaningNote": null,
     "type": "Special Administrative Region",
     "capital": null,
     "capitalLatLng": null
@@ -376,6 +418,8 @@
       "Níngxià",
       "宁夏"
     ],
+    "meaning": "Victory over the Western Xia",
+    "meaningNote": null,
     "type": "Autonomous Region",
     "capital": "Yinchuan",
     "capitalLatLng": [
@@ -394,6 +438,8 @@
       "Qīnghǎi",
       "青海"
     ],
+    "meaning": "The Great Blue Lake",
+    "meaningNote": "A calque of the Tibetan Co Ngoinbo, “the blue sea”.",
     "type": "Province",
     "capital": "Xining",
     "capitalLatLng": [
@@ -412,6 +458,8 @@
       "Shǎnxī",
       "陕西"
     ],
+    "meaning": "West of the ancient borderstone at Shaanyuan",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Xi'an",
     "capitalLatLng": [
@@ -430,6 +478,8 @@
       "Shāndōng",
       "山东"
     ],
+    "meaning": "East of the Taihang Mountains",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Jinan",
     "capitalLatLng": [
@@ -448,6 +498,8 @@
       "Shànghǎi",
       "上海"
     ],
+    "meaning": "The Upper Channel",
+    "meaningNote": null,
     "type": "Municipality",
     "capital": null,
     "capitalLatLng": null
@@ -463,6 +515,8 @@
       "Shānxī",
       "山西"
     ],
+    "meaning": "West of the Taihang Mountains",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Taiyuan",
     "capitalLatLng": [
@@ -481,6 +535,8 @@
       "Sìchuān",
       "四川"
     ],
+    "meaning": "The Four Circuits of the Chuanxia (Three Gorges) Region",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Chengdu",
     "capitalLatLng": [
@@ -499,6 +555,8 @@
       "Táiwān",
       "台湾"
     ],
+    "meaning": "Land by the sea",
+    "meaningNote": "Transcribed from a Siraya word meaning “land by the sea”.",
     "type": "Province",
     "capital": "Taipei",
     "capitalLatLng": [
@@ -517,6 +575,8 @@
       "Tiānjīn",
       "天津"
     ],
+    "meaning": "Ford of the Son of Heaven",
+    "meaningNote": null,
     "type": "Municipality",
     "capital": null,
     "capitalLatLng": null
@@ -532,6 +592,8 @@
       "Xīzàng",
       "西藏"
     ],
+    "meaning": "Western Tsang",
+    "meaningNote": "“Ü-Tsang” is the Tibetans' own name for their cultural heartland.",
     "type": "Autonomous Region",
     "capital": "Lhasa",
     "capitalLatLng": [
@@ -550,6 +612,8 @@
       "Xīnjiāng",
       "新疆"
     ],
+    "meaning": "Newly Restored Borderland",
+    "meaningNote": null,
     "type": "Autonomous Region",
     "capital": "Ürümqi",
     "capitalLatLng": [
@@ -568,6 +632,8 @@
       "Yúnnán",
       "云南"
     ],
+    "meaning": "South of the Rosy Clouds",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Kunming",
     "capitalLatLng": [
@@ -586,6 +652,8 @@
       "Zhèjiāng",
       "浙江"
     ],
+    "meaning": "The Winding River",
+    "meaningNote": null,
     "type": "Province",
     "capital": "Hangzhou",
     "capitalLatLng": [
