@@ -42,7 +42,10 @@ const sections = [
   },
   {
     title: "Settings",
-    items: ["Choose whether the map keeps its zoom between rounds or resets every round."],
+    items: [
+      "Choose whether the map keeps its zoom between rounds or resets every round.",
+      "Turn on Auto next to move to the next round by itself a few seconds after each answer.",
+    ],
   },
 ];
 

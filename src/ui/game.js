@@ -12,6 +12,7 @@ import { QuizSession } from "../core/engine.js";
 import { renderPrompt } from "./prompts.js";
 import { renderAnswerInput } from "./inputs.js";
 import { createHamburgerMenu } from "./hamburgerMenu.js";
+import { loadSettings } from "../core/settings.js";
 
 export function renderGame(
   container,
@@ -219,6 +220,11 @@ export function renderGame(
   let timerInterval = null;
   let roundStartedAt = null;
   const roundTimes = [];
+  // Read per game (not threaded through the wizard config like keepZoom):
+  // it only affects pacing, so a change in Settings applies to the next
+  // game started, including Restart / Play Again.
+  const autoNextDelay = loadSettings().autoNextDelay;
+  let autoNextTimeout = null;
 
   function updateHeader() {
     progress.textContent = `Round ${session.roundNumber} / ${session.roundCount}`;
@@ -302,6 +308,14 @@ export function renderGame(
     // listener below. Without this, that single click would both confirm
     // *and* immediately advance, and the result would never be visible.
     suppressNextRootAdvance = true;
+    if (autoNextDelay > 0) {
+      // `active` guards against firing after Back/Home/Restart tore this
+      // game down while the timeout was pending.
+      autoNextTimeout = setTimeout(() => {
+        autoNextTimeout = null;
+        if (active && phase === "result") goNext();
+      }, autoNextDelay * 1000);
+    }
   }
 
   function cleanupRoundDom() {
@@ -315,6 +329,9 @@ export function renderGame(
   function goNext() {
     // The timer was already stopped when the result was confirmed
     // (attemptConfirm) — goNext only ever runs in the "result" phase.
+    // Advancing manually before auto next fires cancels it.
+    clearTimeout(autoNextTimeout);
+    autoNextTimeout = null;
     cleanupRoundDom();
     if (session.advance()) {
       startRound();

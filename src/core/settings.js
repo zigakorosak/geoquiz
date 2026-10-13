@@ -7,6 +7,9 @@ const STORAGE_KEY = "geo-quiz-settings";
 
 const defaults = {
   keepZoom: true,
+  // Seconds to wait after a result before moving on by itself; 0 = off
+  // (wait for Next / a click).
+  autoNextDelay: 0,
 };
 
 export function loadSettings() {
