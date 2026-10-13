@@ -49,4 +49,25 @@ if [ -z "$run_id" ]; then
 fi
 
 echo "Watching run $run_id..."
-gh run watch "$run_id" --exit-status
+# `gh run watch` also exits non-zero when GitHub's API has a hiccup (an
+# HTTP 500 from api.github.com right after triggering was seen twice), not
+# only when the deploy itself fails. So on a non-zero exit, ask for the
+# run's real state: finished -> report its actual conclusion; still
+# running (or the status query failed too) -> wait and watch again.
+for attempt in 1 2 3 4 5; do
+  if gh run watch "$run_id" --exit-status; then
+    exit 0
+  fi
+  state=$(gh run view "$run_id" --json status,conclusion --jq '"\(.status) \(.conclusion)"' 2>/dev/null || echo "unknown")
+  case "$state" in
+    "completed success")
+      exit 0 ;;
+    completed\ *)
+      echo "Deploy run $run_id finished: ${state#completed }."
+      exit 1 ;;
+  esac
+  echo "Lost track of run $run_id (state: $state) — likely a temporary GitHub API error. Retrying watch ($attempt/5)..."
+  sleep $((attempt * 5))
+done
+echo "Gave up watching run $run_id — check https://github.com/$(gh repo view --json nameWithOwner --jq .nameWithOwner 2>/dev/null)/actions/runs/$run_id"
+exit 1
