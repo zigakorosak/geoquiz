@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Push to git, then trigger and wait for the deploy workflow — equivalent
-# to running scripts/git-push.sh followed by scripts/deploy.sh.
+# Push to git, then wait for the deploy that the push starts — equivalent
+# to running scripts/git-push.sh followed by scripts/watch-deploy.sh.
 #
 # Usage: scripts/push-deploy.sh "commit message"
 set -euo pipefail
@@ -28,4 +28,4 @@ trap summary EXIT
 message="${1:?Usage: scripts/push-deploy.sh \"commit message\"}"
 
 step Push scripts/git-push.sh "$message"
-step Deploy scripts/deploy.sh
+step Deploy scripts/watch-deploy.sh

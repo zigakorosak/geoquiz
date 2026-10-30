@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Triggers the "Deploy to Namecheap" GitHub Actions workflow (manual-only
-# by design — see .github/workflows/deploy.yml — it never runs on push)
+# Triggers the "Deploy to Namecheap" GitHub Actions workflow by hand (it
+# also runs on its own on every push to main — see scripts/watch-deploy.sh)
 # against the current branch, waits for it to finish, and reports
 # pass/fail. Requires `gh` to already be authenticated.
 #

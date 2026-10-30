@@ -75,8 +75,8 @@ Tars the project (excluding `node_modules`, `dist`, `archive`) into
 
 ## Deployment
 
-Deploys are **manual only** — pushing to `main` does not trigger anything.
-To push a build live:
+Every push to `main` deploys automatically (pushes that only change `.md`
+files are skipped). To deploy by hand:
 
 ```bash
 gh workflow run "Deploy to Namecheap"

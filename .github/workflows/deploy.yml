@@ -2,29 +2,37 @@ name: Deploy to Namecheap
 
 # Builds the static site (Node runs here, not on the shared host — cPanel
 # hosting doesn't reliably have a usable Node/npm setup for this) and
-# uploads dist/ to public_html/geoquiz via FTP/FTPS. Needs three repo
-# secrets set up first: FTP_SERVER, FTP_USERNAME, FTP_PASSWORD — see
-# "Deployment" in DESIGN.md for exactly where to find them in cPanel and
-# how to add them.
+# uploads dist/ to public_html/geoquiz via FTPS. Needs three repo secrets:
+# FTP_SERVER, FTP_USERNAME, FTP_PASSWORD — see "Deployment" in DESIGN.md.
 #
-# Manual only, by request — does NOT run automatically on push. Trigger it
-# from the Actions tab ("Deploy to Namecheap" -> "Run workflow"), or via
-# `gh workflow run "Deploy to Namecheap"`.
+# Runs on every push to main (except docs-only pushes), or by hand from the
+# Actions tab / `gh workflow run "Deploy to Namecheap"` (scripts/deploy.sh).
 
 on:
+  push:
+    branches: [main]
+    # Docs-only pushes (README/DESIGN/LOG/MISTAKES) don't change the build.
+    paths-ignore:
+      - "**.md"
   workflow_dispatch:
+
+# Never run two uploads to the same folder at once; a newer push waits for
+# the running deploy instead of cancelling it mid-upload.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
 
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
 
       - name: Install dependencies
         run: npm ci
@@ -40,12 +48,11 @@ jobs:
           password: ${{ secrets.FTP_PASSWORD }}
           protocol: ftps
           local-dir: ./dist/
-          # Wipes server-dir before uploading. Safe here since this FTP
-          # account's root is scoped to just this one app's folder (see
-          # note below) — also cleans up the stray nested public_html/
-          # a misconfigured earlier run left behind, and keeps old hashed
-          # asset filenames from previous builds from accumulating.
-          dangerous-clean-slate: true
+          # No dangerous-clean-slate: it wiped and re-uploaded the whole app on
+          # every run (the app is half-missing while that happens). The
+          # .ftp-deploy-sync-state.json on the server already lets the action
+          # delete files it uploaded before, so stale hashed assets still
+          # get cleaned up.
           # The FTP account's own login root is already public_html/geoquiz
           # (see cPanel's FTP Accounts "Path" column) — server-dir is
           # relative to that root, not the account's home directory, so

@@ -3,6 +3,25 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-10-30 — Deploy on every push, map-pin favicon
+
+Deploy on push. `.github/workflows/deploy.yml` now also runs on every push
+to `main`, except pushes that only change `.md` files; `workflow_dispatch`
+still works for deploying by hand. A `concurrency` group queues a second
+deploy behind a running one instead of uploading in parallel.
+`actions/checkout` and `actions/setup-node` went from v4 to v6 (Node 20
+runtime was deprecated, every run printed a warning) and the build runs
+on Node 24. New `scripts/watch-deploy.sh` waits for the deploy a push
+started; `push-deploy.sh` and `archive-p-d.sh` use it instead of
+`deploy.sh`, which would now start a second, duplicate deploy.
+
+Also dropped `dangerous-clean-slate`: with deploys on every push, wiping
+and re-uploading the whole app each time left it half-missing during the
+upload. The server's `.ftp-deploy-sync-state.json` already lets the
+action delete files it uploaded before, so old hashed assets still go.
+New favicon: a map pin in the app's accent blue (it was still Vite's
+default logo).
+
 ## 2026-09-30 — Restart button in the game header
 
 Requested: a restart control up top next to Back to Menu that starts the

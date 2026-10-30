@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Archive, push to git, then deploy — equivalent to running
-# scripts/archive.sh, scripts/git-push.sh, and scripts/deploy.sh in order.
+# scripts/archive.sh, scripts/git-push.sh, and scripts/watch-deploy.sh in order.
 #
 # Usage: scripts/archive-p-d.sh "commit message" [archive-label]
 set -euo pipefail
@@ -30,4 +30,4 @@ label="${2:-snapshot}"
 
 step Archive scripts/archive.sh "$label"
 step Push scripts/git-push.sh "$message"
-step Deploy scripts/deploy.sh
+step Deploy scripts/watch-deploy.sh

@@ -1748,10 +1748,11 @@ us-states.json` + `us-states-topology.json`.
   commit anything whose staged path *looks* like a credential (`.env`,
   `secret`, `credential`, `.pem`, `id_rsa` — a blunt safety net, not a
   substitute for actually looking), commits, and pushes. `deploy.sh`
-  triggers the (manual-only — see Deployment below) GitHub Actions
-  workflow and waits for it to finish, reporting pass/fail rather than
-  firing-and-forgetting. `push-deploy.sh`/`archive-p-d.sh` just sequence
-  these (and `archive.sh`) — no logic of their own.
+  triggers the GitHub Actions deploy workflow by hand and waits for it
+  to finish, reporting pass/fail rather than firing-and-forgetting.
+  `watch-deploy.sh` instead waits for the deploy a push already started.
+  `push-deploy.sh`/`archive-p-d.sh` just sequence these (and
+  `archive.sh`) — no logic of their own.
 
 ## Deployment
 
@@ -1759,10 +1760,10 @@ Live at `zigakorosak.com/geoquiz/`, deployed from GitHub to Namecheap
 shared hosting (cPanel): `.github/workflows/deploy.yml` builds the site
 (Node runs in the Action, not on the shared host — cPanel hosting doesn't
 reliably have a usable npm/build setup) and FTPS-uploads `dist/`.
-**Manual only, by request** — pushing to `main` does *not* auto-deploy;
-trigger it from the Actions tab ("Deploy to Namecheap" → "Run workflow")
-or `gh workflow run "Deploy to Namecheap"` when it's actually time to
-push a change live.
+Every push to `main` deploys automatically, except pushes that only
+change `.md` files (changed 2026-10-30; it used to be manual only). It
+can also be run by hand from the Actions tab ("Deploy to Namecheap" →
+"Run workflow") or `gh workflow run "Deploy to Namecheap"`.
 
 `vite.config.js` sets `base: "/geoquiz/"` to match — this is what makes
 both the built `<script>`/`<link>` tags in `index.html` and the
