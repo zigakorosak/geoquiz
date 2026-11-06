@@ -3,6 +3,25 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-11-06 — Tiny islands visible on the map
+
+Requested: very small islands (French Polynesia in Oceania) should be
+easier to see. They were subpixel at region zoom, so the map showed open
+ocean where they are. Now, while a feature's largest part is under 12 px²
+on screen, every part of it gets a 2.5px outline in its own fill color
+(`.country--tiny`, see DESIGN.md), so each islet shows as a dot; zoomed in
+far enough, the outline goes and the real shape takes over. Features with
+a much bigger land neighbor (Vatican, Monaco, Luxembourg) are left out,
+since a blob would hide their borders. Marked states carry over to the
+outline. Pin mode draws the same islands as two outlined paths over the
+merged landmass.
+
+Verified in Firefox (Playwright, scratch harness, deleted after):
+before/after screenshots of Oceania at 1280×800 and 390×760, the world
+view (Caribbean dots, Europe unchanged), pin mode, and French Polynesia
+highlighted; outlined count 64 at k=1, 17 at k≈9.5 (French Polynesia
+framed), 0 at k=60 (Vatican), the pin-mode paths shrinking the same way.
+
 ## 2026-10-30 — Deploy on every push, map-pin favicon
 
 Deploy on push. `.github/workflows/deploy.yml` now also runs on every push

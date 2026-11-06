@@ -26,6 +26,8 @@ Live at **[zigakorosak.com/geoquiz](https://zigakorosak.com/geoquiz/)**.
   infinitely left/right instead of stopping at the antimeridian.
 - Tiny countries and archipelagos get invisible, appropriately-sized click
   targets so they're actually selectable at normal zoom.
+- Tiny islands (French Polynesia, Kiribati, the Caribbean) are drawn as
+  dots until you zoom in far enough to see their real shape.
 - Per-round timer with total/average time in the end-of-game summary.
 
 ## Tech stack

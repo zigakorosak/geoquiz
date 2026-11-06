@@ -6,7 +6,7 @@
 // (US states) reuses it with only its `projection` config differing.
 
 import { geoNaturalEarth1, geoIdentity, geoConicEqualArea, geoAlbersUsa, geoPath } from "d3-geo";
-import { feature, mesh, merge } from "topojson-client";
+import { feature, mesh, merge, neighbors } from "topojson-client";
 import { zoom, zoomIdentity } from "d3-zoom";
 import { select } from "d3-selection";
 import { Delaunay } from "d3-delaunay";
@@ -254,6 +254,20 @@ const PIN_CONFIRM_PADDING_PX = 10;
 const MERGE_SLIVER_MIN_ASPECT = 50;
 const MERGE_SLIVER_MIN_SPAN_FRACTION = 0.1; // of the larger viewport dimension
 
+// Tiny islands (French Polynesia, Kiribati, the Caribbean) are subpixel at
+// world and region zoom: their fill alone draws nothing. While a feature's
+// largest part is under this many screen px², every part of it gets a
+// land-colored outline of TINY_STROKE_PX (style.css's `.country--tiny`), so
+// each islet shows as a dot; zoomed in past that, the real shape is
+// visible and the outline goes. Screen px on purpose — this is about what
+// the eye can see, not about size relative to other features.
+const TINY_AREA_PX = 12;
+// Only features with no comparably big land neighbor get the outline:
+// on Vatican, Monaco or Luxembourg a land-colored blob would just paint
+// over the borders that show where they are. Saint Martin / Sint Maarten
+// (two halves of one island) still qualify.
+const TINY_NEIGHBOR_RATIO = 4;
+
 // Standard even-odd ray-casting point-in-polygon test, run directly on raw
 // lon/lat ring coordinates (pin mode's `_findContainingId` is the only
 // caller) — deliberately not projection/SVG-dependent, so it works
@@ -496,6 +510,13 @@ export class WorldMap {
     // preserves order for a GeometryCollection), which is what lets the
     // playable subset below be selected by index.
     this._rawGeometries = this.pinMode ? topologyObject.geometries : null;
+    // Land neighbors per feature index (shared arcs), for the tiny-island
+    // outline's eligibility — see TINY_NEIGHBOR_RATIO.
+    this._neighborsByIndex = neighbors(topologyObject.geometries);
+    // { index, id, kLimit } per feature that gets the tiny-island outline
+    // while k < kLimit — recomputed every _reflow (see _updateTinyIslands).
+    this._tinyCandidates = [];
+    this._tinyKey = null; // pin mode: which candidates the tiny paths currently draw
     // Which feature ids the initial view frames itself on — the chosen
     // region, minus any member excluded from framing specifically
     // (core/regions.js's `fitExclude`; see _defaultTransform). Null means
@@ -593,9 +614,18 @@ export class WorldMap {
     this.pinPlayableLandmass = document.createElementNS(SVG_NS, "path");
     this.pinPlayableLandmass.id = `${this._instanceId}-landmass-playable`;
     this.pinPlayableLandmass.setAttribute("class", "pin-landmass pin-landmass--playable");
+    // Pin mode's tiny islands (see TINY_AREA_PX): the merged landmass
+    // can't outline only some of its parts, so they're drawn again on top
+    // as two small outlined paths, muted and playable.
+    this.pinTinyMuted = document.createElementNS(SVG_NS, "path");
+    this.pinTinyMuted.setAttribute("class", "pin-tiny");
+    this.pinTinyPlayable = document.createElementNS(SVG_NS, "path");
+    this.pinTinyPlayable.setAttribute("class", "pin-tiny pin-tiny--playable");
     if (this.pinMode) {
       this.contentGroup.appendChild(this.pinLandmass);
       this.contentGroup.appendChild(this.pinPlayableLandmass);
+      this.contentGroup.appendChild(this.pinTinyMuted);
+      this.contentGroup.appendChild(this.pinTinyPlayable);
     }
 
     // Everything below is built once, directly, into the home copy;
@@ -1331,6 +1361,24 @@ export class WorldMap {
     const featureCount = this.geojson.features.length;
     const evenSplitArea = featureCount > 0 ? (width * height) / featureCount : Infinity;
 
+    // Tiny-island candidates (see TINY_AREA_PX): the largest part's
+    // projected area at k=1, then the k below which it's under the limit.
+    const largestByIndex = this.geojson.features.map((f) => {
+      if (!f.geometry) return 0;
+      const a = f.geometry.type === "MultiPolygon" ? this._largestPartAreas(f)[0] : this.pathGen.area(f);
+      return Number.isFinite(a) ? a : 0;
+    });
+    this._tinyCandidates = [];
+    this._tinyKey = null;
+    this.geojson.features.forEach((f, index) => {
+      const area = largestByIndex[index];
+      if (!f.id || !(area > 0)) return;
+      const kLimit = Math.sqrt(TINY_AREA_PX / area);
+      if (kLimit <= MIN_ZOOM) return;
+      const bigNeighbor = (this._neighborsByIndex[index] ?? []).some((n) => largestByIndex[n] > TINY_NEIGHBOR_RATIO * area);
+      if (!bigNeighbor) this._tinyCandidates.push({ index, id: f.id, kLimit });
+    });
+
     // Pass 1: lay out every path (home copy — ghost copies are <use>
     // references and update automatically). For every playable feature,
     // also note its bbox center as a Voronoi site (used below to bound
@@ -1528,6 +1576,43 @@ export class WorldMap {
     this._suppressGestureHooks = true;
     this._selection.call(this.zoomBehavior.transform, target);
     this._suppressGestureHooks = false;
+    this._updateTinyIslands();
+  }
+
+  // Gives the tiny-island outline (TINY_AREA_PX) to exactly the candidates
+  // still under the limit at the current k. Runs after a reflow and once
+  // per settled gesture — mid-gesture the outlines ride the frozen raster
+  // like everything else.
+  _updateTinyIslands() {
+    const k = this.currentTransform?.k || 1;
+    if (this.pinMode) {
+      const active = this._tinyCandidates.filter((c) => k < c.kLimit);
+      const key = active.map((c) => c.index).join(",");
+      if (key !== this._tinyKey) {
+        this._tinyKey = key;
+        const muted = [];
+        const playable = [];
+        for (const c of active) {
+          (this._playableIds.has(c.id) ? playable : muted).push(this.geojson.features[c.index]);
+        }
+        const d = (list) => (list.length ? this.pathGen({ type: "FeatureCollection", features: list }) ?? "" : "");
+        this.pinTinyMuted.setAttribute("d", d(muted));
+        this.pinTinyPlayable.setAttribute("d", d(playable));
+      }
+      this._syncRevealTiny();
+      return;
+    }
+    for (const c of this._tinyCandidates) {
+      this._pathsByIndex[c.index]?.classList.toggle("country--tiny", k < c.kLimit);
+    }
+  }
+
+  // Pin mode's revealed target is outlined like its tiny-island self.
+  _syncRevealTiny() {
+    const k = this.currentTransform?.k || 1;
+    const id = this._revealedFeatureId;
+    const tiny = Boolean(id) && this._tinyCandidates.some((c) => c.id === id && k < c.kLimit);
+    this.revealPath.classList.toggle("country--tiny", tiny);
   }
 
   // Where a fresh map starts: a zoom/pan transform framing `focusIds`
@@ -2029,7 +2114,7 @@ export class WorldMap {
   }
 
   // Runs once, shortly after a pan/zoom gesture ends (debounced — see the
-  // "end.gesture" handler). Three jobs:
+  // "end.gesture" handler). Four jobs:
   //  1. Bake any frozen zoom (_bakeFrozenZoom): the one full vector
   //     repaint per gesture, which is also what makes the zoomed view
   //     sharp — the CSS-scaled gesture raster is inherently blurry.
@@ -2038,6 +2123,8 @@ export class WorldMap {
   //  3. Re-pad the tiny-country assist hulls for the final zoom level —
   //     the expensive counter-scale (~80 polygon rebuilds); once per
   //     gesture is all the precision an invisible hit-assist needs.
+  //  4. Outline the tiny islands still too small to see at this zoom
+  //     (_updateTinyIslands).
   _onGestureSettle() {
     this._settleTimer = null;
     this._bakeFrozenZoom();
@@ -2050,6 +2137,7 @@ export class WorldMap {
       this.pinMarker.setAttribute("r", String(PIN_RADIUS_PX / k));
       this.capitalMarker.setAttribute("r", String(PIN_RADIUS_PX / k));
     }
+    this._updateTinyIslands();
     if (this._hullBaseById.size > 0 && k !== this._lastHullPadK) {
       this._lastHullPadK = k;
       for (const [id, base] of this._hullBaseById) {
@@ -2237,6 +2325,7 @@ export class WorldMap {
       // rule until the next _mark replaced its `d`.
       this._revealedFeatureId = null;
       this.revealPath.removeAttribute("d");
+      this.revealPath.classList.remove("country--tiny");
     }
   }
 
@@ -2260,6 +2349,7 @@ export class WorldMap {
       this._revealedFeatureId = id;
       this.revealPath.setAttribute("d", this.pathGen(f) ?? "");
       this.revealPath.classList.add(className);
+      this._syncRevealTiny();
       return;
     }
     const path = this.featuresById.get(id);

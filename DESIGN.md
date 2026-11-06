@@ -727,6 +727,26 @@ with a region-independent projection: zoom is now absolute.
   playable-overlay merge includes id-less features (`!f.id ||
   playableIds.has(f.id)`), so the muted base never shows through at them.
 
+Tiny islands are drawn bigger than they are. Most island territories
+(French Polynesia, Kiribati, the Caribbean) are subpixel at world
+and region zoom, so their fill alone shows nothing. While a feature's
+largest part is under `TINY_AREA_PX` (12 px²) on screen, its path gets
+`.country--tiny`: an outline in its own fill color, 2.5px and
+non-scaling, so every islet shows as a dot. Each candidate's k limit is
+worked out in `_reflow`; `_updateTinyIslands` toggles the class after a
+reflow and once per settled gesture, so the outline goes once the real
+shape is big enough. Only features with no land neighbor more than
+`TINY_NEIGHBOR_RATIO` (4×) their size qualify — on Vatican, Monaco or
+Luxembourg a land-colored blob would paint over the borders that show
+where they are (Saint Martin / Sint Maarten still qualify). The marked
+states (hover, highlight, selected, correct, wrong) repeat their fill
+color as the stroke. Pin mode can't outline only some of its merged
+landmass's parts, so the active tiny features are drawn again on top as
+two outlined paths (`.pin-tiny`, muted and playable), and the revealed
+target gets `.country--tiny` too. At 1280×800 world zoom 64 features are
+outlined; framed on French Polynesia (k≈9.5) 17 still are; on Vatican
+(k=60) none.
+
 True microstates (Vatican City, Monaco, San Marino, Liechtenstein, Malta,
 ...) and archipelagos/multi-part countries with no single dominant,
 easily-clickable landmass (Maldives, Philippines, Bahamas, Brunei, ...)

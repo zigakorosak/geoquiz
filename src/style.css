@@ -803,6 +803,49 @@ button:disabled {
   fill-opacity: 0.6;
 }
 
+/* Tiny islands (WorldMap.js's TINY_AREA_PX): while an island territory is
+   too small to see, every islet gets an outline in its own fill color, so
+   French Polynesia or Kiribati shows as a scatter of dots instead of
+   nothing. Non-scaling like every border, so each dot is the same size at
+   any zoom; WorldMap drops the class once the real shape is big enough.
+   The marked states repeat their fill as the stroke, after the plain
+   rules above so they win at equal specificity. */
+.country--tiny {
+  stroke: var(--map-land);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+}
+
+.country--tiny.country--unplayable {
+  stroke: var(--map-land-muted);
+}
+
+.country--tiny.country--hovered {
+  stroke: var(--accent);
+  stroke-opacity: 0.6;
+}
+
+.country--tiny.country--highlighted {
+  stroke: var(--accent);
+  stroke-opacity: 1;
+}
+
+.country--tiny.country--selected {
+  stroke: var(--accent);
+  stroke-opacity: 0.8;
+  stroke-width: 2.5;
+}
+
+.country--tiny.country--correct {
+  stroke: var(--correct);
+  stroke-opacity: 0.8;
+}
+
+.country--tiny.country--wrong {
+  stroke: var(--wrong);
+  stroke-opacity: 0.8;
+}
+
 /* Pin-drop mode draws no per-country paths at all — WorldMap.js simply
    doesn't create them (see its per-feature loop), so `.pin-landmass`
    below is the entire map, plus one shared `revealPath` for the
@@ -855,6 +898,23 @@ button:disabled {
   fill: var(--map-land);
 }
 
+/* Pin mode's tiny islands, drawn over the merged landmass (see
+   .country--tiny above) — the landmass itself can't outline only some of
+   its parts. */
+.pin-tiny {
+  fill: var(--map-land-muted);
+  stroke: var(--map-land-muted);
+  stroke-width: 2.5;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
+.pin-tiny--playable {
+  fill: var(--map-land);
+  stroke: var(--map-land);
+}
+
 /* Confirm reveals only the target country's own outline — never the pin's
    actual (possibly wrong) country, which pin mode never shows the shape
    of at all (inputs.js's map-pin renderer always calls markResult with a
@@ -865,6 +925,10 @@ button:disabled {
   fill-opacity: 0.6;
   stroke: var(--correct);
   stroke-width: 1.5;
+}
+
+.world-map--pin-mode .country--tiny.country--correct {
+  stroke-width: 2.5;
 }
 
 /* HTML marker dots over the map (WorldMap.js's markerLayer): the pin and
