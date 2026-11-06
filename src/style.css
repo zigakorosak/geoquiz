@@ -806,10 +806,12 @@ button:disabled {
 /* Tiny islands (WorldMap.js's TINY_AREA_PX): while an island territory is
    too small to see, every islet gets an outline in its own fill color, so
    French Polynesia or Kiribati shows as a scatter of dots instead of
-   nothing. Non-scaling like every border, so each dot is the same size at
-   any zoom; WorldMap drops the class once the real shape is big enough.
-   The marked states repeat their fill as the stroke, after the plain
-   rules above so they win at equal specificity. */
+   nothing. These are extra per-islet paths over the country's own (see
+   WorldMap.js's tinyGroup), non-scaling like every border; WorldMap sets
+   the width inline for the zoom level (dots grow slowly as you zoom in)
+   and hides an islet's dot once its real shape is bigger. The marked
+   states repeat their fill as the stroke, after the plain rules above so
+   they win at equal specificity. */
 .country--tiny {
   stroke: var(--map-land);
   stroke-width: 2.5;
@@ -833,7 +835,6 @@ button:disabled {
 .country--tiny.country--selected {
   stroke: var(--accent);
   stroke-opacity: 0.8;
-  stroke-width: 2.5;
 }
 
 .country--tiny.country--correct {
@@ -900,7 +901,7 @@ button:disabled {
 
 /* Pin mode's tiny islands, drawn over the merged landmass (see
    .country--tiny above) — the landmass itself can't outline only some of
-   its parts. */
+   its parts. Width set inline by WorldMap, per zoom level. */
 .pin-tiny {
   fill: var(--map-land-muted);
   stroke: var(--map-land-muted);
@@ -915,6 +916,12 @@ button:disabled {
   stroke: var(--map-land);
 }
 
+/* The revealed target's dots, like the target itself (below). */
+.pin-tiny.country--correct {
+  fill: var(--correct);
+  stroke: var(--correct);
+}
+
 /* Confirm reveals only the target country's own outline — never the pin's
    actual (possibly wrong) country, which pin mode never shows the shape
    of at all (inputs.js's map-pin renderer always calls markResult with a
@@ -925,10 +932,6 @@ button:disabled {
   fill-opacity: 0.6;
   stroke: var(--correct);
   stroke-width: 1.5;
-}
-
-.world-map--pin-mode .country--tiny.country--correct {
-  stroke-width: 2.5;
 }
 
 /* HTML marker dots over the map (WorldMap.js's markerLayer): the pin and

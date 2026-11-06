@@ -255,13 +255,21 @@ const MERGE_SLIVER_MIN_ASPECT = 50;
 const MERGE_SLIVER_MIN_SPAN_FRACTION = 0.1; // of the larger viewport dimension
 
 // Tiny islands (French Polynesia, Kiribati, the Caribbean) are subpixel at
-// world and region zoom: their fill alone draws nothing. While a feature's
-// largest part is under this many screen px², every part of it gets a
-// land-colored outline of TINY_STROKE_PX (style.css's `.country--tiny`), so
-// each islet shows as a dot; zoomed in past that, the real shape is
-// visible and the outline goes. Screen px on purpose — this is about what
-// the eye can see, not about size relative to other features.
+// world and region zoom: their fill alone draws nothing. A feature whose
+// largest part is under TINY_AREA_PX on screen at k=1 is a candidate, and
+// each of its parts (islets) is drawn again on top with an outline in its
+// own fill color (style.css's `.country--tiny`), so it shows as a dot.
+// Per part, not per feature: French Polynesia's atolls are far smaller
+// than Tahiti and need a dot long after Tahiti doesn't. The outline width
+// depends on zoom so a dot never gets smaller as you zoom in: the dot
+// aims for TINY_DOT_PX × k^TINY_DOT_GROWTH across (capped at
+// TINY_DOT_MAX_PX), and the outline makes up whatever the islet's own
+// width (√area × k) doesn't; once the islet is bigger, its dot is gone.
+// Screen px on purpose: this is about what the eye can see.
 const TINY_AREA_PX = 12;
+const TINY_DOT_PX = 2.5;
+const TINY_DOT_GROWTH = 0.6;
+const TINY_DOT_MAX_PX = 8;
 // Only features with no comparably big land neighbor get the outline:
 // on Vatican, Monaco or Luxembourg a land-colored blob would just paint
 // over the borders that show where they are. Saint Martin / Sint Maarten
@@ -513,10 +521,13 @@ export class WorldMap {
     // Land neighbors per feature index (shared arcs), for the tiny-island
     // outline's eligibility — see TINY_NEIGHBOR_RATIO.
     this._neighborsByIndex = neighbors(topologyObject.geometries);
-    // { index, id, kLimit } per feature that gets the tiny-island outline
-    // while k < kLimit — recomputed every _reflow (see _updateTinyIslands).
-    this._tinyCandidates = [];
-    this._tinyKey = null; // pin mode: which candidates the tiny paths currently draw
+    // Tiny-island dots (see TINY_AREA_PX): one outlined path per part of
+    // every candidate feature, { path, width (√area, px at k=1) }, in
+    // `tinyGroup`; and per id, its parts' paths, which take the same mark
+    // and hover classes as the country itself (see _mark).
+    this._tinyParts = [];
+    this._tinyPartsById = new Map();
+    this._tinyKey = null; // which features the dots were last built for
     // Which feature ids the initial view frames itself on — the chosen
     // region, minus any member excluded from framing specifically
     // (core/regions.js's `fitExclude`; see _defaultTransform). Null means
@@ -614,18 +625,15 @@ export class WorldMap {
     this.pinPlayableLandmass = document.createElementNS(SVG_NS, "path");
     this.pinPlayableLandmass.id = `${this._instanceId}-landmass-playable`;
     this.pinPlayableLandmass.setAttribute("class", "pin-landmass pin-landmass--playable");
-    // Pin mode's tiny islands (see TINY_AREA_PX): the merged landmass
-    // can't outline only some of its parts, so they're drawn again on top
-    // as two small outlined paths, muted and playable.
-    this.pinTinyMuted = document.createElementNS(SVG_NS, "path");
-    this.pinTinyMuted.setAttribute("class", "pin-tiny");
-    this.pinTinyPlayable = document.createElementNS(SVG_NS, "path");
-    this.pinTinyPlayable.setAttribute("class", "pin-tiny pin-tiny--playable");
+    // The tiny-island dots (see TINY_AREA_PX) — over the country paths
+    // (inserted before borderGroup below), or in pin mode over the merged
+    // landmass, which can't outline only some of its parts.
+    this.tinyGroup = document.createElementNS(SVG_NS, "g");
+    this.tinyGroup.setAttribute("class", "tiny-islands");
     if (this.pinMode) {
       this.contentGroup.appendChild(this.pinLandmass);
       this.contentGroup.appendChild(this.pinPlayableLandmass);
-      this.contentGroup.appendChild(this.pinTinyMuted);
-      this.contentGroup.appendChild(this.pinTinyPlayable);
+      this.contentGroup.appendChild(this.tinyGroup);
     }
 
     // Everything below is built once, directly, into the home copy;
@@ -670,6 +678,7 @@ export class WorldMap {
 
     this.borderGroup = document.createElementNS(SVG_NS, "g");
     this.borderGroup.setAttribute("class", "border-lines");
+    if (!this.pinMode) this.contentGroup.appendChild(this.tinyGroup);
     this.contentGroup.appendChild(this.borderGroup);
     this.hitGroup = document.createElementNS(SVG_NS, "g");
     this.hitGroup.setAttribute("class", "hit-areas");
@@ -893,7 +902,9 @@ export class WorldMap {
         if (isFirstForId) this.hitClipsById.set(f.id, { clipId, polygon });
       }
 
-      this.contentGroup.insertBefore(path, this.borderGroup);
+      // Before the tiny-island dots, which sit between the country paths
+      // and borderGroup.
+      this.contentGroup.insertBefore(path, this.tinyGroup);
       this._pathsByIndex.push(path);
     }
 
@@ -1361,23 +1372,7 @@ export class WorldMap {
     const featureCount = this.geojson.features.length;
     const evenSplitArea = featureCount > 0 ? (width * height) / featureCount : Infinity;
 
-    // Tiny-island candidates (see TINY_AREA_PX): the largest part's
-    // projected area at k=1, then the k below which it's under the limit.
-    const largestByIndex = this.geojson.features.map((f) => {
-      if (!f.geometry) return 0;
-      const a = f.geometry.type === "MultiPolygon" ? this._largestPartAreas(f)[0] : this.pathGen.area(f);
-      return Number.isFinite(a) ? a : 0;
-    });
-    this._tinyCandidates = [];
-    this._tinyKey = null;
-    this.geojson.features.forEach((f, index) => {
-      const area = largestByIndex[index];
-      if (!f.id || !(area > 0)) return;
-      const kLimit = Math.sqrt(TINY_AREA_PX / area);
-      if (kLimit <= MIN_ZOOM) return;
-      const bigNeighbor = (this._neighborsByIndex[index] ?? []).some((n) => largestByIndex[n] > TINY_NEIGHBOR_RATIO * area);
-      if (!bigNeighbor) this._tinyCandidates.push({ index, id: f.id, kLimit });
-    });
+    this._layoutTinyIslands();
 
     // Pass 1: lay out every path (home copy — ghost copies are <use>
     // references and update automatically). For every playable feature,
@@ -1579,40 +1574,86 @@ export class WorldMap {
     this._updateTinyIslands();
   }
 
-  // Gives the tiny-island outline (TINY_AREA_PX) to exactly the candidates
-  // still under the limit at the current k. Runs after a reflow and once
-  // per settled gesture — mid-gesture the outlines ride the frozen raster
-  // like everything else.
-  _updateTinyIslands() {
-    const k = this.currentTransform?.k || 1;
-    if (this.pinMode) {
-      const active = this._tinyCandidates.filter((c) => k < c.kLimit);
-      const key = active.map((c) => c.index).join(",");
-      if (key !== this._tinyKey) {
-        this._tinyKey = key;
-        const muted = [];
-        const playable = [];
-        for (const c of active) {
-          (this._playableIds.has(c.id) ? playable : muted).push(this.geojson.features[c.index]);
+  // Tiny-island dots (see TINY_AREA_PX): picks the candidates for this
+  // fit, (re)builds their per-part paths when that set changed, and
+  // re-projects them. Part of every _reflow.
+  _layoutTinyIslands() {
+    const features = this.geojson.features;
+    const partsOf = (f) =>
+      !f.geometry ? [] : f.geometry.type === "MultiPolygon" ? f.geometry.coordinates : [f.geometry.coordinates];
+    const areaOf = (coords) => {
+      const a = this.pathGen.area({ type: "Polygon", coordinates: coords });
+      return Number.isFinite(a) ? a : 0;
+    };
+    const largest = features.map((f) => Math.max(0, ...partsOf(f).map(areaOf)));
+    const candidates = [];
+    features.forEach((f, index) => {
+      const area = largest[index];
+      if (!f.id || !(area > 0) || area >= TINY_AREA_PX) return;
+      const bigNeighbor = (this._neighborsByIndex[index] ?? []).some((n) => largest[n] > TINY_NEIGHBOR_RATIO * area);
+      if (!bigNeighbor) candidates.push(index);
+    });
+
+    const key = candidates.join(",");
+    if (key !== this._tinyKey) {
+      this._tinyKey = key;
+      this.tinyGroup.replaceChildren();
+      this._tinyParts = [];
+      this._tinyPartsById.clear();
+      for (const index of candidates) {
+        const f = features[index];
+        const playable = this._playableIds.has(f.id);
+        // Carry over whatever the country is marked with right now (a
+        // resize that changes the set rebuilds these mid-round).
+        const marks = this.pinMode
+          ? this._revealedFeatureId === f.id ? [...this.revealPath.classList].filter((c) => c.startsWith("country--")) : []
+          : [...(this.featuresById.get(f.id)?.classList ?? [])].filter((c) => c.startsWith("country--"));
+        for (const coords of partsOf(f)) {
+          const path = document.createElementNS(SVG_NS, "path");
+          path.setAttribute(
+            "class",
+            this.pinMode
+              ? "pin-tiny" + (playable ? " pin-tiny--playable" : "")
+              : "country country--tiny" + (playable ? "" : " country--unplayable")
+          );
+          path.classList.add(...marks.filter((c) => c !== "country--unplayable"));
+          if (playable && !this.pinMode) {
+            // Clickable like the country's own path (the dot is bigger
+            // than the land under it, so geometry alone would miss).
+            path.dataset.id = f.id;
+            path.addEventListener("click", () => {
+              if (this.clickEnabled && this.onClick) this.onClick(f.id);
+            });
+          }
+          this.tinyGroup.appendChild(path);
+          // Outer ring only: an atoll's lagoon is a hole in the data, and
+          // a dot with a hole reads as a ring.
+          const part = { path, coords: [coords[0]], width: 0 };
+          this._tinyParts.push(part);
+          if (!this._tinyPartsById.has(f.id)) this._tinyPartsById.set(f.id, []);
+          this._tinyPartsById.get(f.id).push(path);
         }
-        const d = (list) => (list.length ? this.pathGen({ type: "FeatureCollection", features: list }) ?? "" : "");
-        this.pinTinyMuted.setAttribute("d", d(muted));
-        this.pinTinyPlayable.setAttribute("d", d(playable));
       }
-      this._syncRevealTiny();
-      return;
     }
-    for (const c of this._tinyCandidates) {
-      this._pathsByIndex[c.index]?.classList.toggle("country--tiny", k < c.kLimit);
+    for (const part of this._tinyParts) {
+      part.path.setAttribute("d", this.pathGen({ type: "Polygon", coordinates: part.coords }) ?? "");
+      part.width = Math.sqrt(areaOf(part.coords));
     }
   }
 
-  // Pin mode's revealed target is outlined like its tiny-island self.
-  _syncRevealTiny() {
+  // Sets every tiny-island dot's outline for the current k (see
+  // TINY_AREA_PX); a part already bigger than its dot is hidden. Runs
+  // after a reflow and once per settled gesture — mid-gesture the dots
+  // ride the frozen raster like everything else.
+  _updateTinyIslands() {
     const k = this.currentTransform?.k || 1;
-    const id = this._revealedFeatureId;
-    const tiny = Boolean(id) && this._tinyCandidates.some((c) => c.id === id && k < c.kLimit);
-    this.revealPath.classList.toggle("country--tiny", tiny);
+    const dot = Math.min(TINY_DOT_MAX_PX, TINY_DOT_PX * k ** TINY_DOT_GROWTH);
+    for (const { path, width } of this._tinyParts) {
+      const w = dot - width * k;
+      const display = w > 0 ? "" : "none";
+      if (path.style.display !== display) path.style.display = display;
+      if (w > 0) path.style.strokeWidth = `${w.toFixed(2)}px`;
+    }
   }
 
   // Where a fresh map starts: a zoom/pan transform framing `focusIds`
@@ -1911,11 +1952,13 @@ export class WorldMap {
     if (this._hoveredId !== null) {
       this.featuresById.get(this._hoveredId)?.classList.remove("country--hovered");
       this.hitAreasById.get(this._hoveredId)?.classList.remove("country--hovered");
+      for (const part of this._tinyPartsById.get(this._hoveredId) ?? []) part.classList.remove("country--hovered");
     }
     this._hoveredId = id;
     if (id !== null) {
       this.featuresById.get(id)?.classList.add("country--hovered");
       this.hitAreasById.get(id)?.classList.add("country--hovered");
+      for (const part of this._tinyPartsById.get(id) ?? []) part.classList.add("country--hovered");
     }
   }
 
@@ -2325,7 +2368,6 @@ export class WorldMap {
       // rule until the next _mark replaced its `d`.
       this._revealedFeatureId = null;
       this.revealPath.removeAttribute("d");
-      this.revealPath.classList.remove("country--tiny");
     }
   }
 
@@ -2349,7 +2391,7 @@ export class WorldMap {
       this._revealedFeatureId = id;
       this.revealPath.setAttribute("d", this.pathGen(f) ?? "");
       this.revealPath.classList.add(className);
-      this._syncRevealTiny();
+      for (const part of this._tinyPartsById.get(id) ?? []) part.classList.add(className);
       return;
     }
     const path = this.featuresById.get(id);
@@ -2359,27 +2401,29 @@ export class WorldMap {
       // duplicating whatever border it shares with each neighbor — so a
       // shared edge is drawn twice, once by each side, and SVG paints
       // later siblings over earlier ones. Country paths sit in plain
-      // dataset order (see _reflow's `insertBefore(path, this.borderGroup)`
+      // dataset order (see the constructor's `insertBefore(path, this.tinyGroup)`
       // loop), unrelated to adjacency, so a highlighted country's own
       // (thicker, colored) stroke only actually WINS along the sides whose
       // neighbor happens to come earlier in that order — the other sides
       // show the neighbor's ordinary thin border painted on top instead,
       // reading as a patchy/missing highlight rather than a uniform one.
-      // Moving the marked path to right before `borderGroup` — the same
-      // insertion point _reflow itself uses — makes it the LAST of the
-      // per-country paths, so its stroke wins on every side regardless of
-      // original order; disputed-border dashes in `borderGroup` still
-      // paint above it, unaffected. `insertBefore` on an already-attached
+      // Moving the marked path to right before `tinyGroup` — the same
+      // insertion point the constructor itself uses — makes it the LAST of
+      // the per-country paths, so its stroke wins on every side regardless
+      // of original order; the tiny-island dots and disputed-border dashes
+      // in `borderGroup` still paint above it, unaffected. `insertBefore` on an already-attached
       // node moves it rather than cloning it, so no duplicate is created,
       // and ghost `<use>` copies mirror `contentGroup`'s live DOM order
       // automatically — nothing further needed for them.
-      this.contentGroup.insertBefore(path, this.borderGroup);
+      this.contentGroup.insertBefore(path, this.tinyGroup);
     }
     const hitArea = this.hitAreasById.get(id);
     if (hitArea) hitArea.classList.add(className);
+    for (const part of this._tinyPartsById.get(id) ?? []) part.classList.add(className);
   }
 
   _forEachMarked(fn) {
+    for (const { path } of this._tinyParts) fn(path);
     if (this.pinMode) {
       fn(this.revealPath);
       return;

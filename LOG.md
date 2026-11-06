@@ -3,6 +3,26 @@
 Newest entries at the top. See `DESIGN.md` for the architecture this log
 refers to.
 
+## 2026-11-06 — Tiny-island dots grow with zoom
+
+Reported: zooming in, the islands got smaller too fast. Two causes: the
+outline was a fixed 2.5px and switched off in one step once a feature's
+largest part reached 12 px², leaving its (still tiny) real shape; and it
+was per feature, so French Polynesia's atolls lost their dots as soon as
+Tahiti was big enough. Now every part of a candidate is its own dot path
+(see DESIGN.md) whose outline is set per zoom so its on-screen size only
+grows: 2.5px × k^0.6, capped at 8px, until the islet's real shape is
+bigger. Outer rings only (atoll lagoons made the dots rings), and the
+dots are drawn above the country paths (they were below them, so each
+islet's own dark border showed through). Dots take hover/mark classes
+and are clickable.
+
+Verified in Firefox (Playwright, scratch harness, deleted after):
+French Polynesia's dot sizes per zoom (2.5 → 8px, never shrinking, the
+same in pin mode); screenshots at k=1/3/8/25; highlight reaches all its
+dots and clearMarks removes it; jittered clicks just outside the real
+islets but on their dots select French Polynesia (5/5).
+
 ## 2026-11-06 — Tiny islands visible on the map
 
 Requested: very small islands (French Polynesia in Oceania) should be

@@ -728,24 +728,28 @@ with a region-independent projection: zoom is now absolute.
   playableIds.has(f.id)`), so the muted base never shows through at them.
 
 Tiny islands are drawn bigger than they are. Most island territories
-(French Polynesia, Kiribati, the Caribbean) are subpixel at world
-and region zoom, so their fill alone shows nothing. While a feature's
-largest part is under `TINY_AREA_PX` (12 px²) on screen, its path gets
-`.country--tiny`: an outline in its own fill color, 2.5px and
-non-scaling, so every islet shows as a dot. Each candidate's k limit is
-worked out in `_reflow`; `_updateTinyIslands` toggles the class after a
-reflow and once per settled gesture, so the outline goes once the real
-shape is big enough. Only features with no land neighbor more than
-`TINY_NEIGHBOR_RATIO` (4×) their size qualify — on Vatican, Monaco or
-Luxembourg a land-colored blob would paint over the borders that show
-where they are (Saint Martin / Sint Maarten still qualify). The marked
-states (hover, highlight, selected, correct, wrong) repeat their fill
-color as the stroke. Pin mode can't outline only some of its merged
-landmass's parts, so the active tiny features are drawn again on top as
-two outlined paths (`.pin-tiny`, muted and playable), and the revealed
-target gets `.country--tiny` too. At 1280×800 world zoom 64 features are
-outlined; framed on French Polynesia (k≈9.5) 17 still are; on Vatican
-(k=60) none.
+(French Polynesia, Kiribati, the Caribbean) are subpixel at world and
+region zoom, so their fill alone shows nothing. A feature whose largest
+part is under `TINY_AREA_PX` (12 px²) at k=1 is a candidate, as long as
+no land neighbor is more than `TINY_NEIGHBOR_RATIO` (4×) its size — on
+Vatican, Monaco or Luxembourg a land-colored blob would paint over the
+borders that show where they are (Saint Martin / Sint Maarten still
+qualify). `_layoutTinyIslands` (every `_reflow`) draws each part of each
+candidate again in `tinyGroup`, between the country paths and
+`borderGroup`: the outer ring only (an atoll's lagoon would make the dot
+a ring), `.country--tiny`, outlined in its own fill color. Per part, not
+per feature, because French Polynesia's atolls need a dot long after
+Tahiti doesn't. `_updateTinyIslands` (after a reflow and once per settled
+gesture) sets each dot's outline so it never gets smaller as you zoom
+in: the dot aims for 2.5px × k^0.6 across, capped at 8px, and the outline
+makes up whatever the islet's own width (√area × k) doesn't; once the
+islet is bigger, its dot is hidden. Dots take the country's hover and
+mark classes (`_mark`, `_forEachMarked`, `_setHoveredId`) and are
+clickable like its path. In pin mode they sit over the merged landmass
+(`.pin-tiny`, muted or playable, not clickable) and the revealed target's
+dots turn green with it. 237 dot paths on the world map; French
+Polynesia's 21 grow 2.5px (k=1) → 4.8 (k=3) → 8 (k=8), with 12 still
+dots at k=40 and none at k=80.
 
 True microstates (Vatican City, Monaco, San Marino, Liechtenstein, Malta,
 ...) and archipelagos/multi-part countries with no single dominant,
